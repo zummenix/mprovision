@@ -7,6 +7,9 @@ use std::fs::{self, DirEntry};
 use std::path::{Path, PathBuf};
 use std::env;
 
+/// A Result type for this crate.
+pub type Result<T> = std::result::Result<T, String>;
+
 /// Returns an iterator over the `*.mobileprovision` entries within a given
 /// directory.
 ///
@@ -16,7 +19,7 @@ use std::env;
 /// - the user lacks the requisite permissions
 /// - there is no entry in the filesystem at the provided path
 /// - the provided path is not a directory
-pub fn files<P>(path: P) -> Result<Box<Iterator<Item=DirEntry>>, String> where P: AsRef<Path> {
+pub fn files<P>(path: P) -> Result<Box<Iterator<Item=DirEntry>>> where P: AsRef<Path> {
     let metadata = try!(fs::metadata(&path).map_err(|err| err.to_string()));
     if !metadata.is_dir() {
         return Err(format!("{:?} is not a directory", path.as_ref()));
@@ -43,7 +46,7 @@ pub fn files<P>(path: P) -> Result<Box<Iterator<Item=DirEntry>>, String> where P
 /// # Errors
 /// This function will return an error if 'HOME' environment variable is not set
 /// or equal to the empty string.
-pub fn directory() -> Result<PathBuf, String> {
+pub fn directory() -> Result<PathBuf> {
     env::home_dir()
         .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
         .ok_or("couldn't find home directory".into())
