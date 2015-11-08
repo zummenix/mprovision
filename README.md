@@ -5,7 +5,7 @@ A tool that helps iOS developers to manage mobileprovision files. (WIP)
 
 For now only supported method is compilation from source. To compile you need to
 install [Rust Compiler](https://www.rust-lang.org/downloads.html) and then
-`clone` and `build`.
+`clone` and `build`:
 
 ```bash
 git clone https://github.com/zummenix/mprovision
@@ -13,4 +13,4 @@ cd mprovision
 cargo build --release
 ```
 
-The binary will end up in `./target/release/mprovision`.
+Result binary will be `./target/release/mprovision`.
