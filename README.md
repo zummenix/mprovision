@@ -14,3 +14,7 @@ cargo build --release
 ```
 
 Result binary will be `./target/release/mprovision`.
+
+## License
+
+MIT
