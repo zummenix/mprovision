@@ -15,7 +15,7 @@ fn main() {
             .required(false)
             .takes_value(true));
 
-    let matches = App::new("myapp")
+    let matches = App::new("mprovision")
         .version("0.1.0")
         .about("A tool that helps iOS developers to manage mobileprovision files.")
         .subcommand(count_subcommand)
