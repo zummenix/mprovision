@@ -3,7 +3,7 @@ extern crate mprovision;
 extern crate clap;
 
 use std::fs;
-use clap::{Arg, App, SubCommand};
+use clap::{Arg, App, AppSettings, SubCommand};
 
 fn main() {
     let count_subcommand = SubCommand::with_name("count")
@@ -16,6 +16,7 @@ fn main() {
             .takes_value(true));
 
     let matches = App::new("mprovision")
+        .setting(AppSettings::SubcommandRequired)
         .version("0.1.0")
         .about("A tool that helps iOS developers to manage mobileprovision files.")
         .subcommand(count_subcommand)
