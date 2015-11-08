@@ -2,3 +2,6 @@
 name = "mprovision"
 version = "0.1.0"
 authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
+
+[dependencies]
+clap = "1.4.7"
