@@ -9,11 +9,8 @@ fn main() {
     let count_subcommand = SubCommand::with_name("count")
         .about("Counts provisioning profiles in a directory.")
         .arg(Arg::with_name("DIRECTORY")
-            .short("d")
-            .long("directory")
             .help("Directory where to count provisioning profiles.")
-            .required(false)
-            .takes_value(true));
+            .required(false));
 
     let matches = App::new("mprovision")
         .setting(AppSettings::SubcommandRequired)
