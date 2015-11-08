@@ -5,3 +5,7 @@ authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
 
 [dependencies]
 clap = "1.4.7"
+
+[dev-dependencies]
+expectest = "0.3.1"
+tempdir = "0.3.4"
