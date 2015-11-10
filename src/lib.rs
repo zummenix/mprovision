@@ -25,22 +25,23 @@ pub type Result<T> = std::result::Result<T, String>;
 /// - the user lacks the requisite permissions
 /// - there is no entry in the filesystem at the provided path
 /// - the provided path is not a directory
-pub fn files<P>(path: P) -> Result<Box<Iterator<Item=DirEntry>>> where P: AsRef<Path> {
+pub fn files<P>(path: P) -> Result<Box<Iterator<Item = DirEntry>>>
+    where P: AsRef<Path>
+{
     let metadata = try!(fs::metadata(&path).map_err(|err| err.to_string()));
     if !metadata.is_dir() {
         return Err(format!("{:?} is not a directory", path.as_ref()));
     }
     let entries = try!(fs::read_dir(&path).map_err(|err| err.to_string()));
-    let filtered = entries
-        .filter_map(|entry| entry.ok())
-        .filter_map(|entry| {
-            if let Some(ext) = entry.path().extension() {
-                if ext == "mobileprovision" {
-                    return Some(entry);
-                }
-            }
-            None
-        });
+    let filtered = entries.filter_map(|entry| entry.ok())
+                          .filter_map(|entry| {
+                              if let Some(ext) = entry.path().extension() {
+                                  if ext == "mobileprovision" {
+                                      return Some(entry);
+                                  }
+                              }
+                              None
+                          });
     Ok(Box::new(filtered))
 }
 
