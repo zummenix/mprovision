@@ -12,9 +12,47 @@ extern crate tempdir;
 use std::fs::{self, DirEntry};
 use std::path::{Path, PathBuf};
 use std::env;
+use std::io;
+use std::fmt;
+use std::error;
 
 /// A Result type for this crate.
-pub type Result<T> = std::result::Result<T, String>;
+pub type Result<T> = std::result::Result<T, Error>;
+
+/// An Error type.
+#[derive(Debug)]
+pub enum Error {
+    /// Denotes I/O error.
+    Io(io::Error),
+}
+
+impl error::Error for Error {
+    fn description(&self) -> &str {
+        match *self {
+            Error::Io(ref e) => e.description(),
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::Io(ref e) => Some(e),
+        }
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::Io(ref e) => e.fmt(f),
+        }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self {
+        Error::Io(e)
+    }
+}
 
 /// Returns an iterator over the `*.mobileprovision` entries within a given
 /// directory.
@@ -28,11 +66,7 @@ pub type Result<T> = std::result::Result<T, String>;
 pub fn files<P>(path: P) -> Result<Box<Iterator<Item = DirEntry>>>
     where P: AsRef<Path>
 {
-    let metadata = try!(fs::metadata(&path).map_err(|err| err.to_string()));
-    if !metadata.is_dir() {
-        return Err(format!("{:?} is not a directory", path.as_ref()));
-    }
-    let entries = try!(fs::read_dir(&path).map_err(|err| err.to_string()));
+    let entries = try!(fs::read_dir(&path));
     let filtered = entries.filter_map(|entry| entry.ok())
                           .filter_map(|entry| {
                               if let Some(ext) = entry.path().extension() {
@@ -56,7 +90,7 @@ pub fn files<P>(path: P) -> Result<Box<Iterator<Item = DirEntry>>>
 pub fn directory() -> Result<PathBuf> {
     env::home_dir()
         .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
-        .ok_or("couldn't find home directory".into())
+        .ok_or(Error::Io(io::Error::new(io::ErrorKind::NotFound, "")))
 }
 
 #[cfg(test)]
