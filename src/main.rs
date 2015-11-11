@@ -6,17 +6,19 @@ use std::fs;
 use clap::{Arg, App, AppSettings, SubCommand};
 
 fn main() {
-    let count_subcommand = SubCommand::with_name("count")
-                               .about("Counts provisioning profiles in a directory.")
-                               .arg(Arg::with_name("DIRECTORY")
-                                        .help("Directory where to count provisioning profiles.")
-                                        .required(false));
+    let subcommands = vec![
+        SubCommand::with_name("count")
+            .about("Counts provisioning profiles in a directory.")
+            .arg(Arg::with_name("DIRECTORY")
+                .help("Directory where to count provisioning profiles.")
+                .required(false)),
+    ];
 
     let matches = App::new("mprovision")
                       .setting(AppSettings::SubcommandRequired)
                       .version("0.1.0")
                       .about("A tool that helps iOS developers to manage mobileprovision files.")
-                      .subcommand(count_subcommand)
+                      .subcommands(subcommands)
                       .get_matches();
 
     if let Some(matches) = matches.subcommand_matches("count") {
