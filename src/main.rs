@@ -12,6 +12,14 @@ fn main() {
             .arg(Arg::with_name("DIRECTORY")
                 .help("Directory where to count provisioning profiles.")
                 .required(false)),
+        SubCommand::with_name("search")
+            .about("Searches provisioning profile for provided text.")
+            .arg(Arg::with_name("TEXT")
+                .help("Text to search in provisioning profile.")
+                .required(true))
+            .arg(Arg::with_name("DIRECTORY")
+                .help("Directory where to search provisioning profiles.")
+                .required(false)),
     ];
 
     let matches = App::new("mprovision")
@@ -23,6 +31,20 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("count") {
         handle_count_subcommand(matches)
+    }
+    if let Some(matches) = matches.subcommand_matches("search") {
+        let s = matches.value_of("TEXT").unwrap();
+        match mprovision::search(matches.value_of("DIRECTORY"), s) {
+            Ok(results) => {
+                for result in results {
+                    match result {
+                        Ok(profile) => println!("{}\n", profile.description()),
+                        Err(err) => println!("Error: {}", err),
+                    }
+                }
+            },
+            Err(err) => println!("Error: {}", err),
+        }
     }
 }
 

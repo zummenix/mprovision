@@ -5,6 +5,7 @@ authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
 
 [dependencies]
 clap = "1.5.1"
+plist = "0.0.10"
 
 [dev-dependencies]
 expectest = "0.3.1"
