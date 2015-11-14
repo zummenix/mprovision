@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
 
 [dependencies]
-clap = "1.4.7"
+clap = "1.5.1"
 
 [dev-dependencies]
 expectest = "0.3.1"
