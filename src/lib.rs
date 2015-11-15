@@ -100,7 +100,9 @@ pub fn directory() -> Result<PathBuf> {
         .ok_or(Error::Io(io::Error::new(io::ErrorKind::NotFound, "")))
 }
 
-pub fn search<P>(path: Option<P>, s: &str) -> Result<Vec<Result<Profile>>> where P: AsRef<Path> {
+pub fn search<P>(path: Option<P>, s: &str) -> Result<Vec<Result<Profile>>>
+    where P: AsRef<Path>
+{
     if let Some(path) = path {
         search_dir(path, s)
     } else {
@@ -109,22 +111,27 @@ pub fn search<P>(path: Option<P>, s: &str) -> Result<Vec<Result<Profile>>> where
     }
 }
 
-pub fn search_dir<P>(path: P, s: &str) -> Result<Vec<Result<Profile>>> where P: AsRef<Path> {
+pub fn search_dir<P>(path: P, s: &str) -> Result<Vec<Result<Profile>>>
+    where P: AsRef<Path>
+{
     let files = try!(files(&path));
     let mut buf = Vec::with_capacity(100 * 1024);
     let results: Vec<_> = files.map(|entry| profile_from_file(entry.path(), &mut buf))
-        .filter(|result| {
-            if let &Ok(ref profile) = result {
-                profile.contains(s)
-            } else {
-                true
-            }
-        }).collect();
+                               .filter(|result| {
+                                   if let &Ok(ref profile) = result {
+                                       profile.contains(s)
+                                   } else {
+                                       true
+                                   }
+                               })
+                               .collect();
     Ok(results)
 }
 
 /// Returns instance of the `Profile` parsed from a file.
-pub fn profile_from_file<P>(path: P, buf: &mut Vec<u8>) -> Result<Profile> where P: AsRef<Path> {
+pub fn profile_from_file<P>(path: P, buf: &mut Vec<u8>) -> Result<Profile>
+    where P: AsRef<Path>
+{
     let mut file = try!(File::open(path));
     buf.clear();
     try!(file.read_to_end(buf));
@@ -173,15 +180,11 @@ impl Profile {
     /// Returns `true` if one or more fields of the profile contain `string`.
     pub fn contains(&self, string: &str) -> bool {
         let s = string.to_lowercase();
-        let items = &[
-            self.name.as_ref(),
-            self.app_identifier.as_ref(),
-            self.uuid.as_ref(),
-        ];
+        let items = &[self.name.as_ref(), self.app_identifier.as_ref(), self.uuid.as_ref()];
         for item in items {
             if let &Some(ref string) = item {
                 if string.to_lowercase().contains(&s) {
-                    return true
+                    return true;
                 }
             }
         }
@@ -205,10 +208,10 @@ fn find(data: &[u8], needle: &[u8]) -> Option<usize> {
     let needle_len = needle.len();
     for (i, _) in data.iter().enumerate() {
         if i + needle_len > data.len() {
-            return None
+            return None;
         }
         if &data[i..i + needle_len] == needle {
-            return Some(i)
+            return Some(i);
         }
     }
     None
