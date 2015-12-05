@@ -7,5 +7,5 @@ authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
 plist = "0.0.10"
 
 [dev-dependencies]
-expectest = "0.3.1"
+expectest = "0.4.0"
 tempdir = "0.3.4"

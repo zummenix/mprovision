@@ -8,4 +8,4 @@ name = "mprovision"
 
 [dependencies]
 mprovision = { path = "mprovision" }
-docopt = "0.6.75"
+docopt = "0.6.78"
