@@ -2,21 +2,19 @@
 /// Represents provisioning profile data.
 #[derive(Default, Debug)]
 pub struct Profile {
-    pub uuid: Option<String>,
-    pub name: Option<String>,
-    pub app_identifier: Option<String>,
+    pub uuid: String,
+    pub name: String,
+    pub app_identifier: String,
 }
 
 impl Profile {
     /// Returns `true` if one or more fields of the profile contain `string`.
     pub fn contains(&self, string: &str) -> bool {
         let s = string.to_lowercase();
-        let items = &[self.name.as_ref(), self.app_identifier.as_ref(), self.uuid.as_ref()];
+        let items = &[&self.name, &self.app_identifier, &self.uuid];
         for item in items {
-            if let &Some(ref string) = item {
-                if string.to_lowercase().contains(&s) {
-                    return true;
-                }
+            if item.to_lowercase().contains(&s) {
+                return true;
             }
         }
         false
@@ -25,11 +23,29 @@ impl Profile {
     /// Returns profile in a text form.
     pub fn description(&self) -> String {
         let mut desc = String::new();
-        desc.push_str(self.uuid.as_ref().unwrap_or(&"<UUID not found>".into()));
+        desc.push_str(&self.uuid);
         desc.push_str("\n");
-        desc.push_str(self.app_identifier.as_ref().unwrap_or(&"<ID not found>".into()));
+        desc.push_str(&self.app_identifier);
         desc.push_str("\n");
-        desc.push_str(self.name.as_ref().unwrap_or(&"<Name not found>".into()));
+        desc.push_str(&self.name);
         desc
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expectest::prelude::*;
+    use super::*;
+
+    #[test]
+    fn contains() {
+        let profile = Profile {
+            uuid: "123".into(),
+            name: "name".into(),
+            app_identifier: "id".into(),
+        };
+        expect!(profile.contains("12")).to(be_true());
+        expect!(profile.contains("me")).to(be_true());
+        expect!(profile.contains("id")).to(be_true());
     }
 }

@@ -111,17 +111,17 @@ pub fn profile_from_data(data: &[u8]) -> Option<Profile> {
             if let Ok(StringValue(key)) = item {
                 if key == "UUID" {
                     if let Some(Ok(StringValue(value))) = iter.next() {
-                        profile.uuid = Some(value);
+                        profile.uuid = value;
                     }
                 }
                 if key == "Name" {
                     if let Some(Ok(StringValue(value))) = iter.next() {
-                        profile.name = Some(value);
+                        profile.name = value;
                     }
                 }
                 if key == "application-identifier" {
                     if let Some(Ok(StringValue(value))) = iter.next() {
-                        profile.app_identifier = Some(value);
+                        profile.app_identifier = value;
                     }
                 }
             }
