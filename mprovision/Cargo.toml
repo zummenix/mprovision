@@ -5,6 +5,7 @@ authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
 
 [dependencies]
 plist = "0.0.10"
+chrono = "~0.2.0" # used in plist.
 
 [dev-dependencies]
 expectest = "0.4.0"

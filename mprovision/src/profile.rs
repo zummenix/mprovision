@@ -1,13 +1,27 @@
 
+use chrono::{DateTime, UTC, TimeZone};
+
 /// Represents provisioning profile data.
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Profile {
     pub uuid: String,
     pub name: String,
     pub app_identifier: String,
+    pub creation_date: DateTime<UTC>,
+    pub expiration_date: DateTime<UTC>,
 }
 
 impl Profile {
+    pub fn empty() -> Self {
+        Profile {
+            uuid: "".into(),
+            name: "".into(),
+            app_identifier: "".into(),
+            creation_date: UTC.timestamp(0, 0),
+            expiration_date: UTC.timestamp(0, 0),
+        }
+    }
+
     /// Returns `true` if one or more fields of the profile contain `string`.
     pub fn contains(&self, string: &str) -> bool {
         let s = string.to_lowercase();
@@ -28,6 +42,8 @@ impl Profile {
         desc.push_str(&self.app_identifier);
         desc.push_str("\n");
         desc.push_str(&self.name);
+        desc.push_str("\n");
+        desc.push_str(&format!("{} - {}", self.creation_date, self.expiration_date));
         desc
     }
 }

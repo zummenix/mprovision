@@ -9,6 +9,7 @@ extern crate expectest;
 #[cfg(test)]
 extern crate tempdir;
 extern crate plist;
+extern crate chrono;
 
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
@@ -105,7 +106,7 @@ pub fn profile_from_file<P>(path: P, buf: &mut Vec<u8>) -> Result<Profile>
 /// Returns instance of the `Profile` parsed from a `data`.
 pub fn profile_from_data(data: &[u8]) -> Option<Profile> {
     if let Some(data) = find_plist(data) {
-        let mut profile = Profile::default();
+        let mut profile = Profile::empty();
         let mut iter = plist::StreamingParser::new(io::Cursor::new(data)).into_iter();
         while let Some(item) = iter.next() {
             if let Ok(StringValue(key)) = item {
@@ -122,6 +123,16 @@ pub fn profile_from_data(data: &[u8]) -> Option<Profile> {
                 if key == "application-identifier" {
                     if let Some(Ok(StringValue(value))) = iter.next() {
                         profile.app_identifier = value;
+                    }
+                }
+                if key == "CreationDate" {
+                    if let Some(Ok(DateValue(value))) = iter.next() {
+                        profile.creation_date = value;
+                    }
+                }
+                if key == "ExpirationDate" {
+                    if let Some(Ok(DateValue(value))) = iter.next() {
+                        profile.expiration_date = value;
                     }
                 }
             }
