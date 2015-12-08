@@ -51,6 +51,7 @@ impl Profile {
 #[cfg(test)]
 mod tests {
     use expectest::prelude::*;
+    use chrono::{UTC, TimeZone};
     use super::*;
 
     #[test]
@@ -59,6 +60,8 @@ mod tests {
             uuid: "123".into(),
             name: "name".into(),
             app_identifier: "id".into(),
+            creation_date: UTC.timestamp(0, 0),
+            expiration_date: UTC.timestamp(0, 0),
         };
         expect!(profile.contains("12")).to(be_true());
         expect!(profile.contains("me")).to(be_true());
