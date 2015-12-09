@@ -1,9 +1,11 @@
 
+use std::path::PathBuf;
 use chrono::{DateTime, UTC, TimeZone};
 
 /// Represents provisioning profile data.
 #[derive(Debug)]
 pub struct Profile {
+    pub path: PathBuf,
     pub uuid: String,
     pub name: String,
     pub app_identifier: String,
@@ -14,6 +16,7 @@ pub struct Profile {
 impl Profile {
     pub fn empty() -> Self {
         Profile {
+            path: PathBuf::new(),
             uuid: "".into(),
             name: "".into(),
             app_identifier: "".into(),
@@ -51,12 +54,14 @@ impl Profile {
 #[cfg(test)]
 mod tests {
     use expectest::prelude::*;
+    use std::path::PathBuf;
     use chrono::{UTC, TimeZone};
     use super::*;
 
     #[test]
     fn contains() {
         let profile = Profile {
+            path: PathBuf::new(),
             uuid: "123".into(),
             name: "name".into(),
             app_identifier: "id".into(),

@@ -97,10 +97,13 @@ pub fn search_dir<P>(path: P, s: &str) -> Result<Vec<Result<Profile>>>
 pub fn profile_from_file<P>(path: P, buf: &mut Vec<u8>) -> Result<Profile>
     where P: AsRef<Path>
 {
-    let mut file = try!(File::open(path));
+    let mut file = try!(File::open(path.as_ref()));
     buf.clear();
     try!(file.read_to_end(buf));
-    profile_from_data(buf).ok_or(Error::Own("Couldn't parse file.".into()))
+    profile_from_data(buf).map(|mut p| {
+        p.path = path.as_ref().to_owned();
+        p
+    }).ok_or(Error::Own("Couldn't parse file.".into()))
 }
 
 /// Returns instance of the `Profile` parsed from a `data`.
