@@ -12,6 +12,7 @@ A tool that helps iOS developers to manage mobileprovision files.
 
 Usage:
   mprovision search <text> [<directory>]
+  mprovision remove <uuid> [<directory>]
   mprovision (-h | --help)
   mprovision --version
 
@@ -42,6 +43,27 @@ fn main() {
                         Ok(profile) => println!("{}\n", profile.description()),
                         Err(err) => println!("Error: {}", err),
                     }
+                }
+            },
+            Err(err) => {
+                writeln!(&mut io::stderr(), "Error: {}", err).unwrap();
+                process::exit(1);
+            },
+        }
+    }
+    if args.get_bool("remove") {
+        let uuid = args.get_str("<uuid>");
+        if uuid.is_empty() {
+            writeln!(&mut io::stderr(), "{}", "<uuid> should not be empty.").unwrap();
+            process::exit(1);
+        }
+        let dir_name = args.get_str("<directory>");
+        let dir_name = if dir_name.is_empty() { None } else { Some(dir_name) };
+        match mprovision::search(dir_name, uuid) {
+            Ok(results) => {
+                if let Some(&Ok(ref profile)) = results.first() {
+                    println!("Removing profile with uuid: {}", uuid);
+                    std::fs::remove_file(&profile.path);
                 }
             },
             Err(err) => {
