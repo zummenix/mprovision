@@ -1,6 +1,7 @@
 
 extern crate mprovision;
 extern crate docopt;
+extern crate version;
 
 use std::io::{self, Write};
 use std::process;
@@ -23,10 +24,10 @@ Options:
 
 fn main() {
     let args = Docopt::new(USAGE)
-                            .and_then(|d| d.options_first(true)
-                                           .version(Some(version()))
-                                           .parse())
-                            .unwrap_or_else(|e| e.exit());
+        .and_then(|d| d.options_first(true)
+                       .version(Some(format!("mprovision {}", version::current())))
+                       .parse())
+        .unwrap_or_else(|e| e.exit());
 
     if let Some(cmd) = Command::from_args(&args) {
         let result = match cmd {
@@ -99,18 +100,5 @@ fn remove(args: &::docopt::ArgvMap) -> Result<(), String> {
             Ok(())
         },
         Err(e) => Err(e.to_string()),
-    }
-}
-
-fn version() -> String {
-    let v = (
-        option_env!("CARGO_PKG_VERSION_MAJOR"),
-        option_env!("CARGO_PKG_VERSION_MINOR"),
-        option_env!("CARGO_PKG_VERSION_PATCH"),
-    );
-    if let (Some(major), Some(minor), Some(patch)) = v {
-        format!("mprovision {}.{}.{}", major, minor, patch)
-    } else {
-        "N/A".to_owned()
     }
 }
