@@ -1,6 +1,6 @@
 [package]
 name = "mprovision-bin"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
 
 [[bin]]

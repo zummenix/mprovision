@@ -109,7 +109,7 @@ pub fn profile_from_file<P>(path: P) -> Result<Profile>
 pub fn profile_from_data(data: &[u8]) -> Option<Profile> {
     if let Some(data) = find_plist(data) {
         let mut profile = Profile::empty();
-        let mut iter = plist::StreamingParser::new(io::Cursor::new(data)).into_iter();
+        let mut iter = plist::xml::EventReader::new(io::Cursor::new(data)).into_iter();
         while let Some(item) = iter.next() {
             if let Ok(StringValue(key)) = item {
                 if key == "UUID" {
