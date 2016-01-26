@@ -80,8 +80,7 @@ pub fn search_dir<P>(path: P, s: &str) -> Result<Vec<Result<Profile>>>
     where P: AsRef<Path>
 {
     let files = try!(files(&path));
-    let mut buf = Vec::with_capacity(100 * 1024);
-    let results: Vec<_> = files.map(|entry| profile_from_file(entry.path(), &mut buf))
+    let results: Vec<_> = files.map(|entry| profile_from_file(entry.path()))
                                .filter(|result| {
                                    if let &Ok(ref profile) = result {
                                        profile.contains(s)
@@ -94,13 +93,13 @@ pub fn search_dir<P>(path: P, s: &str) -> Result<Vec<Result<Profile>>>
 }
 
 /// Returns instance of the `Profile` parsed from a file.
-pub fn profile_from_file<P>(path: P, buf: &mut Vec<u8>) -> Result<Profile>
+pub fn profile_from_file<P>(path: P) -> Result<Profile>
     where P: AsRef<Path>
 {
     let mut file = try!(File::open(path.as_ref()));
-    buf.clear();
-    try!(file.read_to_end(buf));
-    profile_from_data(buf).map(|mut p| {
+    let mut buf = Vec::new();
+    try!(file.read_to_end(&mut buf));
+    profile_from_data(&buf).map(|mut p| {
         p.path = path.as_ref().to_owned();
         p
     }).ok_or(Error::Own("Couldn't parse file.".into()))
