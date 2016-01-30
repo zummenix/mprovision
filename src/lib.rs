@@ -78,7 +78,7 @@ pub fn with_path<P, F, T>(path: Option<P>, f: F) -> Result<T>
     }
 }
 
-pub fn search_dir<P>(path: P, s: &str) -> Result<Vec<Result<Profile>>>
+pub fn search<P>(path: P, s: &str) -> Result<Vec<Result<Profile>>>
     where P: AsRef<Path>
 {
     let files = try!(files(&path));

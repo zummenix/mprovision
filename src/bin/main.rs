@@ -71,7 +71,7 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
     let dir_name = if dir_name.is_empty() { None } else { Some(dir_name) };
 
     let result = mprovision::with_path(dir_name, |path| {
-        mprovision::search_dir(path, text)
+        mprovision::search(path, text)
     });
     match result {
         Ok(results) => {
@@ -96,7 +96,7 @@ fn remove(args: &::docopt::ArgvMap) -> Result<(), String> {
     let dir_name = if dir_name.is_empty() { None } else { Some(dir_name) };
 
     let result = mprovision::with_path(dir_name, |path| {
-        mprovision::search_dir(path, uuid)
+        mprovision::search(path, uuid)
     });
     match result {
         Ok(results) => {
