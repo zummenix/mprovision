@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use chrono::{DateTime, UTC, TimeZone};
 
 /// Represents provisioning profile data.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Profile {
     pub path: PathBuf,
     pub uuid: String,

@@ -78,20 +78,32 @@ pub fn with_path<P, F, T>(path: Option<P>, f: F) -> Result<T>
     }
 }
 
-pub fn search<P>(path: P, s: &str) -> Result<Vec<Result<Profile>>>
+pub fn profiles<P>(path: P) -> Result<Box<Iterator<Item = Result<Profile>>>> where P: AsRef<Path> {
+    Ok(Box::new(try!(files(&path)).map(|entry| profile_from_file(entry.path()))))
+}
+
+pub fn valid_profiles<P>(path: P) -> Result<Box<Iterator<Item = Profile>>> where P: AsRef<Path> {
+    Ok(Box::new(try!(profiles(path)).filter(Result::is_ok).map(|r| r.unwrap())))
+}
+
+pub struct SearchInfo {
+    pub total: usize,
+    pub profiles: Vec<Profile>,
+}
+
+pub fn search<P>(path: P, s: &str) -> Result<SearchInfo>
     where P: AsRef<Path>
 {
-    let files = try!(files(&path));
-    let results: Vec<_> = files.map(|entry| profile_from_file(entry.path()))
-                               .filter(|result| {
-                                   if let &Ok(ref profile) = result {
-                                       profile.contains(s)
-                                   } else {
-                                       true
-                                   }
-                               })
-                               .collect();
-    Ok(results)
+    let mut total = 0;
+    let profiles = try!(valid_profiles(path)).filter(|profile| {
+        total += 1;
+        profile.contains(s)
+    }).collect();
+
+    Ok(SearchInfo {
+        total: total,
+        profiles: profiles,
+    })
 }
 
 /// Returns instance of the `Profile` parsed from a file.

@@ -74,11 +74,13 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
         mprovision::search(path, text)
     });
     match result {
-        Ok(results) => {
-            for result in results {
-                match result {
-                    Ok(profile) => println!("{}\n", profile.description()),
-                    Err(e) => return Err(e.to_string()),
+        Ok(info) => {
+            if info.profiles.len() == 0 {
+                println!("Nothing found for '{}'", text);
+            } else {
+                println!("Found {} of {}:\n", info.profiles.len(), info.total);
+                for profile in &info.profiles {
+                    println!("{}\n", profile.description());
                 }
             }
             Ok(())
@@ -99,8 +101,8 @@ fn remove(args: &::docopt::ArgvMap) -> Result<(), String> {
         mprovision::search(path, uuid)
     });
     match result {
-        Ok(results) => {
-            if let Some(&Ok(ref profile)) = results.first() {
+        Ok(info) => {
+            if let Some(ref profile) = info.profiles.first() {
                 println!("Removing profile with uuid: {}", uuid);
                 if let Err(e) = std::fs::remove_file(&profile.path) {
                     return Err(e.to_string());
