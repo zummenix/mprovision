@@ -69,7 +69,11 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
     }
     let dir_name = args.get_str("<directory>");
     let dir_name = if dir_name.is_empty() { None } else { Some(dir_name) };
-    match mprovision::search(dir_name, text) {
+
+    let result = mprovision::with_path(dir_name, |path| {
+        mprovision::search_dir(path, text)
+    });
+    match result {
         Ok(results) => {
             for result in results {
                 match result {
@@ -90,7 +94,11 @@ fn remove(args: &::docopt::ArgvMap) -> Result<(), String> {
     }
     let dir_name = args.get_str("<directory>");
     let dir_name = if dir_name.is_empty() { None } else { Some(dir_name) };
-    match mprovision::search(dir_name, uuid) {
+
+    let result = mprovision::with_path(dir_name, |path| {
+        mprovision::search_dir(path, uuid)
+    });
+    match result {
         Ok(results) => {
             if let Some(&Ok(ref profile)) = results.first() {
                 println!("Removing profile with uuid: {}", uuid);

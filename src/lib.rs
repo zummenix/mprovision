@@ -66,14 +66,15 @@ pub fn directory() -> Result<PathBuf> {
             or equal to the empty string.".to_owned()))
 }
 
-pub fn search<P>(path: Option<P>, s: &str) -> Result<Vec<Result<Profile>>>
-    where P: AsRef<Path>
+pub fn with_path<P, F, T>(path: Option<P>, f: F) -> Result<T>
+    where P: AsRef<Path>,
+          F: FnOnce(&AsRef<Path>) -> Result<T>,
 {
     if let Some(path) = path {
-        search_dir(path, s)
+        f(&path)
     } else {
         let path = try!(directory());
-        search_dir(path, s)
+        f(&path)
     }
 }
 
