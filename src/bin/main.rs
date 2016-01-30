@@ -1,6 +1,7 @@
 
 extern crate mprovision;
 extern crate docopt;
+#[macro_use(version)]
 extern crate version;
 
 use std::io::{self, Write};
@@ -25,7 +26,7 @@ Options:
 fn main() {
     let args = Docopt::new(USAGE)
         .and_then(|d| d.options_first(true)
-                       .version(Some(format!("mprovision {}", version::current())))
+                       .version(Some(format!("mprovision {}", version!())))
                        .parse())
         .unwrap_or_else(|e| e.exit());
 

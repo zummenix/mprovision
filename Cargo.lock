@@ -7,7 +7,7 @@ dependencies = [
  "expectest 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "plist 0.0.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempdir 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "version 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "version 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -166,7 +166,7 @@ dependencies = [
 
 [[package]]
 name = "version"
-version = "1.1.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
