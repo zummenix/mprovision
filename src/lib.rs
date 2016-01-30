@@ -62,7 +62,8 @@ pub fn files<P>(path: P) -> Result<Box<Iterator<Item = DirEntry>>>
 pub fn directory() -> Result<PathBuf> {
     env::home_dir()
         .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
-        .ok_or(Error::Io(io::Error::new(io::ErrorKind::NotFound, "")))
+        .ok_or(Error::Own("'HOME' environment variable is not set \
+            or equal to the empty string.".to_owned()))
 }
 
 pub fn search<P>(path: Option<P>, s: &str) -> Result<Vec<Result<Profile>>>
