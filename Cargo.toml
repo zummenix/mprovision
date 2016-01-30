@@ -1,12 +1,18 @@
 [package]
-name = "mprovision-bin"
+name = "mprovision"
 version = "0.1.1"
 authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
 
 [[bin]]
+path = "src/bin/main.rs"
 name = "mprovision"
 
 [dependencies]
-mprovision = { path = "mprovision" }
 docopt = "0.6.78"
 version = "1.1.0"
+plist = "0.0.12"
+chrono = "~0.2.0" # used in plist.
+
+[dev-dependencies]
+expectest = "0.4.1"
+tempdir = "0.3.4"
