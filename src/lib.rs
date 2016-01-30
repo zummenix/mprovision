@@ -62,13 +62,13 @@ pub fn files<P>(path: P) -> Result<Box<Iterator<Item = DirEntry>>>
 pub fn directory() -> Result<PathBuf> {
     env::home_dir()
         .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
-        .ok_or(Error::Own("'HOME' environment variable is not set \
-            or equal to the empty string.".to_owned()))
+        .ok_or(Error::Own("'HOME' environment variable is not set or equal to the empty string."
+                              .to_owned()))
 }
 
 pub fn with_path<P, F, T>(path: Option<P>, f: F) -> Result<T>
     where P: AsRef<Path>,
-          F: FnOnce(&AsRef<Path>) -> Result<T>,
+          F: FnOnce(&AsRef<Path>) -> Result<T>
 {
     if let Some(path) = path {
         f(&path)
@@ -78,11 +78,15 @@ pub fn with_path<P, F, T>(path: Option<P>, f: F) -> Result<T>
     }
 }
 
-pub fn profiles<P>(path: P) -> Result<Box<Iterator<Item = Result<Profile>>>> where P: AsRef<Path> {
+pub fn profiles<P>(path: P) -> Result<Box<Iterator<Item = Result<Profile>>>>
+    where P: AsRef<Path>
+{
     Ok(Box::new(try!(files(&path)).map(|entry| profile_from_file(entry.path()))))
 }
 
-pub fn valid_profiles<P>(path: P) -> Result<Box<Iterator<Item = Profile>>> where P: AsRef<Path> {
+pub fn valid_profiles<P>(path: P) -> Result<Box<Iterator<Item = Profile>>>
+    where P: AsRef<Path>
+{
     Ok(Box::new(try!(profiles(path)).filter(Result::is_ok).map(|r| r.unwrap())))
 }
 
@@ -95,10 +99,12 @@ pub fn search<P>(path: P, s: &str) -> Result<SearchInfo>
     where P: AsRef<Path>
 {
     let mut total = 0;
-    let profiles = try!(valid_profiles(path)).filter(|profile| {
-        total += 1;
-        profile.contains(s)
-    }).collect();
+    let profiles = try!(valid_profiles(path))
+                       .filter(|profile| {
+                           total += 1;
+                           profile.contains(s)
+                       })
+                       .collect();
 
     Ok(SearchInfo {
         total: total,
@@ -113,10 +119,12 @@ pub fn profile_from_file<P>(path: P) -> Result<Profile>
     let mut file = try!(File::open(path.as_ref()));
     let mut buf = Vec::new();
     try!(file.read_to_end(&mut buf));
-    profile_from_data(&buf).map(|mut p| {
-        p.path = path.as_ref().to_owned();
-        p
-    }).ok_or(Error::Own("Couldn't parse file.".into()))
+    profile_from_data(&buf)
+        .map(|mut p| {
+            p.path = path.as_ref().to_owned();
+            p
+        })
+        .ok_or(Error::Own("Couldn't parse file.".into()))
 }
 
 /// Returns instance of the `Profile` parsed from a `data`.
