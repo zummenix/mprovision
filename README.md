@@ -15,6 +15,16 @@ cargo build --release
 
 Result binary will be `./target/release/mprovision`.
 
+## Usage
+
+We support two commands for now:
+```bash
+mprovision search <text> [<directory>]
+mprovision remove <uuid> [<directory>]
+```
+
+Currently
+
 ## License
 
 MIT
