@@ -22,8 +22,8 @@ We support two commands for now:
 mprovision search <text> [<directory>]
 mprovision remove <uuid> [<directory>]
 ```
-
-Currently
+Parameter `<directory>` is optional, all commands work on
+`~/Library/MobileDevice/Provisioning Profiles` directory by default.
 
 ## License
 
