@@ -112,6 +112,18 @@ pub fn search<P>(path: P, s: &str) -> Result<SearchInfo>
     })
 }
 
+pub fn remove<P>(path: P, uuid: &str) -> Result<()>
+    where P: AsRef<Path>
+{
+    for profile in try!(valid_profiles(path)).into_iter() {
+        if profile.uuid == uuid {
+            try!(std::fs::remove_file(&profile.path));
+            return Ok(());
+        }
+    }
+    return Err(Error::Own(format!("Profile '{}' is not found.", uuid)))
+}
+
 /// Returns instance of the `Profile` parsed from a file.
 pub fn profile_from_file<P>(path: P) -> Result<Profile>
     where P: AsRef<Path>

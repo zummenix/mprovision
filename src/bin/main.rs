@@ -97,19 +97,7 @@ fn remove(args: &::docopt::ArgvMap) -> Result<(), String> {
     let dir_name = args.get_str("<directory>");
     let dir_name = if dir_name.is_empty() { None } else { Some(dir_name) };
 
-    let result = mprovision::with_path(dir_name, |path| {
-        mprovision::search(path, uuid)
-    });
-    match result {
-        Ok(info) => {
-            if let Some(ref profile) = info.profiles.first() {
-                println!("Removing profile with uuid: {}", uuid);
-                if let Err(e) = std::fs::remove_file(&profile.path) {
-                    return Err(e.to_string());
-                }
-            }
-            Ok(())
-        },
-        Err(e) => Err(e.to_string()),
-    }
+    mprovision::with_path(dir_name, |path| mprovision::remove(path, uuid))
+        .and_then(|_| Ok(println!("Profile '{}' was removed.", uuid)))
+        .map_err(|e| e.to_string())
 }
