@@ -70,11 +70,8 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
     let dir_name = args.get_str("<directory>");
     let dir_name = if dir_name.is_empty() { None } else { Some(dir_name) };
 
-    let result = mprovision::with_path(dir_name, |path| {
-        mprovision::search(path, text)
-    });
-    match result {
-        Ok(info) => {
+    mprovision::with_path(dir_name, |path| mprovision::search(path, text))
+        .and_then(|info| {
             if info.profiles.len() == 0 {
                 println!("Nothing found for '{}'", text);
             } else {
@@ -84,9 +81,8 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
                 }
             }
             Ok(())
-        },
-        Err(e) => Err(e.to_string()),
-    }
+        })
+        .map_err(|e| e.to_string())
 }
 
 fn remove(args: &::docopt::ArgvMap) -> Result<(), String> {
