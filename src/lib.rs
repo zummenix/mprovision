@@ -35,10 +35,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// - the user lacks the requisite permissions
 /// - there is no entry in the filesystem at the provided path
 /// - the provided path is not a directory
-pub fn files<P>(path: P) -> Result<Box<Iterator<Item = DirEntry>>>
-    where P: AsRef<Path>
-{
-    let entries = try!(fs::read_dir(&path));
+pub fn files(path: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
+    let entries = try!(fs::read_dir(path));
     let filtered = entries.filter_map(|entry| entry.ok())
                           .filter_map(|entry| {
                               if let Some(ext) = entry.path().extension() {
@@ -66,9 +64,8 @@ pub fn directory() -> Result<PathBuf> {
                               .to_owned()))
 }
 
-pub fn with_path<P, F, T>(path: Option<P>, f: F) -> Result<T>
-    where P: AsRef<Path>,
-          F: FnOnce(&AsRef<Path>) -> Result<T>
+pub fn with_path<F, T>(path: Option<&Path>, f: F) -> Result<T>
+    where F: FnOnce(&Path) -> Result<T>
 {
     if let Some(path) = path {
         f(&path)
@@ -78,15 +75,11 @@ pub fn with_path<P, F, T>(path: Option<P>, f: F) -> Result<T>
     }
 }
 
-pub fn profiles<P>(path: P) -> Result<Box<Iterator<Item = Result<Profile>>>>
-    where P: AsRef<Path>
-{
-    Ok(Box::new(try!(files(&path)).map(|entry| profile_from_file(entry.path()))))
+pub fn profiles(path: &Path) -> Result<Box<Iterator<Item = Result<Profile>>>> {
+    Ok(Box::new(try!(files(path)).map(|entry| profile_from_file(entry.path().as_path()))))
 }
 
-pub fn valid_profiles<P>(path: P) -> Result<Box<Iterator<Item = Profile>>>
-    where P: AsRef<Path>
-{
+pub fn valid_profiles(path: &Path) -> Result<Box<Iterator<Item = Profile>>> {
     Ok(Box::new(try!(profiles(path)).filter(Result::is_ok).map(|r| r.unwrap())))
 }
 
@@ -95,9 +88,7 @@ pub struct SearchInfo {
     pub profiles: Vec<Profile>,
 }
 
-pub fn search<P>(path: P, s: &str) -> Result<SearchInfo>
-    where P: AsRef<Path>
-{
+pub fn search(path: &Path, s: &str) -> Result<SearchInfo> {
     let mut total = 0;
     let profiles = try!(valid_profiles(path))
                        .filter(|profile| {
@@ -112,28 +103,24 @@ pub fn search<P>(path: P, s: &str) -> Result<SearchInfo>
     })
 }
 
-pub fn remove<P>(path: P, uuid: &str) -> Result<()>
-    where P: AsRef<Path>
-{
+pub fn remove(path: &Path, uuid: &str) -> Result<()> {
     for profile in try!(valid_profiles(path)).into_iter() {
         if profile.uuid == uuid {
             try!(std::fs::remove_file(&profile.path));
             return Ok(());
         }
     }
-    return Err(Error::Own(format!("Profile '{}' is not found.", uuid)))
+    return Err(Error::Own(format!("Profile '{}' is not found.", uuid)));
 }
 
 /// Returns instance of the `Profile` parsed from a file.
-pub fn profile_from_file<P>(path: P) -> Result<Profile>
-    where P: AsRef<Path>
-{
-    let mut file = try!(File::open(path.as_ref()));
+pub fn profile_from_file(path: &Path) -> Result<Profile> {
+    let mut file = try!(File::open(path));
     let mut buf = Vec::new();
     try!(file.read_to_end(&mut buf));
     profile_from_data(&buf)
         .map(|mut p| {
-            p.path = path.as_ref().to_owned();
+            p.path = path.to_owned();
             p
         })
         .ok_or(Error::Own("Couldn't parse file.".into()))

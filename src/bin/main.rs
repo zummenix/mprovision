@@ -68,7 +68,7 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
         return Err("<text> should not be empty.".to_owned());
     }
     let dir_name = args.get_str("<directory>");
-    let dir_name = if dir_name.is_empty() { None } else { Some(dir_name) };
+    let dir_name = if dir_name.is_empty() { None } else { Some(dir_name.as_ref()) };
 
     mprovision::with_path(dir_name, |path| mprovision::search(path, text))
         .and_then(|info| {
@@ -91,7 +91,7 @@ fn remove(args: &::docopt::ArgvMap) -> Result<(), String> {
         return Err("<uuid> should not be empty.".to_owned());
     }
     let dir_name = args.get_str("<directory>");
-    let dir_name = if dir_name.is_empty() { None } else { Some(dir_name) };
+    let dir_name = if dir_name.is_empty() { None } else { Some(dir_name.as_ref()) };
 
     mprovision::with_path(dir_name, |path| mprovision::remove(path, uuid))
         .and_then(|_| Ok(println!("Profile '{}' was removed.", uuid)))
