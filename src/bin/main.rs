@@ -75,7 +75,7 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
             if info.profiles.len() == 0 {
                 println!("Nothing found for '{}'", text);
             } else {
-                println!("Found {} of {}:\n", info.profiles.len(), info.total);
+                println!("Found {} of {} profiles.\n", info.profiles.len(), info.total);
                 for profile in &info.profiles {
                     println!("{}\n", profile.description());
                 }
