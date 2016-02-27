@@ -10,6 +10,7 @@ extern crate expectest;
 extern crate tempdir;
 extern crate plist;
 extern crate chrono;
+extern crate crossbeam;
 
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
@@ -22,6 +23,55 @@ pub use profile::Profile;
 
 mod error;
 mod profile;
+
+fn execute<F, U, I>(iter: I, number_of_threads: usize, f: F) -> ThreadPoolIter<I, F, U> where F: Fn(I::Item) -> U, I: Iterator {
+    ThreadPoolIter {
+        iter: iter,
+        map_op: f,
+        pool_size: number_of_threads,
+        buffer: Vec::new(),
+    }
+}
+
+struct ThreadPoolIter<I, F, U> {
+    iter: I,
+    map_op: F,
+    pool_size: usize,
+    buffer: Vec<U>,
+}
+
+impl<I, F, U> Iterator for ThreadPoolIter<I, F, U> where I: Iterator, F: Fn(I::Item) -> U + Sync, I::Item: Send, U: Send {
+    type Item = U;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.buffer.is_empty() {
+            let mut buf = Vec::with_capacity(self.pool_size);
+            let mut n = 0;
+            while n < self.pool_size {
+                if let Some(item) = self.iter.next() {
+                    buf.push(item);
+                } else {
+                    break;
+                }
+                n += 1;
+            }
+            if buf.is_empty() {
+                None
+            } else {
+                self.buffer = crossbeam::scope(|scope| {
+                    let ref f = self.map_op;
+                    let guards: Vec<_> = buf.into_iter().map(|item| {
+                        scope.spawn(move || (f)(item))
+                    }).collect();
+                    guards.into_iter().map(|guard| guard.join()).collect()
+                });
+                Some(self.buffer.remove(0))
+            }
+        } else {
+            Some(self.buffer.remove(0))
+        }
+    }
+}
 
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -76,7 +126,9 @@ pub fn with_path<F, T>(path: Option<&Path>, f: F) -> Result<T>
 }
 
 pub fn profiles(path: &Path) -> Result<Box<Iterator<Item = Result<Profile>>>> {
-    Ok(Box::new(try!(files(path)).map(|entry| profile_from_file(entry.path().as_path()))))
+    let files = try!(files(path));
+    let iter = execute(files, 8, |entry| profile_from_file(entry.path().as_path()));
+    Ok(Box::new(iter))
 }
 
 pub fn valid_profiles(path: &Path) -> Result<Box<Iterator<Item = Profile>>> {
