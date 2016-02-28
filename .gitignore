@@ -11,3 +11,6 @@
 /target/
 /mprovision/target/
 /mprovision/Cargo.lock
+
+.idea/
+mprovision.iml
