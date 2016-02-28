@@ -13,6 +13,7 @@ version = "2.0.1"
 plist = "0.0.12"
 chrono = "~0.2.0" # used in plist.
 crossbeam = "0.2.8"
+num_cpus = "0.2.11"
 
 [dev-dependencies]
 expectest = "0.4.1"

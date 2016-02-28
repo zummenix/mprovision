@@ -10,6 +10,7 @@ extern crate tempdir;
 extern crate plist;
 extern crate chrono;
 extern crate crossbeam;
+extern crate num_cpus;
 
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
@@ -181,7 +182,7 @@ where F: FnOnce(&Path) -> Result<T>
 
 pub fn profiles(path: &Path) -> Result<Box<Iterator<Item = Result<Profile>>>> {
     let files = try!(files(path));
-    let iter = execute(files, 8, |entry| ReadProfileJob(entry));
+    let iter = execute(files, num_cpus::get(), |entry| ReadProfileJob(entry));
     Ok(Box::new(iter))
 }
 
