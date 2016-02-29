@@ -1,4 +1,3 @@
-
 //! **mprovision** is a tool that helps iOS developers to manage mobileprovision
 //! files. Main purpose of this crate is to contain functions and types
 //! for **mprovision**.
@@ -10,6 +9,8 @@ extern crate expectest;
 extern crate tempdir;
 extern crate plist;
 extern crate chrono;
+extern crate crossbeam;
+extern crate num_cpus;
 
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
@@ -17,11 +18,115 @@ use std::env;
 use std::io::{self, Read};
 use plist::PlistEvent::*;
 
+use std::thread;
+use std::thread::JoinHandle;
+use std::sync::mpsc::channel;
+use std::sync::mpsc::Receiver;
+
+use crossbeam::sync::chase_lev;
+use crossbeam::sync::chase_lev::*;
+
 pub use error::Error;
 pub use profile::Profile;
 
 mod error;
 mod profile;
+
+fn execute<F, I, J>(iter: I, number_of_threads: usize, f: F) -> JobIter<J::Output> where F: Fn(I::Item) -> J, J: Job + Send + 'static, J::Output: Send + 'static, I: Iterator {
+    let (mut worker, stealer) = chase_lev::deque();
+    let (tx, rx) = channel();
+
+    for item in iter {
+        let job = (f)(item);
+        worker.push(job);
+    }
+
+    let mut handles = Vec::new();
+    for thread_id in 0..number_of_threads {
+        let stealer = stealer.clone();
+        let tx = tx.clone();
+
+        let handle = thread::spawn(move|| {
+            loop {
+                match stealer.steal() {
+                    Steal::Data(job) => tx.send(Event::Data(thread_id, job.execute())).unwrap_or(()),
+                    Steal::Empty => break,
+                    _ => (),
+                }
+            }
+
+            tx.send(Event::Finish(thread_id)).unwrap_or(());
+        });
+
+        handles.push((thread_id, handle));
+    }
+
+    JobIter {
+        handles: handles,
+        receiver: rx,
+    }
+}
+
+trait Job {
+    type Output;
+    fn execute(self) -> Self::Output;
+}
+
+struct ReadProfileJob(DirEntry);
+
+impl Job for ReadProfileJob {
+    type Output = Result<Profile>;
+    fn execute(self) -> Self::Output {
+        profile_from_file(self.0.path().as_path())
+    }
+}
+
+struct JobIter<T> {
+    handles: Vec<(usize, JoinHandle<()>)>,
+    receiver: Receiver<Event<T>>,
+}
+
+impl<T> Iterator for JobIter<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.receiver.recv() {
+                Ok(event) => {
+                    match event {
+                        Event::Finish(thread_index) => {
+                            let mut index = None;
+                            for (i, &(id, _)) in self.handles.iter().enumerate() {
+                                if thread_index == id {
+                                    index = Some(i);
+                                    break;
+                                }
+                            }
+                            if let Some(i) = index {
+                                let handle = self.handles.swap_remove(i);
+                                match handle.1.join() {
+                                    Err(error) => println!("Error: {:?}", error),
+                                    Ok(_) => (),
+                                }
+                            }
+                        }
+                        Event::Data(_, data) => {
+                            return Some(data);
+                        }
+                    }
+                },
+                Err(_) => {
+                    break;
+                },
+            }
+        }
+        None
+    }
+}
+
+enum Event<T> {
+    Finish(usize),
+    Data(usize, T),
+}
 
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -38,14 +143,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub fn files(path: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
     let entries = try!(fs::read_dir(path));
     let filtered = entries.filter_map(|entry| entry.ok())
-                          .filter_map(|entry| {
-                              if let Some(ext) = entry.path().extension() {
-                                  if ext == "mobileprovision" {
-                                      return Some(entry);
-                                  }
-                              }
-                              None
-                          });
+    .filter_map(|entry| {
+        if let Some(ext) = entry.path().extension() {
+            if ext == "mobileprovision" {
+                return Some(entry);
+            }
+        }
+        None
+    });
     Ok(Box::new(filtered))
 }
 
@@ -59,13 +164,13 @@ pub fn files(path: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
 /// or equal to the empty string.
 pub fn directory() -> Result<PathBuf> {
     env::home_dir()
-        .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
-        .ok_or(Error::Own("'HOME' environment variable is not set or equal to the empty string."
-                              .to_owned()))
+    .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
+    .ok_or(Error::Own("'HOME' environment variable is not set or equal to the empty string."
+                      .to_owned()))
 }
 
 pub fn with_path<F, T>(path: Option<&Path>, f: F) -> Result<T>
-    where F: FnOnce(&Path) -> Result<T>
+where F: FnOnce(&Path) -> Result<T>
 {
     if let Some(path) = path {
         f(&path)
@@ -76,7 +181,9 @@ pub fn with_path<F, T>(path: Option<&Path>, f: F) -> Result<T>
 }
 
 pub fn profiles(path: &Path) -> Result<Box<Iterator<Item = Result<Profile>>>> {
-    Ok(Box::new(try!(files(path)).map(|entry| profile_from_file(entry.path().as_path()))))
+    let files = try!(files(path));
+    let iter = execute(files, num_cpus::get(), |entry| ReadProfileJob(entry));
+    Ok(Box::new(iter))
 }
 
 pub fn valid_profiles(path: &Path) -> Result<Box<Iterator<Item = Profile>>> {
@@ -91,11 +198,11 @@ pub struct SearchInfo {
 pub fn search(path: &Path, s: &str) -> Result<SearchInfo> {
     let mut total = 0;
     let profiles = try!(valid_profiles(path))
-                       .filter(|profile| {
-                           total += 1;
-                           profile.contains(s)
-                       })
-                       .collect();
+    .filter(|profile| {
+        total += 1;
+        profile.contains(s)
+    })
+    .collect();
 
     Ok(SearchInfo {
         total: total,
@@ -119,11 +226,11 @@ pub fn profile_from_file(path: &Path) -> Result<Profile> {
     let mut buf = Vec::new();
     try!(file.read_to_end(&mut buf));
     profile_from_data(&buf)
-        .map(|mut p| {
-            p.path = path.to_owned();
-            p
-        })
-        .ok_or(Error::Own("Couldn't parse file.".into()))
+    .map(|mut p| {
+        p.path = path.to_owned();
+        p
+    })
+    .ok_or(Error::Own("Couldn't parse file.".into()))
 }
 
 /// Returns instance of the `Profile` parsed from a `data`.
@@ -197,7 +304,7 @@ fn find_plist(data: &[u8]) -> Option<&[u8]> {
     None
 }
 
-#[cfg(test)]
+    #[cfg(test)]
 mod tests {
     use expectest::prelude::*;
     use tempdir::TempDir;
