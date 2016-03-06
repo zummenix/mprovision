@@ -15,6 +15,7 @@ A tool that helps iOS developers to manage mobileprovision files.
 Usage:
   mprovision search <text> [<directory>]
   mprovision remove <uuid> [<directory>]
+  mprovision show-xml <uuid> [<directory>]
   mprovision (-h | --help)
   mprovision --version
 
@@ -34,6 +35,7 @@ fn main() {
         let result = match cmd {
             Command::Search => search(&args),
             Command::Remove => remove(&args),
+            Command::ShowXml => show_xml(&args),
         };
         match result {
             Ok(_) => process::exit(0),
@@ -48,6 +50,7 @@ fn main() {
 enum Command {
     Search,
     Remove,
+    ShowXml,
 }
 
 impl Command {
@@ -56,6 +59,8 @@ impl Command {
             Some(Command::Search)
         } else if args.get_bool("remove") {
             Some(Command::Remove)
+        } else if args.get_bool("show-xml") {
+            Some(Command::ShowXml)
         } else {
             None
         }
@@ -95,5 +100,18 @@ fn remove(args: &::docopt::ArgvMap) -> Result<(), String> {
 
     mprovision::with_path(dir_name, |path| mprovision::remove(path, uuid))
         .and_then(|_| Ok(println!("Profile '{}' was removed.", uuid)))
+        .map_err(|e| e.to_string())
+}
+
+fn show_xml(args: &::docopt::ArgvMap) -> Result<(), String> {
+    let uuid = args.get_str("<uuid>");
+    if uuid.is_empty() {
+        return Err("<uuid> should not be empty.".to_owned());
+    }
+    let dir_name = args.get_str("<directory>");
+    let dir_name = if dir_name.is_empty() { None } else { Some(dir_name.as_ref()) };
+
+    mprovision::with_path(dir_name, |path| mprovision::xml(path, uuid))
+        .and_then(|xml| Ok(println!("{}", xml)))
         .map_err(|e| e.to_string())
 }

@@ -220,6 +220,19 @@ pub fn remove(path: &Path, uuid: &str) -> Result<()> {
     return Err(Error::Own(format!("Profile '{}' is not found.", uuid)));
 }
 
+pub fn xml(path: &Path, uuid: &str) -> Result<String> {
+    for profile in try!(valid_profiles(path)).into_iter() {
+        if profile.uuid == uuid {
+            let mut file = try!(File::open(&profile.path));
+            let mut buf = Vec::new();
+            try!(file.read_to_end(&mut buf));
+            let data = try!(find_plist(&buf).ok_or(Error::Own("Couldn't parse file.".into())));
+            return Ok(try!(String::from_utf8(data.to_owned())));
+        }
+    }
+    return Err(Error::Own(format!("Profile '{}' is not found.", uuid)));
+}
+
 /// Returns instance of the `Profile` parsed from a file.
 pub fn profile_from_file(path: &Path) -> Result<Profile> {
     let mut file = try!(File::open(path));

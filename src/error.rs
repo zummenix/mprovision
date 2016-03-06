@@ -1,6 +1,7 @@
 use std::io;
 use std::fmt;
 use std::error;
+use std::string::FromUtf8Error;
 
 /// An Error type.
 #[derive(Debug)]
@@ -39,5 +40,11 @@ impl fmt::Display for Error {
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self {
         Error::Io(e)
+    }
+}
+
+impl From<FromUtf8Error> for Error {
+    fn from(e: FromUtf8Error) -> Self {
+        Error::Own(e.to_string())
     }
 }
