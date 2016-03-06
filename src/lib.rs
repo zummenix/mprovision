@@ -32,7 +32,12 @@ pub use profile::Profile;
 mod error;
 mod profile;
 
-fn execute<F, I, J>(iter: I, number_of_threads: usize, f: F) -> JobIter<J::Output> where F: Fn(I::Item) -> J, J: Job + Send + 'static, J::Output: Send + 'static, I: Iterator {
+fn execute<F, I, J>(iter: I, number_of_threads: usize, f: F) -> JobIter<J::Output>
+    where F: Fn(I::Item) -> J,
+          J: Job + Send + 'static,
+          J::Output: Send + 'static,
+          I: Iterator
+{
     let (mut worker, stealer) = chase_lev::deque();
     let (tx, rx) = channel();
 
@@ -46,10 +51,12 @@ fn execute<F, I, J>(iter: I, number_of_threads: usize, f: F) -> JobIter<J::Outpu
         let stealer = stealer.clone();
         let tx = tx.clone();
 
-        let handle = thread::spawn(move|| {
+        let handle = thread::spawn(move || {
             loop {
                 match stealer.steal() {
-                    Steal::Data(job) => tx.send(Event::Data(thread_id, job.execute())).unwrap_or(()),
+                    Steal::Data(job) => {
+                        tx.send(Event::Data(thread_id, job.execute())).unwrap_or(())
+                    }
                     Steal::Empty => break,
                     _ => (),
                 }
@@ -113,10 +120,10 @@ impl<T> Iterator for JobIter<T> {
                             return Some(data);
                         }
                     }
-                },
+                }
                 Err(_) => {
                     break;
-                },
+                }
             }
         }
         None
@@ -143,14 +150,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub fn files(path: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
     let entries = try!(fs::read_dir(path));
     let filtered = entries.filter_map(|entry| entry.ok())
-    .filter_map(|entry| {
-        if let Some(ext) = entry.path().extension() {
-            if ext == "mobileprovision" {
-                return Some(entry);
-            }
-        }
-        None
-    });
+                          .filter_map(|entry| {
+                              if let Some(ext) = entry.path().extension() {
+                                  if ext == "mobileprovision" {
+                                      return Some(entry);
+                                  }
+                              }
+                              None
+                          });
     Ok(Box::new(filtered))
 }
 
@@ -164,13 +171,13 @@ pub fn files(path: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
 /// or equal to the empty string.
 pub fn directory() -> Result<PathBuf> {
     env::home_dir()
-    .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
-    .ok_or(Error::Own("'HOME' environment variable is not set or equal to the empty string."
-                      .to_owned()))
+        .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
+        .ok_or(Error::Own("'HOME' environment variable is not set or equal to the empty string."
+                              .to_owned()))
 }
 
 pub fn with_path<F, T>(path: Option<&Path>, f: F) -> Result<T>
-where F: FnOnce(&Path) -> Result<T>
+    where F: FnOnce(&Path) -> Result<T>
 {
     if let Some(path) = path {
         f(&path)
@@ -198,11 +205,11 @@ pub struct SearchInfo {
 pub fn search(path: &Path, s: &str) -> Result<SearchInfo> {
     let mut total = 0;
     let profiles = try!(valid_profiles(path))
-    .filter(|profile| {
-        total += 1;
-        profile.contains(s)
-    })
-    .collect();
+                       .filter(|profile| {
+                           total += 1;
+                           profile.contains(s)
+                       })
+                       .collect();
 
     Ok(SearchInfo {
         total: total,
@@ -239,11 +246,11 @@ pub fn profile_from_file(path: &Path) -> Result<Profile> {
     let mut buf = Vec::new();
     try!(file.read_to_end(&mut buf));
     profile_from_data(&buf)
-    .map(|mut p| {
-        p.path = path.to_owned();
-        p
-    })
-    .ok_or(Error::Own("Couldn't parse file.".into()))
+        .map(|mut p| {
+            p.path = path.to_owned();
+            p
+        })
+        .ok_or(Error::Own("Couldn't parse file.".into()))
 }
 
 /// Returns instance of the `Profile` parsed from a `data`.

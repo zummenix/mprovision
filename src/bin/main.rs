@@ -26,10 +26,12 @@ Options:
 
 fn main() {
     let args = Docopt::new(USAGE)
-        .and_then(|d| d.options_first(true)
-                       .version(Some(format!("mprovision {}", version!())))
-                       .parse())
-        .unwrap_or_else(|e| e.exit());
+                   .and_then(|d| {
+                       d.options_first(true)
+                        .version(Some(format!("mprovision {}", version!())))
+                        .parse()
+                   })
+                   .unwrap_or_else(|e| e.exit());
 
     if let Some(cmd) = Command::from_args(&args) {
         let result = match cmd {
@@ -73,14 +75,20 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
         return Err("<text> should not be empty.".to_owned());
     }
     let dir_name = args.get_str("<directory>");
-    let dir_name = if dir_name.is_empty() { None } else { Some(dir_name.as_ref()) };
+    let dir_name = if dir_name.is_empty() {
+        None
+    } else {
+        Some(dir_name.as_ref())
+    };
 
     mprovision::with_path(dir_name, |path| mprovision::search(path, text))
         .and_then(|info| {
             if info.profiles.len() == 0 {
                 println!("Nothing found for '{}'", text);
             } else {
-                println!("Found {} of {} profiles.\n", info.profiles.len(), info.total);
+                println!("Found {} of {} profiles.\n",
+                         info.profiles.len(),
+                         info.total);
                 for profile in &info.profiles {
                     println!("{}\n", profile.description());
                 }
@@ -96,7 +104,11 @@ fn remove(args: &::docopt::ArgvMap) -> Result<(), String> {
         return Err("<uuid> should not be empty.".to_owned());
     }
     let dir_name = args.get_str("<directory>");
-    let dir_name = if dir_name.is_empty() { None } else { Some(dir_name.as_ref()) };
+    let dir_name = if dir_name.is_empty() {
+        None
+    } else {
+        Some(dir_name.as_ref())
+    };
 
     mprovision::with_path(dir_name, |path| mprovision::remove(path, uuid))
         .and_then(|_| Ok(println!("Profile '{}' was removed.", uuid)))
@@ -109,7 +121,11 @@ fn show_xml(args: &::docopt::ArgvMap) -> Result<(), String> {
         return Err("<uuid> should not be empty.".to_owned());
     }
     let dir_name = args.get_str("<directory>");
-    let dir_name = if dir_name.is_empty() { None } else { Some(dir_name.as_ref()) };
+    let dir_name = if dir_name.is_empty() {
+        None
+    } else {
+        Some(dir_name.as_ref())
+    };
 
     mprovision::with_path(dir_name, |path| mprovision::xml(path, uuid))
         .and_then(|xml| Ok(println!("{}", xml)))
