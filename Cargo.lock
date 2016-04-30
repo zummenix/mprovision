@@ -5,7 +5,7 @@ dependencies = [
  "chrono 0.2.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "crossbeam 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "docopt 0.6.78 (registry+https://github.com/rust-lang/crates.io-index)",
- "expectest 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "expectest 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num_cpus 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "plist 0.0.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempdir 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -65,11 +65,17 @@ dependencies = [
 
 [[package]]
 name = "expectest"
-version = "0.4.1"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "num 0.1.30 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.1.32 (registry+https://github.com/rust-lang/crates.io-index)",
+ "skeptic 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "getopts"
+version = "0.2.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "kernel32-sys"
@@ -99,6 +105,11 @@ version = "0.1.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "num-traits"
+version = "0.1.32"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "num_cpus"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -116,6 +127,14 @@ dependencies = [
  "rustc-serialize 0.3.16 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 0.6.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "xml-rs 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "pulldown-cmark"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "getopts 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -154,6 +173,15 @@ version = "0.6.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "num 0.1.30 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "skeptic"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "pulldown-cmark 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tempdir 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

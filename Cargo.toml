@@ -16,5 +16,5 @@ crossbeam = "0.2.8"
 num_cpus = "0.2.11"
 
 [dev-dependencies]
-expectest = "0.4.1"
+expectest = "0.5.1"
 tempdir = "0.3.4"
