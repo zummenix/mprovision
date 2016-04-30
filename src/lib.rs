@@ -10,7 +10,9 @@ extern crate tempdir;
 extern crate plist;
 extern crate chrono;
 extern crate crossbeam;
-extern crate num_cpus;
+extern crate rayon;
+
+use rayon::prelude::*;
 
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
@@ -18,122 +20,11 @@ use std::env;
 use std::io::{self, Read};
 use plist::PlistEvent::*;
 
-use std::thread;
-use std::thread::JoinHandle;
-use std::sync::mpsc::channel;
-use std::sync::mpsc::Receiver;
-
-use crossbeam::sync::chase_lev;
-use crossbeam::sync::chase_lev::*;
-
 pub use error::Error;
 pub use profile::Profile;
 
 mod error;
 mod profile;
-
-fn execute<F, I, J>(iter: I, number_of_threads: usize, f: F) -> JobIter<J::Output>
-    where F: Fn(I::Item) -> J,
-          J: Job + Send + 'static,
-          J::Output: Send + 'static,
-          I: Iterator
-{
-    let (mut worker, stealer) = chase_lev::deque();
-    let (tx, rx) = channel();
-
-    for item in iter {
-        let job = (f)(item);
-        worker.push(job);
-    }
-
-    let mut handles = Vec::new();
-    for thread_id in 0..number_of_threads {
-        let stealer = stealer.clone();
-        let tx = tx.clone();
-
-        let handle = thread::spawn(move || {
-            loop {
-                match stealer.steal() {
-                    Steal::Data(job) => {
-                        tx.send(Event::Data(thread_id, job.execute())).unwrap_or(())
-                    }
-                    Steal::Empty => break,
-                    _ => (),
-                }
-            }
-
-            tx.send(Event::Finish(thread_id)).unwrap_or(());
-        });
-
-        handles.push((thread_id, handle));
-    }
-
-    JobIter {
-        handles: handles,
-        receiver: rx,
-    }
-}
-
-trait Job {
-    type Output;
-    fn execute(self) -> Self::Output;
-}
-
-struct ReadProfileJob(DirEntry);
-
-impl Job for ReadProfileJob {
-    type Output = Result<Profile>;
-    fn execute(self) -> Self::Output {
-        profile_from_file(self.0.path().as_path())
-    }
-}
-
-struct JobIter<T> {
-    handles: Vec<(usize, JoinHandle<()>)>,
-    receiver: Receiver<Event<T>>,
-}
-
-impl<T> Iterator for JobIter<T> {
-    type Item = T;
-    fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            match self.receiver.recv() {
-                Ok(event) => {
-                    match event {
-                        Event::Finish(thread_index) => {
-                            let mut index = None;
-                            for (i, &(id, _)) in self.handles.iter().enumerate() {
-                                if thread_index == id {
-                                    index = Some(i);
-                                    break;
-                                }
-                            }
-                            if let Some(i) = index {
-                                let handle = self.handles.swap_remove(i);
-                                match handle.1.join() {
-                                    Err(error) => println!("Error: {:?}", error),
-                                    Ok(_) => (),
-                                }
-                            }
-                        }
-                        Event::Data(_, data) => {
-                            return Some(data);
-                        }
-                    }
-                }
-                Err(_) => {
-                    break;
-                }
-            }
-        }
-        None
-    }
-}
-
-enum Event<T> {
-    Finish(usize),
-    Data(usize, T),
-}
 
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -187,57 +78,35 @@ pub fn with_path<F, T>(path: Option<&Path>, f: F) -> Result<T>
     }
 }
 
-pub fn profiles(path: &Path) -> Result<Box<Iterator<Item = Result<Profile>>>> {
-    let files = try!(files(path));
-    let iter = execute(files, num_cpus::get(), |entry| ReadProfileJob(entry));
-    Ok(Box::new(iter))
-}
-
-pub fn valid_profiles(path: &Path) -> Result<Box<Iterator<Item = Profile>>> {
-    Ok(Box::new(try!(profiles(path)).filter(Result::is_ok).map(|r| r.unwrap())))
-}
-
 pub struct SearchInfo {
     pub total: usize,
     pub profiles: Vec<Profile>,
 }
 
 pub fn search(path: &Path, s: &str) -> Result<SearchInfo> {
-    let mut total = 0;
-    let profiles = try!(valid_profiles(path))
-                       .filter(|profile| {
-                           total += 1;
-                           profile.contains(s)
-                       })
-                       .collect();
-
+    let files: Vec<DirEntry> = try!(files(path)).collect();
     Ok(SearchInfo {
-        total: total,
-        profiles: profiles,
+        total: files.len(),
+        profiles: parallel(files, |profile| profile.contains(s)),
     })
 }
 
 pub fn remove(path: &Path, uuid: &str) -> Result<()> {
-    for profile in try!(valid_profiles(path)).into_iter() {
-        if profile.uuid == uuid {
-            try!(std::fs::remove_file(&profile.path));
-            return Ok(());
-        }
-    }
-    return Err(Error::Own(format!("Profile '{}' is not found.", uuid)));
+    find_by_uuid(path, uuid)
+        .and_then(|profile| std::fs::remove_file(&profile.path).map_err(|err| err.into()))
 }
 
 pub fn xml(path: &Path, uuid: &str) -> Result<String> {
-    for profile in try!(valid_profiles(path)).into_iter() {
-        if profile.uuid == uuid {
+    match find_by_uuid(path, uuid) {
+        Ok(profile) => {
             let mut file = try!(File::open(&profile.path));
             let mut buf = Vec::new();
             try!(file.read_to_end(&mut buf));
             let data = try!(find_plist(&buf).ok_or(Error::Own("Couldn't parse file.".into())));
-            return Ok(try!(String::from_utf8(data.to_owned())));
+            Ok(try!(String::from_utf8(data.to_owned())))
         }
+        Err(err) => Err(err),
     }
-    return Err(Error::Own(format!("Profile '{}' is not found.", uuid)));
 }
 
 /// Returns instance of the `Profile` parsed from a file.
@@ -324,7 +193,39 @@ fn find_plist(data: &[u8]) -> Option<&[u8]> {
     None
 }
 
-    #[cfg(test)]
+fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
+    where F: Fn(&Profile) -> bool + Sync
+{
+    collect(entries.into_par_iter()
+                   .weight_max()
+                   .filter_map(|entry| profile_from_file(&entry.path()).ok())
+                   .filter(f))
+}
+
+fn collect<I>(par_iter: I) -> Vec<I::Item>
+    where I: ParallelIterator
+{
+    let queue = crossbeam::sync::MsQueue::new();
+
+    par_iter.for_each(|item| queue.push(item));
+
+    let mut items = Vec::new();
+    while let Some(item) = queue.try_pop() {
+        items.push(item);
+    }
+    items
+}
+
+fn find_by_uuid(path: &Path, uuid: &str) -> Result<Profile> {
+    let files: Vec<DirEntry> = try!(files(path)).collect();
+    if let Some(profile) = parallel(files, |profile| profile.uuid == uuid).pop() {
+        Ok(profile)
+    } else {
+        Err(Error::Own(format!("Profile '{}' is not found.", uuid)))
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use expectest::prelude::*;
     use tempdir::TempDir;
