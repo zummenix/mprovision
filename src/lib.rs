@@ -316,7 +316,7 @@ fn find_plist(data: &[u8]) -> Option<&[u8]> {
     let end_i = find(data, suffix).map(|i| i + suffix.len());
 
     if let (Some(start_i), Some(end_i)) = (start_i, end_i) {
-        if end_i < data.len() {
+        if end_i <= data.len() {
             return Some(&data[start_i..end_i]);
         }
     }
@@ -330,6 +330,7 @@ mod tests {
     use tempdir::TempDir;
     use std::fs::File;
     use super::files;
+    use super::find_plist;
 
     #[test]
     fn filter_mobileprovision_files() {
@@ -342,5 +343,14 @@ mod tests {
         File::create(temp_dir.path().join("3.txt")).unwrap();
         let result = files(temp_dir.path()).map(|iter| iter.count());
         expect!(result).to(be_ok().value(2));
+    }
+
+    #[test]
+    fn test_find_plist() {
+        let data: &[u8] = b"<?xml version=</plist>";
+        expect!(find_plist(&data)).to(be_some().value(data));
+
+        let data: &[u8] = b"   <?xml version=</plist>   ";
+        expect!(find_plist(&data)).to(be_some().value(b"<?xml version=</plist>"));
     }
 }
