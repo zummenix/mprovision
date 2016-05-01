@@ -19,6 +19,7 @@ Usage:
   mprovision remove <uuid> [<directory>]
   mprovision show-xml <uuid> [<directory>]
   mprovision show-expired [<directory>]
+  mprovision remove-expired [<directory>]
   mprovision (-h | --help)
   mprovision --version
 
@@ -42,6 +43,7 @@ fn main() {
             Command::Remove => remove(&args),
             Command::ShowXml => show_xml(&args),
             Command::ShowExpired => show_expired(&args),
+            Command::RemoveExpired => remove_expired(&args),
         };
         match result {
             Ok(_) => process::exit(0),
@@ -58,6 +60,7 @@ enum Command {
     Remove,
     ShowXml,
     ShowExpired,
+    RemoveExpired,
 }
 
 impl Command {
@@ -70,6 +73,8 @@ impl Command {
             Some(Command::ShowXml)
         } else if args.get_bool("show-expired") {
             Some(Command::ShowExpired)
+        } else if args.get_bool("remove-expired") {
+            Some(Command::RemoveExpired)
         } else {
             None
         }
@@ -135,6 +140,33 @@ fn show_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
                          info.total);
                 for profile in &info.profiles {
                     println!("{}\n", profile.description());
+                }
+            }
+            Ok(())
+        })
+        .map_err(|e| e.to_string())
+}
+
+fn remove_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
+    use chrono::*;
+
+    mprovision::with_path(directory(args),
+                          |path| mprovision::expired_profiles(path, UTC::now()))
+        .and_then(|info| {
+            if info.profiles.len() == 0 {
+                println!("All profiles are valid.");
+            } else {
+                println!("Found {} of {} profiles.\n",
+                         info.profiles.len(),
+                         info.total);
+                for profile in info.profiles {
+                    match std::fs::remove_file(&profile.path) {
+                        Ok(_) => println!("Profile '{}' was removed.", profile.uuid),
+                        Err(e) => {
+                            println!("Error while trying to remove profile '{}'", profile.uuid);
+                            println!("{}", e);
+                        }
+                    }
                 }
             }
             Ok(())
