@@ -6,6 +6,7 @@ dependencies = [
  "crossbeam 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "docopt 0.6.78 (registry+https://github.com/rust-lang/crates.io-index)",
  "expectest 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "memmem 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "plist 0.0.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempdir 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -106,6 +107,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "memmem"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "num"

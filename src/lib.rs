@@ -11,6 +11,7 @@ extern crate plist;
 extern crate chrono;
 extern crate crossbeam;
 extern crate rayon;
+extern crate memmem;
 
 use plist::PlistEvent::*;
 use chrono::*;
@@ -171,27 +172,17 @@ pub fn profile_from_data(data: &[u8]) -> Option<Profile> {
     }
 }
 
-/// Returns an index where the `needle` starts in the `data`.
-fn find(data: &[u8], needle: &[u8]) -> Option<usize> {
-    let needle_len = needle.len();
-    for (i, _) in data.iter().enumerate() {
-        if i + needle_len > data.len() {
-            return None;
-        }
-        if &data[i..i + needle_len] == needle {
-            return Some(i);
-        }
-    }
-    None
-}
-
 /// Returns a plist content in a `data`.
 fn find_plist(data: &[u8]) -> Option<&[u8]> {
-    let prefix = b"<?xml version=";
-    let suffix = b"</plist>";
+    use memmem::{Searcher, TwoWaySearcher};
 
-    let start_i = find(data, prefix);
-    let end_i = find(data, suffix).map(|i| i + suffix.len());
+    let prefix = b"<?xml version=";
+    let prefix_searcher = TwoWaySearcher::new(prefix);
+    let suffix = b"</plist>";
+    let suffix_searcher = TwoWaySearcher::new(suffix);
+
+    let start_i = prefix_searcher.search_in(data);
+    let end_i = suffix_searcher.search_in(data).map(|i| i + suffix.len());
 
     if let (Some(start_i), Some(end_i)) = (start_i, end_i) {
         if end_i <= data.len() {
