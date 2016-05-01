@@ -3,6 +3,7 @@ extern crate mprovision;
 extern crate docopt;
 #[macro_use(version)]
 extern crate version;
+extern crate chrono;
 
 use std::io::{self, Write};
 use std::process;
@@ -16,6 +17,7 @@ Usage:
   mprovision search <text> [<directory>]
   mprovision remove <uuid> [<directory>]
   mprovision show-xml <uuid> [<directory>]
+  mprovision show-expired [<directory>]
   mprovision (-h | --help)
   mprovision --version
 
@@ -38,6 +40,7 @@ fn main() {
             Command::Search => search(&args),
             Command::Remove => remove(&args),
             Command::ShowXml => show_xml(&args),
+            Command::ShowExpired => show_expired(&args),
         };
         match result {
             Ok(_) => process::exit(0),
@@ -53,6 +56,7 @@ enum Command {
     Search,
     Remove,
     ShowXml,
+    ShowExpired,
 }
 
 impl Command {
@@ -63,6 +67,8 @@ impl Command {
             Some(Command::Remove)
         } else if args.get_bool("show-xml") {
             Some(Command::ShowXml)
+        } else if args.get_bool("show-expired") {
+            Some(Command::ShowExpired)
         } else {
             None
         }
@@ -129,5 +135,32 @@ fn show_xml(args: &::docopt::ArgvMap) -> Result<(), String> {
 
     mprovision::with_path(dir_name, |path| mprovision::xml(path, uuid))
         .and_then(|xml| Ok(println!("{}", xml)))
+        .map_err(|e| e.to_string())
+}
+
+fn show_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
+    use chrono::*;
+
+    let dir_name = args.get_str("<directory>");
+    let dir_name = if dir_name.is_empty() {
+        None
+    } else {
+        Some(dir_name.as_ref())
+    };
+
+    mprovision::with_path(dir_name, |path| mprovision::expired_profiles(path, UTC::now()))
+        .and_then(|info| {
+            if info.profiles.len() == 0 {
+                println!("All profiles are valid.");
+            } else {
+                println!("Found {} of {} profiles.\n",
+                         info.profiles.len(),
+                         info.total);
+                for profile in &info.profiles {
+                    println!("{}\n", profile.description());
+                }
+            }
+            Ok(())
+        })
         .map_err(|e| e.to_string())
 }

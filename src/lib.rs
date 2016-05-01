@@ -12,13 +12,14 @@ extern crate chrono;
 extern crate crossbeam;
 extern crate rayon;
 
+use plist::PlistEvent::*;
+use chrono::*;
 use rayon::prelude::*;
 
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
 use std::env;
 use std::io::{self, Read};
-use plist::PlistEvent::*;
 
 pub use error::Error;
 pub use profile::Profile;
@@ -107,6 +108,14 @@ pub fn xml(path: &Path, uuid: &str) -> Result<String> {
         }
         Err(err) => Err(err),
     }
+}
+
+pub fn expired_profiles(path: &Path, date: DateTime<UTC>) -> Result<SearchInfo> {
+    let entries: Vec<DirEntry> = try!(entries(path)).collect();
+    Ok(SearchInfo {
+        total: entries.len(),
+        profiles: parallel(entries, |profile| profile.expiration_date <= date),
+    })
 }
 
 /// Returns instance of the `Profile` parsed from a file.
