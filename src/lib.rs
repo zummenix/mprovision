@@ -38,7 +38,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// - the user lacks the requisite permissions
 /// - there is no entry in the filesystem at the provided path
 /// - the provided path is not a directory
-pub fn files(path: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
+pub fn entries(path: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
     let entries = try!(fs::read_dir(path));
     let filtered = entries.filter_map(|entry| entry.ok())
                           .filter_map(|entry| {
@@ -84,10 +84,10 @@ pub struct SearchInfo {
 }
 
 pub fn search(path: &Path, s: &str) -> Result<SearchInfo> {
-    let files: Vec<DirEntry> = try!(files(path)).collect();
+    let entries: Vec<DirEntry> = try!(entries(path)).collect();
     Ok(SearchInfo {
-        total: files.len(),
-        profiles: parallel(files, |profile| profile.contains(s)),
+        total: entries.len(),
+        profiles: parallel(entries, |profile| profile.contains(s)),
     })
 }
 
@@ -217,8 +217,8 @@ fn collect<I>(par_iter: I) -> Vec<I::Item>
 }
 
 fn find_by_uuid(path: &Path, uuid: &str) -> Result<Profile> {
-    let files: Vec<DirEntry> = try!(files(path)).collect();
-    if let Some(profile) = parallel(files, |profile| profile.uuid == uuid).pop() {
+    let entries: Vec<DirEntry> = try!(entries(path)).collect();
+    if let Some(profile) = parallel(entries, |profile| profile.uuid == uuid).pop() {
         Ok(profile)
     } else {
         Err(Error::Own(format!("Profile '{}' is not found.", uuid)))
@@ -228,26 +228,28 @@ fn find_by_uuid(path: &Path, uuid: &str) -> Result<Profile> {
 #[cfg(test)]
 mod tests {
     use expectest::prelude::*;
-    use tempdir::TempDir;
-    use std::fs::File;
-    use super::files;
-    use super::find_plist;
 
     #[test]
     fn filter_mobileprovision_files() {
+        use super::entries;
+        use tempdir::TempDir;
+        use std::fs::File;
+
         let temp_dir = TempDir::new("test").unwrap();
-        let result = files(temp_dir.path()).map(|iter| iter.count());
+        let result = entries(temp_dir.path()).map(|iter| iter.count());
         expect!(result).to(be_ok().value(0));
 
         File::create(temp_dir.path().join("1.mobileprovision")).unwrap();
         File::create(temp_dir.path().join("2.mobileprovision")).unwrap();
         File::create(temp_dir.path().join("3.txt")).unwrap();
-        let result = files(temp_dir.path()).map(|iter| iter.count());
+        let result = entries(temp_dir.path()).map(|iter| iter.count());
         expect!(result).to(be_ok().value(2));
     }
 
     #[test]
     fn test_find_plist() {
+        use super::find_plist;
+
         let data: &[u8] = b"<?xml version=</plist>";
         expect!(find_plist(&data)).to(be_some().value(data));
 
