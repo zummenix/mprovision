@@ -16,6 +16,7 @@ extern crate memmem;
 use plist::PlistEvent::*;
 use chrono::*;
 use rayon::prelude::*;
+use memmem::{Searcher, TwoWaySearcher};
 
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
@@ -27,6 +28,38 @@ pub use profile::Profile;
 
 mod error;
 mod profile;
+
+const XML_PREFIX: &'static [u8] = b"<?xml version=";
+const XML_SUFFIX: &'static [u8] = b"</plist>";
+
+#[derive(Debug)]
+pub struct Context {
+    prefix_searcher: TwoWaySearcher<'static>,
+    suffix_searcher: TwoWaySearcher<'static>,
+}
+
+impl Context {
+    pub fn new() -> Self {
+        Context {
+            prefix_searcher: TwoWaySearcher::new(XML_PREFIX),
+            suffix_searcher: TwoWaySearcher::new(XML_SUFFIX),
+        }
+    }
+
+    /// Returns a plist content in a `data`.
+    fn find_plist<'b>(&self, data: &'b [u8]) -> Option<&'b [u8]> {
+        let start_i = self.prefix_searcher.search_in(data);
+        let end_i = self.suffix_searcher.search_in(data).map(|i| i + XML_SUFFIX.len());
+
+        if let (Some(start_i), Some(end_i)) = (start_i, end_i) {
+            if end_i <= data.len() {
+                return Some(&data[start_i..end_i]);
+            }
+        }
+
+        None
+    }
+}
 
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -101,10 +134,12 @@ pub fn remove(path: &Path, uuid: &str) -> Result<()> {
 pub fn xml(path: &Path, uuid: &str) -> Result<String> {
     match find_by_uuid(path, uuid) {
         Ok(profile) => {
+            let context = Context::new();
             let mut file = try!(File::open(&profile.path));
             let mut buf = Vec::new();
             try!(file.read_to_end(&mut buf));
-            let data = try!(find_plist(&buf).ok_or(Error::Own("Couldn't parse file.".into())));
+            let data = try!(context.find_plist(&buf)
+                                   .ok_or(Error::Own("Couldn't parse file.".into())));
             Ok(try!(String::from_utf8(data.to_owned())))
         }
         Err(err) => Err(err),
@@ -120,11 +155,11 @@ pub fn expired_profiles(path: &Path, date: DateTime<UTC>) -> Result<SearchInfo> 
 }
 
 /// Returns instance of the `Profile` parsed from a file.
-pub fn profile_from_file(path: &Path) -> Result<Profile> {
+pub fn profile_from_file(path: &Path, context: &Context) -> Result<Profile> {
     let mut file = try!(File::open(path));
     let mut buf = Vec::new();
     try!(file.read_to_end(&mut buf));
-    profile_from_data(&buf)
+    profile_from_data(&buf, context)
         .map(|mut p| {
             p.path = path.to_owned();
             p
@@ -133,8 +168,8 @@ pub fn profile_from_file(path: &Path) -> Result<Profile> {
 }
 
 /// Returns instance of the `Profile` parsed from a `data`.
-pub fn profile_from_data(data: &[u8]) -> Option<Profile> {
-    if let Some(data) = find_plist(data) {
+pub fn profile_from_data(data: &[u8], context: &Context) -> Option<Profile> {
+    if let Some(data) = context.find_plist(data) {
         let mut profile = Profile::empty();
         let mut iter = plist::xml::EventReader::new(io::Cursor::new(data)).into_iter();
         while let Some(item) = iter.next() {
@@ -172,33 +207,13 @@ pub fn profile_from_data(data: &[u8]) -> Option<Profile> {
     }
 }
 
-/// Returns a plist content in a `data`.
-fn find_plist(data: &[u8]) -> Option<&[u8]> {
-    use memmem::{Searcher, TwoWaySearcher};
-
-    let prefix = b"<?xml version=";
-    let prefix_searcher = TwoWaySearcher::new(prefix);
-    let suffix = b"</plist>";
-    let suffix_searcher = TwoWaySearcher::new(suffix);
-
-    let start_i = prefix_searcher.search_in(data);
-    let end_i = suffix_searcher.search_in(data).map(|i| i + suffix.len());
-
-    if let (Some(start_i), Some(end_i)) = (start_i, end_i) {
-        if end_i <= data.len() {
-            return Some(&data[start_i..end_i]);
-        }
-    }
-
-    None
-}
-
 fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     where F: Fn(&Profile) -> bool + Sync
 {
+    let context = Context::new();
     collect(entries.into_par_iter()
                    .weight_max()
-                   .filter_map(|entry| profile_from_file(&entry.path()).ok())
+                   .filter_map(|entry| profile_from_file(&entry.path(), &context).ok())
                    .filter(f))
 }
 
@@ -228,10 +243,10 @@ fn find_by_uuid(path: &Path, uuid: &str) -> Result<Profile> {
 #[cfg(test)]
 mod tests {
     use expectest::prelude::*;
+    use super::*;
 
     #[test]
     fn filter_mobileprovision_files() {
-        use super::entries;
         use tempdir::TempDir;
         use std::fs::File;
 
@@ -248,12 +263,11 @@ mod tests {
 
     #[test]
     fn test_find_plist() {
-        use super::find_plist;
-
+        let context = Context::new();
         let data: &[u8] = b"<?xml version=</plist>";
-        expect!(find_plist(&data)).to(be_some().value(data));
+        expect!(context.find_plist(&data)).to(be_some().value(data));
 
         let data: &[u8] = b"   <?xml version=</plist>   ";
-        expect!(find_plist(&data)).to(be_some().value(b"<?xml version=</plist>"));
+        expect!(context.find_plist(&data)).to(be_some().value(b"<?xml version=</plist>"));
     }
 }
