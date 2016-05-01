@@ -16,7 +16,6 @@ extern crate memmem;
 use plist::PlistEvent::*;
 use chrono::*;
 use rayon::prelude::*;
-use memmem::{Searcher, TwoWaySearcher};
 
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
@@ -25,41 +24,11 @@ use std::io::{self, Read};
 
 pub use error::Error;
 pub use profile::Profile;
+pub use context::Context;
 
 mod error;
 mod profile;
-
-const XML_PREFIX: &'static [u8] = b"<?xml version=";
-const XML_SUFFIX: &'static [u8] = b"</plist>";
-
-#[derive(Debug)]
-pub struct Context {
-    prefix_searcher: TwoWaySearcher<'static>,
-    suffix_searcher: TwoWaySearcher<'static>,
-}
-
-impl Context {
-    pub fn new() -> Self {
-        Context {
-            prefix_searcher: TwoWaySearcher::new(XML_PREFIX),
-            suffix_searcher: TwoWaySearcher::new(XML_SUFFIX),
-        }
-    }
-
-    /// Returns a plist content in a `data`.
-    fn find_plist<'b>(&self, data: &'b [u8]) -> Option<&'b [u8]> {
-        let start_i = self.prefix_searcher.search_in(data);
-        let end_i = self.suffix_searcher.search_in(data).map(|i| i + XML_SUFFIX.len());
-
-        if let (Some(start_i), Some(end_i)) = (start_i, end_i) {
-            if end_i <= data.len() {
-                return Some(&data[start_i..end_i]);
-            }
-        }
-
-        None
-    }
-}
+mod context;
 
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -157,14 +126,16 @@ pub fn expired_profiles(path: &Path, date: DateTime<UTC>) -> Result<SearchInfo> 
 /// Returns instance of the `Profile` parsed from a file.
 pub fn profile_from_file(path: &Path, context: &Context) -> Result<Profile> {
     let mut file = try!(File::open(path));
-    let mut buf = Vec::new();
+    let mut buf = context.buffers_pool.acquire();
     try!(file.read_to_end(&mut buf));
-    profile_from_data(&buf, context)
+    let result = profile_from_data(&buf, context)
         .map(|mut p| {
             p.path = path.to_owned();
             p
         })
-        .ok_or(Error::Own("Couldn't parse file.".into()))
+        .ok_or(Error::Own("Couldn't parse file.".into()));
+    context.buffers_pool.release(buf);
+    result
 }
 
 /// Returns instance of the `Profile` parsed from a `data`.
@@ -259,15 +230,5 @@ mod tests {
         File::create(temp_dir.path().join("3.txt")).unwrap();
         let result = entries(temp_dir.path()).map(|iter| iter.count());
         expect!(result).to(be_ok().value(2));
-    }
-
-    #[test]
-    fn test_find_plist() {
-        let context = Context::new();
-        let data: &[u8] = b"<?xml version=</plist>";
-        expect!(context.find_plist(&data)).to(be_some().value(data));
-
-        let data: &[u8] = b"   <?xml version=</plist>   ";
-        expect!(context.find_plist(&data)).to(be_some().value(b"<?xml version=</plist>"));
     }
 }
