@@ -37,46 +37,37 @@ fn main() {
                    })
                    .unwrap_or_else(|e| e.exit());
 
-    if let Some(cmd) = Command::from_args(&args) {
-        let result = match cmd {
-            Command::Search => search(&args),
-            Command::Remove => remove(&args),
-            Command::ShowXml => show_xml(&args),
-            Command::ShowExpired => show_expired(&args),
-            Command::RemoveExpired => remove_expired(&args),
-        };
-        match result {
-            Ok(_) => process::exit(0),
-            Err(e) => {
-                writeln!(&mut io::stderr(), "{}", e).unwrap();
-                process::exit(1);
-            }
+    match Command::from_args(&args).execute() {
+        Ok(_) => process::exit(0),
+        Err(e) => {
+            writeln!(&mut io::stderr(), "{}", e).unwrap();
+            process::exit(1);
         }
     }
 }
 
-enum Command {
-    Search,
-    Remove,
-    ShowXml,
-    ShowExpired,
-    RemoveExpired,
+struct Command<'a> {
+    args: &'a ::docopt::ArgvMap,
 }
 
-impl Command {
-    fn from_args(args: &::docopt::ArgvMap) -> Option<Command> {
-        if args.get_bool("search") {
-            Some(Command::Search)
-        } else if args.get_bool("remove") {
-            Some(Command::Remove)
-        } else if args.get_bool("show-xml") {
-            Some(Command::ShowXml)
-        } else if args.get_bool("show-expired") {
-            Some(Command::ShowExpired)
-        } else if args.get_bool("remove-expired") {
-            Some(Command::RemoveExpired)
+impl<'a> Command<'a> {
+    fn from_args(args: &'a ::docopt::ArgvMap) -> Self {
+        Command { args: args }
+    }
+
+    fn execute(&self) -> Result<(), String> {
+        if self.args.get_bool("search") {
+            search(self.args)
+        } else if self.args.get_bool("remove") {
+            remove(self.args)
+        } else if self.args.get_bool("show-xml") {
+            show_xml(self.args)
+        } else if self.args.get_bool("show-expired") {
+            show_expired(self.args)
+        } else if self.args.get_bool("remove-expired") {
+            remove_expired(self.args)
         } else {
-            None
+            Err("Command is not implemented".to_string())
         }
     }
 }
