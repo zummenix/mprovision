@@ -13,14 +13,13 @@ extern crate crossbeam;
 extern crate rayon;
 extern crate memmem;
 
-use plist::PlistEvent::*;
 use chrono::*;
 use rayon::prelude::*;
 
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
 use std::env;
-use std::io::{self, Read};
+use std::io::Read;
 
 pub use error::Error;
 pub use profile::Profile;
@@ -128,7 +127,7 @@ pub fn profile_from_file(path: &Path, context: &Context) -> Result<Profile> {
     let mut file = try!(File::open(path));
     let mut buf = context.buffers_pool.acquire();
     try!(file.read_to_end(&mut buf));
-    let result = profile_from_data(&buf, context)
+    let result = Profile::from_data(&buf, context)
         .map(|mut p| {
             p.path = path.to_owned();
             p
@@ -136,46 +135,6 @@ pub fn profile_from_file(path: &Path, context: &Context) -> Result<Profile> {
         .ok_or(Error::Own("Couldn't parse file.".into()));
     context.buffers_pool.release(buf);
     result
-}
-
-/// Returns instance of the `Profile` parsed from a `data`.
-pub fn profile_from_data(data: &[u8], context: &Context) -> Option<Profile> {
-    if let Some(data) = context.find_plist(data) {
-        let mut profile = Profile::empty();
-        let mut iter = plist::xml::EventReader::new(io::Cursor::new(data)).into_iter();
-        while let Some(item) = iter.next() {
-            if let Ok(StringValue(key)) = item {
-                if key == "UUID" {
-                    if let Some(Ok(StringValue(value))) = iter.next() {
-                        profile.uuid = value;
-                    }
-                }
-                if key == "Name" {
-                    if let Some(Ok(StringValue(value))) = iter.next() {
-                        profile.name = value;
-                    }
-                }
-                if key == "application-identifier" {
-                    if let Some(Ok(StringValue(value))) = iter.next() {
-                        profile.app_identifier = value;
-                    }
-                }
-                if key == "CreationDate" {
-                    if let Some(Ok(DateValue(value))) = iter.next() {
-                        profile.creation_date = value;
-                    }
-                }
-                if key == "ExpirationDate" {
-                    if let Some(Ok(DateValue(value))) = iter.next() {
-                        profile.expiration_date = value;
-                    }
-                }
-            }
-        }
-        Some(profile)
-    } else {
-        None
-    }
 }
 
 fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>

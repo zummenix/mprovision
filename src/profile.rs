@@ -1,6 +1,10 @@
 
 use std::path::PathBuf;
+use std::io;
 use chrono::{DateTime, UTC, TimeZone};
+use plist::PlistEvent::*;
+use plist;
+use Context;
 
 /// Represents provisioning profile data.
 #[derive(Debug, Clone)]
@@ -14,6 +18,46 @@ pub struct Profile {
 }
 
 impl Profile {
+    /// Returns instance of the `Profile` parsed from a `data`.
+    pub fn from_data(data: &[u8], context: &Context) -> Option<Profile> {
+        if let Some(data) = context.find_plist(data) {
+            let mut profile = Profile::empty();
+            let mut iter = plist::xml::EventReader::new(io::Cursor::new(data)).into_iter();
+            while let Some(item) = iter.next() {
+                if let Ok(StringValue(key)) = item {
+                    if key == "UUID" {
+                        if let Some(Ok(StringValue(value))) = iter.next() {
+                            profile.uuid = value;
+                        }
+                    }
+                    if key == "Name" {
+                        if let Some(Ok(StringValue(value))) = iter.next() {
+                            profile.name = value;
+                        }
+                    }
+                    if key == "application-identifier" {
+                        if let Some(Ok(StringValue(value))) = iter.next() {
+                            profile.app_identifier = value;
+                        }
+                    }
+                    if key == "CreationDate" {
+                        if let Some(Ok(DateValue(value))) = iter.next() {
+                            profile.creation_date = value;
+                        }
+                    }
+                    if key == "ExpirationDate" {
+                        if let Some(Ok(DateValue(value))) = iter.next() {
+                            profile.expiration_date = value;
+                        }
+                    }
+                }
+            }
+            Some(profile)
+        } else {
+            None
+        }
+    }
+
     pub fn empty() -> Self {
         Profile {
             path: PathBuf::new(),
