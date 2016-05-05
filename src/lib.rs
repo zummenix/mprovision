@@ -1,4 +1,4 @@
-//! **mprovision** is a tool that helps iOS developers to manage mobileprovision
+//! **mprovision** is a tool that helps `iOS` developers to manage mobileprovision
 //! files. Main purpose of this crate is to contain functions and types
 //! for **mprovision**.
 
@@ -66,8 +66,10 @@ pub fn entries(path: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
 pub fn directory() -> Result<PathBuf> {
     env::home_dir()
         .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
-        .ok_or(Error::Own("'HOME' environment variable is not set or equal to the empty string."
-                              .to_owned()))
+        .ok_or_else(|| {
+            Error::Own("'HOME' environment variable is not set or equal to the empty string."
+                           .to_owned())
+        })
 }
 
 pub fn with_path<F, T>(path: Option<&Path>, f: F) -> Result<T>
@@ -128,11 +130,11 @@ pub fn profile_from_file(path: &Path, context: &Context) -> Result<Profile> {
     let mut buf = context.buffers_pool.acquire();
     try!(file.read_to_end(&mut buf));
     let result = Profile::from_data(&buf, context)
-        .map(|mut p| {
-            p.path = path.to_owned();
-            p
-        })
-        .ok_or(Error::Own("Couldn't parse file.".into()));
+                     .map(|mut p| {
+                         p.path = path.to_owned();
+                         p
+                     })
+                     .ok_or_else(|| Error::Own("Couldn't parse file.".into()));
     context.buffers_pool.release(buf);
     result
 }

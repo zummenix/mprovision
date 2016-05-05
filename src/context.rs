@@ -10,9 +10,7 @@ pub struct BuffersPool {
 
 impl BuffersPool {
     pub fn new() -> Self {
-        BuffersPool {
-            queue: MsQueue::new(),
-        }
+        BuffersPool::default()
     }
 
     pub fn acquire(&self) -> Vec<u8> {
@@ -29,6 +27,14 @@ impl BuffersPool {
     }
 }
 
+impl Default for BuffersPool {
+    fn default() -> Self {
+        BuffersPool {
+            queue: MsQueue::new(),
+        }
+    }
+}
+
 pub struct Context {
     prefix_searcher: TwoWaySearcher<'static>,
     suffix_searcher: TwoWaySearcher<'static>,
@@ -37,11 +43,7 @@ pub struct Context {
 
 impl Context {
     pub fn new() -> Self {
-        Context {
-            prefix_searcher: TwoWaySearcher::new(XML_PREFIX),
-            suffix_searcher: TwoWaySearcher::new(XML_SUFFIX),
-            buffers_pool: BuffersPool::new(),
-        }
+        Context::default()
     }
 
     /// Returns a plist content in a `data`.
@@ -56,6 +58,16 @@ impl Context {
         }
 
         None
+    }
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Context {
+            prefix_searcher: TwoWaySearcher::new(XML_PREFIX),
+            suffix_searcher: TwoWaySearcher::new(XML_SUFFIX),
+            buffers_pool: BuffersPool::new(),
+        }
     }
 }
 
