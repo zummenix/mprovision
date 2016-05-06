@@ -80,7 +80,7 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
 
     mprovision::with_path(directory(args), |path| mprovision::search(path, text))
         .and_then(|info| {
-            if info.profiles.len() == 0 {
+            if info.profiles.is_empty() {
                 println!("Nothing found for '{}'", text);
             } else {
                 println!("Found {} of {} profiles.\n",
@@ -123,7 +123,7 @@ fn show_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
     mprovision::with_path(directory(args),
                           |path| mprovision::expired_profiles(path, UTC::now()))
         .and_then(|info| {
-            if info.profiles.len() == 0 {
+            if info.profiles.is_empty() {
                 println!("All profiles are valid.");
             } else {
                 println!("Found {} of {} profiles.\n",
@@ -144,7 +144,7 @@ fn remove_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
     mprovision::with_path(directory(args),
                           |path| mprovision::expired_profiles(path, UTC::now()))
         .and_then(|info| {
-            if info.profiles.len() == 0 {
+            if info.profiles.is_empty() {
                 println!("All profiles are valid.");
             } else {
                 println!("Found {} of {} profiles.\n",
