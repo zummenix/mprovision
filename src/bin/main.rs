@@ -126,7 +126,7 @@ fn show_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
             if info.profiles.is_empty() {
                 println!("All profiles are valid.");
             } else {
-                println!("Found {} of {} profiles.\n",
+                println!("Showing expired profiles ({} of {})...",
                          info.profiles.len(),
                          info.total);
                 for profile in &info.profiles {
@@ -147,12 +147,12 @@ fn remove_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
             if info.profiles.is_empty() {
                 println!("All profiles are valid.");
             } else {
-                println!("Found {} of {} profiles.\n",
+                println!("Removing expired profiles ({} of {})...",
                          info.profiles.len(),
                          info.total);
                 for profile in info.profiles {
                     match std::fs::remove_file(&profile.path) {
-                        Ok(_) => println!("Profile '{}' was removed.", profile.uuid),
+                        Ok(_) => println!("'{}' was removed.", profile.uuid),
                         Err(e) => {
                             println!("Error while trying to remove profile '{}'", profile.uuid);
                             println!("{}", e);
