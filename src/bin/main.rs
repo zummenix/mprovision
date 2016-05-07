@@ -83,12 +83,10 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
             if info.profiles.is_empty() {
                 println!("Nothing found for '{}'", text);
             } else {
-                println!("Found {} of {} profiles.\n",
-                         info.profiles.len(),
-                         info.total);
                 for profile in &info.profiles {
                     println!("{}\n", profile.description());
                 }
+                println!("Found {} of {}", info.profiles.len(), info.total);
             }
             Ok(())
         })
@@ -102,7 +100,7 @@ fn remove(args: &::docopt::ArgvMap) -> Result<(), String> {
     }
 
     mprovision::with_path(directory(args), |path| mprovision::remove(path, uuid))
-        .and_then(|_| Ok(println!("Profile '{}' was removed.", uuid)))
+        .and_then(|_| Ok(println!("'{}' was removed", uuid)))
         .map_err(|e| e.to_string())
 }
 
@@ -124,14 +122,12 @@ fn show_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
                           |path| mprovision::expired_profiles(path, UTC::now()))
         .and_then(|info| {
             if info.profiles.is_empty() {
-                println!("All profiles are valid.");
+                println!("All provisioning profiles are valid");
             } else {
-                println!("Showing expired profiles ({} of {})...",
-                         info.profiles.len(),
-                         info.total);
                 for profile in &info.profiles {
                     println!("{}\n", profile.description());
                 }
+                println!("Found {} of {}", info.profiles.len(), info.total);
             }
             Ok(())
         })
@@ -145,19 +141,26 @@ fn remove_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
                           |path| mprovision::expired_profiles(path, UTC::now()))
         .and_then(|info| {
             if info.profiles.is_empty() {
-                println!("All profiles are valid.");
+                println!("All provisioning profiles are valid");
             } else {
-                println!("Removing expired profiles ({} of {})...",
-                         info.profiles.len(),
-                         info.total);
+                let mut errors_counter = 0;
+                let mut removals_counter = 0;
                 for profile in info.profiles {
                     match std::fs::remove_file(&profile.path) {
-                        Ok(_) => println!("'{}' was removed.", profile.uuid),
+                        Ok(_) => {
+                            removals_counter += 1;
+                            println!("'{}' was removed", profile.uuid)
+                        }
                         Err(e) => {
-                            println!("Error while trying to remove profile '{}'", profile.uuid);
+                            errors_counter += 1;
+                            println!("Error while trying to remove '{}'", profile.uuid);
                             println!("{}", e);
                         }
                     }
+                }
+                println!("Removed {} of {}", removals_counter, info.total);
+                if errors_counter > 0 {
+                    println!("Errors: {}", errors_counter);
                 }
             }
             Ok(())
