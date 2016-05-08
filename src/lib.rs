@@ -41,8 +41,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// - the user lacks the requisite permissions
 /// - there is no entry in the filesystem at the provided path
 /// - the provided path is not a directory
-pub fn entries(path: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
-    let entries = try!(fs::read_dir(path));
+pub fn entries(dir: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
+    let entries = try!(fs::read_dir(dir));
     let filtered = entries.filter_map(|entry| entry.ok())
                           .filter_map(|entry| {
                               if let Some(ext) = entry.path().extension() {
@@ -72,14 +72,14 @@ pub fn directory() -> Result<PathBuf> {
         })
 }
 
-pub fn with_path<F, T>(path: Option<&Path>, f: F) -> Result<T>
+pub fn with_dir<F, T>(dir: Option<&Path>, f: F) -> Result<T>
     where F: FnOnce(&Path) -> Result<T>
 {
-    if let Some(path) = path {
-        f(&path)
+    if let Some(dir) = dir {
+        f(&dir)
     } else {
-        let path = try!(directory());
-        f(&path)
+        let dir = try!(directory());
+        f(&dir)
     }
 }
 
@@ -88,21 +88,21 @@ pub struct SearchInfo {
     pub profiles: Vec<Profile>,
 }
 
-pub fn search(path: &Path, s: &str) -> Result<SearchInfo> {
-    let entries: Vec<DirEntry> = try!(entries(path)).collect();
+pub fn search(dir: &Path, s: &str) -> Result<SearchInfo> {
+    let entries: Vec<DirEntry> = try!(entries(dir)).collect();
     Ok(SearchInfo {
         total: entries.len(),
         profiles: parallel(entries, |profile| profile.contains(s)),
     })
 }
 
-pub fn remove(path: &Path, uuid: &str) -> Result<()> {
-    find_by_uuid(path, uuid)
+pub fn remove(dir: &Path, uuid: &str) -> Result<()> {
+    find_by_uuid(dir, uuid)
         .and_then(|profile| std::fs::remove_file(&profile.path).map_err(|err| err.into()))
 }
 
-pub fn xml(path: &Path, uuid: &str) -> Result<String> {
-    match find_by_uuid(path, uuid) {
+pub fn xml(dir: &Path, uuid: &str) -> Result<String> {
+    match find_by_uuid(dir, uuid) {
         Ok(profile) => {
             let context = Context::new();
             let mut file = try!(File::open(&profile.path));
@@ -116,8 +116,8 @@ pub fn xml(path: &Path, uuid: &str) -> Result<String> {
     }
 }
 
-pub fn expired_profiles(path: &Path, date: DateTime<UTC>) -> Result<SearchInfo> {
-    let entries: Vec<DirEntry> = try!(entries(path)).collect();
+pub fn expired_profiles(dir: &Path, date: DateTime<UTC>) -> Result<SearchInfo> {
+    let entries: Vec<DirEntry> = try!(entries(dir)).collect();
     Ok(SearchInfo {
         total: entries.len(),
         profiles: parallel(entries, |profile| profile.expiration_date <= date),
@@ -163,8 +163,8 @@ fn collect<I>(par_iter: I) -> Vec<I::Item>
     items
 }
 
-fn find_by_uuid(path: &Path, uuid: &str) -> Result<Profile> {
-    let entries: Vec<DirEntry> = try!(entries(path)).collect();
+fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
+    let entries: Vec<DirEntry> = try!(entries(dir)).collect();
     if let Some(profile) = parallel(entries, |profile| profile.uuid == uuid).pop() {
         Ok(profile)
     } else {
