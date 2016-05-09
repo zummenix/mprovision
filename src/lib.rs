@@ -124,28 +124,13 @@ pub fn expired_profiles(dir: &Path, date: DateTime<UTC>) -> Result<SearchInfo> {
     })
 }
 
-/// Returns instance of the `Profile` parsed from a file.
-pub fn profile_from_file(path: &Path, context: &Context) -> Result<Profile> {
-    let mut file = try!(File::open(path));
-    let mut buf = context.buffers_pool.acquire();
-    try!(file.read_to_end(&mut buf));
-    let result = Profile::from_data(&buf, context)
-                     .map(|mut p| {
-                         p.path = path.to_owned();
-                         p
-                     })
-                     .ok_or_else(|| Error::Own("Couldn't parse file.".into()));
-    context.buffers_pool.release(buf);
-    result
-}
-
 fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     where F: Fn(&Profile) -> bool + Sync
 {
     let context = Context::new();
     collect(entries.into_par_iter()
                    .weight_max()
-                   .filter_map(|entry| profile_from_file(&entry.path(), &context).ok())
+                   .filter_map(|entry| Profile::from_file(&entry.path(), &context).ok())
                    .filter(f))
 }
 

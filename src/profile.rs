@@ -1,10 +1,11 @@
 
-use std::path::PathBuf;
-use std::io;
+use std::io::{self, Read};
+use std::fs::File;
+use std::path::{Path, PathBuf};
 use chrono::{DateTime, UTC, TimeZone};
 use plist::PlistEvent::*;
 use plist;
-use Context;
+use {Context, Error, Result};
 
 /// Represents provisioning profile data.
 #[derive(Debug, Clone)]
@@ -18,8 +19,23 @@ pub struct Profile {
 }
 
 impl Profile {
+    /// Returns instance of the `Profile` parsed from a file.
+    pub fn from_file(path: &Path, context: &Context) -> Result<Self> {
+        let mut file = try!(File::open(path));
+        let mut buf = context.buffers_pool.acquire();
+        try!(file.read_to_end(&mut buf));
+        let result = Profile::from_data(&buf, context)
+                         .map(|mut p| {
+                             p.path = path.to_owned();
+                             p
+                         })
+                         .ok_or_else(|| Error::Own("Couldn't parse file.".into()));
+        context.buffers_pool.release(buf);
+        result
+    }
+
     /// Returns instance of the `Profile` parsed from a `data`.
-    pub fn from_data(data: &[u8], context: &Context) -> Option<Profile> {
+    pub fn from_data(data: &[u8], context: &Context) -> Option<Self> {
         if let Some(data) = context.find_plist(data) {
             let mut profile = Profile::empty();
             let mut iter = plist::xml::EventReader::new(io::Cursor::new(data)).into_iter();
