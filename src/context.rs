@@ -29,9 +29,7 @@ impl BuffersPool {
 
 impl Default for BuffersPool {
     fn default() -> Self {
-        BuffersPool {
-            queue: MsQueue::new(),
-        }
+        BuffersPool { queue: MsQueue::new() }
     }
 }
 

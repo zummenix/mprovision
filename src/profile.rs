@@ -24,7 +24,7 @@ impl Profile {
         let mut file = try!(File::open(path));
         let mut buf = context.buffers_pool.acquire();
         try!(file.read_to_end(&mut buf));
-        let result = Profile::from_data(&buf, context)
+        let result = Profile::from_xml_data(&buf, context)
                          .map(|mut p| {
                              p.path = path.to_owned();
                              p
@@ -35,7 +35,7 @@ impl Profile {
     }
 
     /// Returns instance of the `Profile` parsed from a `data`.
-    pub fn from_data(data: &[u8], context: &Context) -> Option<Self> {
+    pub fn from_xml_data(data: &[u8], context: &Context) -> Option<Self> {
         if let Some(data) = context.find_plist(data) {
             let mut profile = Profile::empty();
             let mut iter = plist::xml::EventReader::new(io::Cursor::new(data)).into_iter();
