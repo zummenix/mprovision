@@ -76,7 +76,7 @@ pub fn with_dir<F, T>(dir: Option<&Path>, f: F) -> Result<T>
     where F: FnOnce(&Path) -> Result<T>
 {
     if let Some(dir) = dir {
-        f(&dir)
+        f(dir)
     } else {
         let dir = try!(directory());
         f(&dir)
