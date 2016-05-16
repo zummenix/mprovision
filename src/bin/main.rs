@@ -30,12 +30,12 @@ Options:
 
 fn main() {
     let args = Docopt::new(USAGE)
-                   .and_then(|d| {
-                       d.options_first(true)
-                        .version(Some(format!("mprovision {}", version!())))
-                        .parse()
-                   })
-                   .unwrap_or_else(|e| e.exit());
+        .and_then(|d| {
+            d.options_first(true)
+                .version(Some(format!("mprovision {}", version!())))
+                .parse()
+        })
+        .unwrap_or_else(|e| e.exit());
 
     match Command::from_args(&args).execute() {
         Ok(_) => process::exit(0),
