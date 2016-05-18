@@ -44,14 +44,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub fn entries(dir: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
     let entries = try!(fs::read_dir(dir));
     let filtered = entries.filter_map(|entry| entry.ok())
-                          .filter_map(|entry| {
-                              if let Some(ext) = entry.path().extension() {
-                                  if ext == "mobileprovision" {
-                                      return Some(entry);
-                                  }
-                              }
-                              None
-                          });
+        .filter_map(|entry| {
+            if let Some(ext) = entry.path().extension() {
+                if ext == "mobileprovision" {
+                    return Some(entry);
+                }
+            }
+            None
+        });
     Ok(Box::new(filtered))
 }
 
@@ -68,7 +68,7 @@ pub fn directory() -> Result<PathBuf> {
         .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
         .ok_or_else(|| {
             Error::Own("'HOME' environment variable is not set or equal to the empty string."
-                           .to_owned())
+                .to_owned())
         })
 }
 
@@ -109,7 +109,7 @@ pub fn xml(dir: &Path, uuid: &str) -> Result<String> {
             let mut buf = Vec::new();
             try!(file.read_to_end(&mut buf));
             let data = try!(context.find_plist(&buf)
-                                   .ok_or(Error::Own("Couldn't parse file.".into())));
+                .ok_or(Error::Own("Couldn't parse file.".into())));
             Ok(try!(String::from_utf8(data.to_owned())))
         }
         Err(err) => Err(err),
@@ -129,9 +129,9 @@ fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
 {
     let context = Context::new();
     collect(entries.into_par_iter()
-                   .weight_max()
-                   .filter_map(|entry| Profile::from_file(&entry.path(), &context).ok())
-                   .filter(f))
+        .weight_max()
+        .filter_map(|entry| Profile::from_file(&entry.path(), &context).ok())
+        .filter(f))
 }
 
 fn collect<I>(par_iter: I) -> Vec<I::Item>

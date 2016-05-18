@@ -25,11 +25,11 @@ impl Profile {
         let mut buf = context.buffers_pool.acquire();
         try!(file.read_to_end(&mut buf));
         let result = Profile::from_xml_data(&buf, context)
-                         .map(|mut p| {
-                             p.path = path.to_owned();
-                             p
-                         })
-                         .ok_or_else(|| Error::Own("Couldn't parse file.".into()));
+            .map(|mut p| {
+                p.path = path.to_owned();
+                p
+            })
+            .ok_or_else(|| Error::Own("Couldn't parse file.".into()));
         context.buffers_pool.release(buf);
         result
     }
