@@ -80,9 +80,9 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
                 println!("Nothing found for '{}'", text);
             } else {
                 for profile in &info.profiles {
-                    println!("{}\n", profile.description());
+                    println!("\n{}", profile.description());
                 }
-                println!("Found {} of {}", info.profiles.len(), info.total);
+                println!("\nFound {} of {}", info.profiles.len(), info.total);
             }
             Ok(())
         })
@@ -129,9 +129,9 @@ fn show_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
                 println!("All provisioning profiles are valid");
             } else {
                 for profile in &info.profiles {
-                    println!("{}\n", profile.description());
+                    println!("\n{}", profile.description());
                 }
-                println!("Found {} of {}", info.profiles.len(), info.total);
+                println!("\nFound {} of {}", info.profiles.len(), info.total);
             }
             Ok(())
         })
