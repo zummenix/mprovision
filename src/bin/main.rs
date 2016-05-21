@@ -18,7 +18,7 @@ Usage:
   mprovision search <text> [<directory>]
   mprovision remove <uuid> [<directory>]
   mprovision show-xml <uuid> [<directory>]
-  mprovision show-expired [<directory>]
+  mprovision show-expired --days <days> [<directory>]
   mprovision remove-expired [<directory>]
   mprovision (-h | --help)
   mprovision --version
@@ -30,11 +30,7 @@ Options:
 
 fn main() {
     let args = Docopt::new(USAGE)
-        .and_then(|d| {
-            d.options_first(true)
-                .version(Some(format!("mprovision {}", version!())))
-                .parse()
-        })
+        .and_then(|d| d.version(Some(format!("mprovision {}", version!()))).parse())
         .unwrap_or_else(|e| e.exit());
 
     match Command::from_args(&args).execute() {
@@ -118,8 +114,16 @@ fn show_xml(args: &::docopt::ArgvMap) -> Result<(), String> {
 fn show_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
     use chrono::*;
 
+    let mut date = UTC::now();
+    if let Some(days) = args.get_str("<days>").parse::<i64>().ok() {
+        if days < 0 || days > 365 {
+            return Err("<days> should be between 0 and 365".to_owned());
+        }
+        date = date + Duration::days(days);
+    }
+
     mprovision::with_dir(directory(args),
-                         |dir| mprovision::expired_profiles(dir, UTC::now()))
+                         |dir| mprovision::expired_profiles(dir, date))
         .and_then(|info| {
             if info.profiles.is_empty() {
                 println!("All provisioning profiles are valid");
