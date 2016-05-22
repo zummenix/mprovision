@@ -4,7 +4,14 @@ Written in Rust.
 
 ## Installation
 
-For now only supported method of installation is compilation from source.
+### Easy way
+
+Download `mprovision.zip` from
+[release page](https://github.com/zummenix/mprovision/releases) and unarchive.
+This archive contains standalone executable that you can place in your `/usr/bin`
+
+### Compilation from source
+
 To compile you need to install
 [Rust Compiler](https://www.rust-lang.org/downloads.html) and then `clone`
 and `build`:
