@@ -1,6 +1,6 @@
 [package]
 name = "mprovision"
-version = "0.1.1"
+version = "1.0.0"
 authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
 
 [[bin]]
@@ -12,10 +12,10 @@ test = false
 [dependencies]
 docopt = "0.6.80"
 version = "2.0.1"
-plist = "0.0.12"
+plist = "0.0.13"
 chrono = "~0.2.0" # used in plist.
-crossbeam = "0.2.8"
-rayon = "0.3.1"
+crossbeam = "0.2.9"
+rayon = "0.4.0"
 memmem = "0.1.1"
 
 [dev-dependencies]
