@@ -1,5 +1,6 @@
 # mprovision
-A tool that helps iOS developers to manage mobileprovision files. (WIP)
+A tool that helps iOS developers to manage local provisioning profiles.
+Written in Rust.
 
 ## Installation
 
