@@ -75,11 +75,11 @@ And when you run this tool first time, performance probably will be slow.
 For comparison, on my machine with ssd and 4 cpu cores I see the following results:
 ```
 $ time mprovision search any
-Found 4 of 798 profiles.
 ...
-mprovision search any  1.96s user 0.04s system 713% cpu 0.280 total
+Found 4 of 789
+mprovision search any  1.94s user 0.03s system 667% cpu 0.295 total
 ```
-As you see performance for almost 1000 profiles is reasonable.
+As you can see the execution time for almost 1000 profiles is reasonable.
 
 ## License
 
