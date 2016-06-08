@@ -9,6 +9,7 @@ use std::io::{self, Write};
 use std::process;
 use std::path::Path;
 use docopt::Docopt;
+use mprovision as mp;
 
 const USAGE: &'static str = "
 mprovision
@@ -74,7 +75,7 @@ fn search(args: &::docopt::ArgvMap) -> Result<(), String> {
         return Err("<text> should not be empty.".to_owned());
     }
 
-    mprovision::with_dir(directory(args), |dir| mprovision::search(dir, text))
+    mp::with_dir(directory(args), |dir| mp::search(dir, text))
         .and_then(|info| {
             if info.profiles.is_empty() {
                 println!("Nothing found for '{}'", text);
@@ -95,7 +96,7 @@ fn remove(args: &::docopt::ArgvMap) -> Result<(), String> {
         return Err("<uuid> should not be empty.".to_owned());
     }
 
-    mprovision::with_dir(directory(args), |dir| mprovision::remove(dir, uuid))
+    mp::with_dir(directory(args), |dir| mp::remove(dir, uuid))
         .and_then(|_| Ok(println!("'{}' was removed", uuid)))
         .map_err(|e| e.to_string())
 }
@@ -106,7 +107,7 @@ fn show_xml(args: &::docopt::ArgvMap) -> Result<(), String> {
         return Err("<uuid> should not be empty.".to_owned());
     }
 
-    mprovision::with_dir(directory(args), |dir| mprovision::xml(dir, uuid))
+    mp::with_dir(directory(args), |dir| mp::xml(dir, uuid))
         .and_then(|xml| Ok(println!("{}", xml)))
         .map_err(|e| e.to_string())
 }
@@ -122,8 +123,7 @@ fn show_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
         date = date + Duration::days(days);
     }
 
-    mprovision::with_dir(directory(args),
-                         |dir| mprovision::expired_profiles(dir, date))
+    mp::with_dir(directory(args), |dir| mp::expired_profiles(dir, date))
         .and_then(|info| {
             if info.profiles.is_empty() {
                 println!("All provisioning profiles are valid");
@@ -141,8 +141,7 @@ fn show_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
 fn remove_expired(args: &::docopt::ArgvMap) -> Result<(), String> {
     use chrono::*;
 
-    mprovision::with_dir(directory(args),
-                         |dir| mprovision::expired_profiles(dir, UTC::now()))
+    mp::with_dir(directory(args), |dir| mp::expired_profiles(dir, UTC::now()))
         .and_then(|info| {
             if info.profiles.is_empty() {
                 println!("All provisioning profiles are valid");
