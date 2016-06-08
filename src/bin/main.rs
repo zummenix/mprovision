@@ -138,7 +138,7 @@ fn remove(args: &::docopt::ArgvMap) -> CliResult {
         return Err(CliError::EmptyParameter("<uuid>"));
     }
 
-    let _ = try!(mp::with_dir(directory(args), |dir| mp::remove(dir, uuid)));
+    try!(mp::with_dir(directory(args), |dir| mp::remove(dir, uuid)));
     println!("'{}' was removed", uuid);
     Ok(())
 }
