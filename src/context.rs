@@ -9,10 +9,6 @@ pub struct BuffersPool {
 }
 
 impl BuffersPool {
-    pub fn new() -> Self {
-        BuffersPool::default()
-    }
-
     pub fn acquire(&self) -> Vec<u8> {
         if let Some(mut vec) = self.queue.try_pop() {
             vec.clear();
@@ -40,10 +36,6 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new() -> Self {
-        Context::default()
-    }
-
     /// Returns a plist content in a `data`.
     pub fn find_plist<'b>(&self, data: &'b [u8]) -> Option<&'b [u8]> {
         let start_i = self.prefix_searcher.search_in(data);
@@ -64,7 +56,7 @@ impl Default for Context {
         Context {
             prefix_searcher: TwoWaySearcher::new(XML_PREFIX),
             suffix_searcher: TwoWaySearcher::new(XML_SUFFIX),
-            buffers_pool: BuffersPool::new(),
+            buffers_pool: BuffersPool::default(),
         }
     }
 }
@@ -76,7 +68,7 @@ mod tests {
 
     #[test]
     fn test_find_plist() {
-        let context = Context::new();
+        let context = Context::default();
         let data: &[u8] = b"<?xml version=</plist>";
         expect!(context.find_plist(&data)).to(be_some().value(data));
 
@@ -86,7 +78,7 @@ mod tests {
 
     #[test]
     fn test_buffers_pool() {
-        let pool = BuffersPool::new();
+        let pool = BuffersPool::default();
         let mut buf = pool.acquire();
         expect!(buf.iter()).to(be_empty());
         buf.push(1);

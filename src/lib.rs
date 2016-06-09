@@ -104,7 +104,7 @@ pub fn remove(dir: &Path, uuid: &str) -> Result<()> {
 pub fn xml(dir: &Path, uuid: &str) -> Result<String> {
     match find_by_uuid(dir, uuid) {
         Ok(profile) => {
-            let context = Context::new();
+            let context = Context::default();
             let mut file = try!(File::open(&profile.path));
             let mut buf = Vec::new();
             try!(file.read_to_end(&mut buf));
@@ -127,7 +127,7 @@ pub fn expired_profiles(dir: &Path, date: DateTime<UTC>) -> Result<SearchInfo> {
 fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     where F: Fn(&Profile) -> bool + Sync
 {
-    let context = Context::new();
+    let context = Context::default();
     collect(entries.into_par_iter()
         .weight_max()
         .filter_map(|entry| Profile::from_file(&entry.path(), &context).ok())
