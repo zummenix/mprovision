@@ -1,8 +1,8 @@
 use memmem::{Searcher, TwoWaySearcher};
 use crossbeam::sync::MsQueue;
 
-const XML_PREFIX: &'static [u8] = b"<?xml version=";
-const XML_SUFFIX: &'static [u8] = b"</plist>";
+const PLIST_PREFIX: &'static [u8] = b"<?xml version=";
+const PLIST_SUFFIX: &'static [u8] = b"</plist>";
 
 pub struct BuffersPool {
     queue: MsQueue<Vec<u8>>,
@@ -39,7 +39,7 @@ impl Context {
     /// Returns a plist content in a `data`.
     pub fn find_plist<'b>(&self, data: &'b [u8]) -> Option<&'b [u8]> {
         let start_i = self.prefix_searcher.search_in(data);
-        let end_i = self.suffix_searcher.search_in(data).map(|i| i + XML_SUFFIX.len());
+        let end_i = self.suffix_searcher.search_in(data).map(|i| i + PLIST_SUFFIX.len());
 
         if let (Some(start_i), Some(end_i)) = (start_i, end_i) {
             if end_i <= data.len() {
@@ -54,8 +54,8 @@ impl Context {
 impl Default for Context {
     fn default() -> Self {
         Context {
-            prefix_searcher: TwoWaySearcher::new(XML_PREFIX),
-            suffix_searcher: TwoWaySearcher::new(XML_SUFFIX),
+            prefix_searcher: TwoWaySearcher::new(PLIST_PREFIX),
+            suffix_searcher: TwoWaySearcher::new(PLIST_SUFFIX),
             buffers_pool: BuffersPool::default(),
         }
     }
