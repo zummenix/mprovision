@@ -12,9 +12,9 @@ This archive contains standalone executable that you can place in your `/usr/bin
 
 ### Compilation from source
 
-To compile you need to install
-[Rust Compiler](https://www.rust-lang.org/downloads.html) and then `clone`
-and `build`:
+To compile you need to install Rust Compiler either by downloading from
+[official site](https://www.rust-lang.org/downloads.html) or using
+[rustup](https://www.rustup.rs) and then `clone` and `build`:
 
 ```bash
 git clone https://github.com/zummenix/mprovision
