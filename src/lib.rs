@@ -9,12 +9,18 @@ extern crate expectest;
 extern crate tempdir;
 extern crate plist;
 extern crate chrono;
-extern crate crossbeam;
-extern crate rayon;
 extern crate memmem;
 
+extern crate futures;
+extern crate futures_io;
+extern crate futures_mio;
+extern crate futures_cpupool;
+extern crate num_cpus;
+
+use futures::stream::Stream;
+use futures_cpupool::CpuPool;
+
 use chrono::*;
-use rayon::prelude::*;
 
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
@@ -127,25 +133,20 @@ pub fn expired_profiles(dir: &Path, date: DateTime<UTC>) -> Result<SearchInfo> {
 fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     where F: Fn(&Profile) -> bool + Sync
 {
-    let context = Context::default();
-    collect(entries.into_par_iter()
-        .weight_max()
-        .filter_map(|entry| Profile::from_file(&entry.path(), &context).ok())
-        .filter(f))
-}
+    let mut event_loop = futures_mio::Loop::new().unwrap();
+    let cpu_pool = CpuPool::new(num_cpus::get() as u32);
 
-fn collect<I>(par_iter: I) -> Vec<I::Item>
-    where I: ParallelIterator
-{
-    let queue = crossbeam::sync::MsQueue::new();
+    let stream = futures::stream::iter(entries.into_iter().map(|entry| Ok(entry)))
+        .map(|entry| {
+            cpu_pool.execute(move || {
+                Profile::from_file(&entry.path()).unwrap()
+            })
+        })
+        .buffered(num_cpus::get() * 2)
+        .filter(f)
+        .collect();
 
-    par_iter.for_each(|item| queue.push(item));
-
-    let mut items = Vec::new();
-    while let Some(item) = queue.try_pop() {
-        items.push(item);
-    }
-    items
+    event_loop.run(stream).unwrap_or(Vec::new())
 }
 
 fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {

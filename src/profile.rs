@@ -20,22 +20,21 @@ pub struct Profile {
 
 impl Profile {
     /// Returns instance of the `Profile` parsed from a file.
-    pub fn from_file(path: &Path, context: &Context) -> Result<Self> {
+    pub fn from_file(path: &Path) -> Result<Self> {
         let mut file = try!(File::open(path));
-        let mut buf = context.buffers_pool.acquire();
+        let mut buf = Vec::new();
         try!(file.read_to_end(&mut buf));
-        let result = Profile::from_xml_data(&buf, context)
+        let result = Profile::from_xml_data(&buf, Context::default())
             .map(|mut p| {
                 p.path = path.to_owned();
                 p
             })
             .ok_or_else(|| Error::Own("Couldn't parse file.".into()));
-        context.buffers_pool.release(buf);
         result
     }
 
     /// Returns instance of the `Profile` parsed from a `data`.
-    pub fn from_xml_data(data: &[u8], context: &Context) -> Option<Self> {
+    pub fn from_xml_data(data: &[u8], context: Context) -> Option<Self> {
         if let Some(data) = context.find_plist(data) {
             let mut profile = Profile::empty();
             let mut iter = plist::xml::EventReader::new(io::Cursor::new(data)).into_iter();

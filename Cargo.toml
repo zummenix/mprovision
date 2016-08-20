@@ -14,9 +14,13 @@ docopt = "0.6.81"
 version = "2.0.1"
 plist = "0.0.13"
 chrono = "~0.2.0" # used in plist.
-crossbeam = "0.2.9"
-rayon = "0.4.0"
 memmem = "0.1.1"
+futures = { git = "https://github.com/alexcrichton/futures-rs" }
+futures-io = { git = "https://github.com/alexcrichton/futures-rs" }
+futures-mio = { git = "https://github.com/alexcrichton/futures-rs" }
+futures-cpupool = { git = "https://github.com/alexcrichton/futures-rs" }
+num_cpus = "1.0.0"
+
 
 [dev-dependencies]
 expectest = "0.6.0"
