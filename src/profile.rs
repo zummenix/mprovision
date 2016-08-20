@@ -1,11 +1,13 @@
 
-use std::io::{self, Read};
+use std::io;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use chrono::{DateTime, UTC, TimeZone};
 use plist::PlistEvent::*;
 use plist;
 use {Context, Error, Result};
+use futures::Future;
+use futures_io;
 
 /// Represents provisioning profile data.
 #[derive(Debug, Clone)]
@@ -21,16 +23,15 @@ pub struct Profile {
 impl Profile {
     /// Returns instance of the `Profile` parsed from a file.
     pub fn from_file(path: &Path) -> Result<Self> {
-        let mut file = try!(File::open(path));
-        let mut buf = Vec::new();
-        try!(file.read_to_end(&mut buf));
-        let result = Profile::from_xml_data(&buf, Context::default())
-            .map(|mut p| {
-                p.path = path.to_owned();
-                p
-            })
-            .ok_or_else(|| Error::Own("Couldn't parse file.".into()));
-        result
+        let file = try!(File::open(path));
+        futures_io::read_to_end(file, Vec::new()).map_err(From::from).and_then(|buf| {
+            Profile::from_xml_data(&buf, Context::default())
+                .map(|mut p| {
+                    p.path = path.to_owned();
+                    p
+                })
+                .ok_or_else(|| Error::Own("Couldn't parse file.".into()))
+        }).wait()
     }
 
     /// Returns instance of the `Profile` parsed from a `data`.
