@@ -134,7 +134,7 @@ fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     where F: Fn(&Profile) -> bool + Sync
 {
     let mut event_loop = futures_mio::Loop::new().unwrap();
-    let cpu_pool = CpuPool::new(num_cpus::get() as u32);
+    let cpu_pool = CpuPool::new(num_cpus::get());
 
     let stream = futures::stream::iter(entries.into_iter().map(|entry| Ok(entry)))
         .map(|entry| {
