@@ -139,10 +139,11 @@ fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     let stream = futures::stream::iter(entries.into_iter().map(|entry| Ok(entry)))
         .map(|entry| {
             cpu_pool.execute(move || {
-                Profile::from_file(&entry.path()).unwrap()
+                Profile::from_file(&entry.path())
             })
         })
         .buffered(num_cpus::get() * 2)
+        .filter_map(|v| v.ok())
         .filter(f)
         .collect();
 
