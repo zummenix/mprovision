@@ -135,11 +135,7 @@ fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     let cpu_pool = CpuPool::new(num_cpus::get());
 
     let stream = futures::stream::iter(entries.into_iter().map(|entry| Ok(entry)))
-        .map(|entry| {
-            cpu_pool.spawn_fn(move || {
-                Profile::from_file(&entry.path())
-            })
-        })
+        .map(|entry| cpu_pool.spawn_fn(move || Profile::from_file(&entry.path())))
         .buffered(num_cpus::get() * 2)
         .filter(f)
         .collect();
