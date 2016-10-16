@@ -16,8 +16,6 @@ plist = "0.0.13"
 chrono = "~0.2.0" # used in plist.
 memmem = "0.1.1"
 futures = { git = "https://github.com/alexcrichton/futures-rs" }
-futures-io = { git = "https://github.com/alexcrichton/futures-rs" }
-futures-mio = { git = "https://github.com/alexcrichton/futures-rs" }
 futures-cpupool = { git = "https://github.com/alexcrichton/futures-rs" }
 num_cpus = "1.0.0"
 

@@ -12,12 +12,11 @@ extern crate chrono;
 extern crate memmem;
 
 extern crate futures;
-extern crate futures_io;
-extern crate futures_mio;
 extern crate futures_cpupool;
 extern crate num_cpus;
 
 use futures::stream::Stream;
+use futures::Future;
 use futures_cpupool::CpuPool;
 
 use chrono::*;
@@ -133,21 +132,19 @@ pub fn expired_profiles(dir: &Path, date: DateTime<UTC>) -> Result<SearchInfo> {
 fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     where F: Fn(&Profile) -> bool + Sync
 {
-    let mut event_loop = futures_mio::Loop::new().unwrap();
     let cpu_pool = CpuPool::new(num_cpus::get());
 
     let stream = futures::stream::iter(entries.into_iter().map(|entry| Ok(entry)))
         .map(|entry| {
-            cpu_pool.execute(move || {
+            cpu_pool.spawn_fn(move || {
                 Profile::from_file(&entry.path())
             })
         })
         .buffered(num_cpus::get() * 2)
-        .filter_map(|v| v.ok())
         .filter(f)
         .collect();
 
-    event_loop.run(stream).unwrap_or(Vec::new())
+    stream.wait().unwrap_or(Vec::new())
 }
 
 fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
