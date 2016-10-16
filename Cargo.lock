@@ -5,8 +5,8 @@ dependencies = [
  "chrono 0.2.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "docopt 0.6.86 (registry+https://github.com/rust-lang/crates.io-index)",
  "expectest 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "futures 0.1.2 (git+https://github.com/alexcrichton/futures-rs)",
- "futures-cpupool 0.1.2 (git+https://github.com/alexcrichton/futures-rs)",
+ "futures 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures-cpupool 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "memmem 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num_cpus 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "plist 0.0.13 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -69,7 +69,7 @@ dependencies = [
 [[package]]
 name = "futures"
 version = "0.1.2"
-source = "git+https://github.com/alexcrichton/futures-rs#c95e3c4f904046459a72818fe090b9fd903135f9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -77,10 +77,10 @@ dependencies = [
 [[package]]
 name = "futures-cpupool"
 version = "0.1.2"
-source = "git+https://github.com/alexcrichton/futures-rs#c95e3c4f904046459a72818fe090b9fd903135f9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "crossbeam 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "futures 0.1.2 (git+https://github.com/alexcrichton/futures-rs)",
+ "futures 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "num_cpus 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -306,8 +306,8 @@ dependencies = [
 "checksum crossbeam 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)" = "0c5ea215664ca264da8a9d9c3be80d2eaf30923c259d03e870388eb927508f97"
 "checksum docopt 0.6.86 (registry+https://github.com/rust-lang/crates.io-index)" = "4a7ef30445607f6fc8720f0a0a2c7442284b629cf0d049286860fae23e71c4d9"
 "checksum expectest 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fe5ea378e61a20fdc7fabcf2a2f7b514c8d8555540562e2496d99df793f1f9bf"
-"checksum futures 0.1.2 (git+https://github.com/alexcrichton/futures-rs)" = "<none>"
-"checksum futures-cpupool 0.1.2 (git+https://github.com/alexcrichton/futures-rs)" = "<none>"
+"checksum futures 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "0bd34f72c0fffc9d2f6c570fd392bf99b9c5cd1481d79809e1cc2320befc0af0"
+"checksum futures-cpupool 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "bb982bb25cd8fa5da6a8eb3a460354c984ff1113da82bcb4f0b0862b5795db82"
 "checksum getopts 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)" = "d9047cfbd08a437050b363d35ef160452c5fe8ea5187ae0a624708c91581d685"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 "checksum lazy_static 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "49247ec2a285bb3dcb23cbd9c35193c025e7251bfce77c1d5da97e6362dffe7f"
