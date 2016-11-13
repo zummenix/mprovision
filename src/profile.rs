@@ -23,7 +23,7 @@ impl Profile {
     pub fn from_file(path: &Path) -> Result<Self> {
 
         let mut buf = Vec::new();
-        try!(try!(File::open(path)).read_to_end(&mut buf));
+        File::open(path)?.read_to_end(&mut buf)?;
         Profile::from_xml_data(&buf, Context::default())
             .map(|mut p| {
                 p.path = path.to_owned();

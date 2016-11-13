@@ -47,7 +47,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// - there is no entry in the filesystem at the provided path
 /// - the provided path is not a directory
 pub fn entries(dir: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
-    let entries = try!(fs::read_dir(dir));
+    let entries = fs::read_dir(dir)?;
     let filtered = entries.filter_map(|entry| entry.ok())
         .filter_map(|entry| {
             if let Some(ext) = entry.path().extension() {
@@ -83,8 +83,7 @@ pub fn with_dir<F, T>(dir: Option<&Path>, f: F) -> Result<T>
     if let Some(dir) = dir {
         f(dir)
     } else {
-        let dir = try!(directory());
-        f(&dir)
+        f(&directory()?)
     }
 }
 
@@ -94,7 +93,7 @@ pub struct SearchInfo {
 }
 
 pub fn search(dir: &Path, s: &str) -> Result<SearchInfo> {
-    let entries: Vec<DirEntry> = try!(entries(dir)).collect();
+    let entries: Vec<DirEntry> = entries(dir)?.collect();
     Ok(SearchInfo {
         total: entries.len(),
         profiles: parallel(entries, |profile| profile.contains(s)),
@@ -110,19 +109,17 @@ pub fn xml(dir: &Path, uuid: &str) -> Result<String> {
     match find_by_uuid(dir, uuid) {
         Ok(profile) => {
             let context = Context::default();
-            let mut file = try!(File::open(&profile.path));
             let mut buf = Vec::new();
-            try!(file.read_to_end(&mut buf));
-            let data = try!(context.find_plist(&buf)
-                .ok_or(Error::Own("Couldn't parse file.".into())));
-            Ok(try!(String::from_utf8(data.to_owned())))
+            File::open(&profile.path)?.read_to_end(&mut buf)?;
+            let data = context.find_plist(&buf).ok_or(Error::Own("Couldn't parse file.".into()))?;
+            Ok(String::from_utf8(data.to_owned())?)
         }
         Err(err) => Err(err),
     }
 }
 
 pub fn expired_profiles(dir: &Path, date: DateTime<UTC>) -> Result<SearchInfo> {
-    let entries: Vec<DirEntry> = try!(entries(dir)).collect();
+    let entries: Vec<DirEntry> = entries(dir)?.collect();
     Ok(SearchInfo {
         total: entries.len(),
         profiles: parallel(entries, |profile| profile.expiration_date <= date),
@@ -144,7 +141,7 @@ fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
 }
 
 fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
-    let entries: Vec<DirEntry> = try!(entries(dir)).collect();
+    let entries: Vec<DirEntry> = entries(dir)?.collect();
     if let Some(profile) = parallel(entries, |profile| profile.uuid == uuid).pop() {
         Ok(profile)
     } else {
