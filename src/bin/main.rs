@@ -120,7 +120,7 @@ fn search(args: &::docopt::ArgvMap) -> CliResult {
         return Err(CliError::EmptyParameter("<text>"));
     }
 
-    let info = try!(mp::with_dir(directory(args), |dir| mp::search(dir, text)));
+    let info = mp::with_dir(directory(args), |dir| mp::search(dir, text))?;
     if info.profiles.is_empty() {
         println!("Nothing found for '{}'", text);
     } else {
@@ -138,7 +138,7 @@ fn remove(args: &::docopt::ArgvMap) -> CliResult {
         return Err(CliError::EmptyParameter("<uuid>"));
     }
 
-    try!(mp::with_dir(directory(args), |dir| mp::remove(dir, uuid)));
+    mp::with_dir(directory(args), |dir| mp::remove(dir, uuid))?;
     println!("'{}' was removed", uuid);
     Ok(())
 }
@@ -149,7 +149,7 @@ fn show_xml(args: &::docopt::ArgvMap) -> CliResult {
         return Err(CliError::EmptyParameter("<uuid>"));
     }
 
-    let xml = try!(mp::with_dir(directory(args), |dir| mp::xml(dir, uuid)));
+    let xml = mp::with_dir(directory(args), |dir| mp::xml(dir, uuid))?;
     println!("{}", xml);
     Ok(())
 }
@@ -165,7 +165,7 @@ fn show_expired(args: &::docopt::ArgvMap) -> CliResult {
         date = date + Duration::days(days);
     }
 
-    let info = try!(mp::with_dir(directory(args), |dir| mp::expired_profiles(dir, date)));
+    let info = mp::with_dir(directory(args), |dir| mp::expired_profiles(dir, date))?;
     if info.profiles.is_empty() {
         println!("All provisioning profiles are valid");
     } else {
@@ -180,7 +180,7 @@ fn show_expired(args: &::docopt::ArgvMap) -> CliResult {
 fn remove_expired(args: &::docopt::ArgvMap) -> CliResult {
     use chrono::*;
 
-    let info = try!(mp::with_dir(directory(args), |dir| mp::expired_profiles(dir, UTC::now())));
+    let info = mp::with_dir(directory(args), |dir| mp::expired_profiles(dir, UTC::now()))?;
     if info.profiles.is_empty() {
         println!("All provisioning profiles are valid");
     } else {
