@@ -4,6 +4,8 @@ extern crate docopt;
 #[macro_use(version)]
 extern crate version;
 extern crate chrono;
+#[macro_use(expect)]
+extern crate expectest;
 
 use std::io::{self, Write};
 use std::process;
@@ -12,6 +14,8 @@ use std::error;
 use std::fmt;
 use docopt::Docopt;
 use mprovision as mp;
+
+mod cli;
 
 const USAGE: &'static str = "
 mprovision

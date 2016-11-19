@@ -7,7 +7,7 @@ authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
 path = "src/bin/main.rs"
 name = "mprovision"
 doc = false
-test = false
+test = true
 
 [dependencies]
 docopt = "0.6.86"
