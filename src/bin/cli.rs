@@ -12,7 +12,10 @@ Options:
   --version     Show version.
 ";
 
-pub fn parse_args(args: Vec<&str>) -> Result<ArgvMap, docopt::Error> {
+pub fn parse<I, S>(args: I) -> Result<ArgvMap, docopt::Error>
+    where I: IntoIterator<Item = S>,
+          S: AsRef<str>
+{
     Docopt::new(USAGE).and_then(|docopt| {
         docopt.argv(args).version(Some(format!("mprovision {}", version!()))).parse()
     })
@@ -25,11 +28,11 @@ mod tests {
 
     #[test]
     fn list_command() {
-        expect!(parse_args(vec!["mprovision", "list"])).to(be_ok());
-        expect!(parse_args(vec!["mprovision", "list", "."])).to(be_ok());
-        expect!(parse_args(vec!["mprovision", "list", "--filter abc"])).to(be_ok());
-        expect!(parse_args(vec!["mprovision", "list", "--filter abc", "."])).to(be_ok());
-        expect!(parse_args(vec!["mprovision", "list", "--expires-in-days 0"])).to(be_ok());
-        expect!(parse_args(vec!["mprovision", "list", "--expires-in-days 0", "."])).to(be_ok());
+        expect!(parse(&["mprovision", "list"])).to(be_ok());
+        expect!(parse(&["mprovision", "list", "."])).to(be_ok());
+        expect!(parse(&["mprovision", "list", "--filter abc"])).to(be_ok());
+        expect!(parse(&["mprovision", "list", "--filter abc", "."])).to(be_ok());
+        expect!(parse(&["mprovision", "list", "--expires-in-days 0"])).to(be_ok());
+        expect!(parse(&["mprovision", "list", "--expires-in-days 0", "."])).to(be_ok());
     }
 }
