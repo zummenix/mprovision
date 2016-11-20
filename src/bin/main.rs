@@ -6,6 +6,7 @@ extern crate version;
 extern crate chrono;
 #[macro_use(expect)]
 extern crate expectest;
+extern crate clap;
 
 use std::io::{self, Write};
 use std::process;

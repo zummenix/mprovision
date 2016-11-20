@@ -1,4 +1,4 @@
-use docopt::{self, Docopt, ArgvMap};
+use clap::{self, Arg, App, SubCommand};
 use std::io::{self, Write};
 use std::process;
 use std::path::{Path, PathBuf};
@@ -6,20 +6,6 @@ use std::error;
 use std::result;
 use std::fmt;
 use mprovision as mp;
-
-const USAGE: &'static str = "
-mprovision
-A tool that helps iOS developers to manage mobileprovision files.
-
-Usage:
-  mprovision list [--filter <text>] [--expires-in-days <days>] [<directory>]
-  mprovision (-h | --help)
-  mprovision --version
-
-Options:
-  -h --help     Show this help message.
-  --version     Show version.
-";
 
 #[derive(Debug, PartialEq)]
 pub enum Command {
@@ -38,14 +24,14 @@ pub type Result = result::Result<Command, Error>;
 #[derive(Debug)]
 pub enum Error {
     Lib(mp::Error),
-    Docopt(docopt::Error),
+    Clap(clap::Error),
     Custom(String),
 }
 
 impl Error {
     pub fn exit(&self) -> ! {
         match *self {
-            Error::Docopt(ref e) => e.exit(),
+            Error::Clap(ref e) => e.exit(),
             _ => {
                 writeln!(&mut io::stderr(), "{}", self).unwrap();
                 process::exit(1);
@@ -58,7 +44,7 @@ impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::Lib(ref e) => e.description(),
-            Error::Docopt(ref e) => e.description(),
+            Error::Clap(ref e) => e.description(),
             Error::Custom(ref e) => e,
         }
     }
@@ -66,7 +52,7 @@ impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
             Error::Lib(ref e) => Some(e),
-            Error::Docopt(ref e) => Some(e),
+            Error::Clap(ref e) => Some(e),
             Error::Custom(_) => None,
         }
     }
@@ -76,7 +62,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Lib(ref e) => error::Error::description(e).fmt(f),
-            Error::Docopt(ref e) => error::Error::description(e).fmt(f),
+            Error::Clap(ref e) => error::Error::description(e).fmt(f),
             Error::Custom(ref e) => e.fmt(f),
         }
     }
@@ -88,48 +74,49 @@ impl From<mp::Error> for Error {
     }
 }
 
-impl From<docopt::Error> for Error {
-    fn from(e: docopt::Error) -> Self {
-        Error::Docopt(e)
+impl From<clap::Error> for Error {
+    fn from(e: clap::Error) -> Self {
+        Error::Clap(e)
     }
 }
 
 pub fn parse<I, S>(args: I) -> Result
     where I: IntoIterator<Item = S>,
-          S: AsRef<str>
+          S: Clone,
+          ::std::ffi::OsString: From<S>
 {
-    let version = format!("mprovision {}", version!());
-    let argv_map = Docopt::new(USAGE)?.argv(args).version(Some(version)).parse()?;
-    if argv_map.get_bool("list") {
+    let app = App::new("mprovision")
+        .about("A tool that helps iOS developers to manage mobileprovision files.")
+        .subcommand(SubCommand::with_name("list")
+            .arg(Arg::with_name("TEXT")
+                .long("--filter")
+                .required(false)
+                .empty_values(false)
+                .takes_value(true))
+            .arg(Arg::with_name("DAYS")
+                .long("--expires-in-days")
+                .required(false)
+                .empty_values(false)
+                .takes_value(true))
+            .arg(Arg::with_name("DIRECTORY")
+                .required(false)
+                .empty_values(false)
+                .takes_value(true)));
+    let matches = app.get_matches_from_safe(args)?;
+    if let Some(list_matches) = matches.subcommand_matches("list") {
         let mut params = ListParams::default();
-        if argv_map.get_bool("--filter") {
-            let text = argv_map.get_str("--filter");
-            if text.is_empty() {
-                return Err(Error::Custom("<text> is empty".to_string()));
+        params.filter = list_matches.value_of("TEXT").map(|text| text.to_string());
+        if let Some(days) = list_matches.value_of("DAYS")
+            .and_then(|days| days.parse::<i64>().ok()) {
+            if days < 0 || days > 365 {
+                return Err(Error::Custom("DAYS should be between 0 and 365".to_string()));
             }
-            params.filter = Some(text.to_string());
+            params.expires_in_days = Some(days);
         }
-        if argv_map.get_bool("--expires-in-days") {
-            if let Some(days) = argv_map.get_str("--expires-in-days").parse::<i64>().ok() {
-                if days < 0 || days > 365 {
-                    return Err(Error::Custom("<days> should be between 0 and 365".to_string()));
-                }
-                params.expires_in_days = Some(days);
-            }
-        }
-        params.directory = directory(&argv_map);
+        params.directory = list_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::List(params))
     } else {
-        Err(Error::Custom("Command is not implemented".to_string()))
-    }
-}
-
-fn directory(args: &::docopt::ArgvMap) -> Option<PathBuf> {
-    let dir_name = args.get_str("<directory>");
-    if dir_name.is_empty() {
-        None
-    } else {
-        Some(dir_name.into())
+        Err(Error::Custom("Command isn't implemented".to_string()))
     }
 }
 
@@ -143,16 +130,36 @@ mod tests {
         expect!(parse(&["mprovision", "list"]))
             .to(be_ok().value(Command::List(ListParams::default())));
 
-        expect!(parse(&["mprovision", "list", "--filter", ""])).to(be_err());
-
         expect!(parse(&["mprovision", "list", "."])).to(be_ok().value(Command::List(ListParams {
             filter: None,
             expires_in_days: None,
             directory: Some(".".into()),
         })));
-        expect!(parse(&["mprovision", "list", "--filter abc"])).to(be_ok());
-        expect!(parse(&["mprovision", "list", "--filter abc", "."])).to(be_ok());
-        expect!(parse(&["mprovision", "list", "--expires-in-days 0"])).to(be_ok());
-        expect!(parse(&["mprovision", "list", "--expires-in-days 0", "."])).to(be_ok());
+
+        expect!(parse(&["mprovision", "list", "--filter", "abc"]))
+            .to(be_ok().value(Command::List(ListParams {
+                filter: Some("abc".to_string()),
+                expires_in_days: None,
+                directory: None,
+            })));
+
+        expect!(parse(&["mprovision", "list", "--filter", ""])).to(be_err());
+
+        expect!(parse(&["mprovision", "list", "--expires-in-days", "3"]))
+            .to(be_ok().value(Command::List(ListParams {
+                filter: None,
+                expires_in_days: Some(3),
+                directory: None,
+            })));
+
+        expect!(parse(&["mprovision", "list", "--expires-in-days", "-3"])).to(be_err());
+        expect!(parse(&["mprovision", "list", "--expires-in-days", "366"])).to(be_err());
+
+        expect!(parse(&["mprovision", "list", "--filter", "abc", "--expires-in-days", "3", "."]))
+            .to(be_ok().value(Command::List(ListParams {
+                filter: Some("abc".to_string()),
+                expires_in_days: Some(3),
+                directory: Some(".".into()),
+            })));
     }
 }
