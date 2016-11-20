@@ -1,7 +1,7 @@
 use docopt::{self, Docopt, ArgvMap};
 use std::io::{self, Write};
 use std::process;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::error;
 use std::result;
 use std::fmt;
@@ -21,9 +21,16 @@ Options:
   --version     Show version.
 ";
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Command {
-    List,
+    List(ListParams),
+}
+
+#[derive(Debug, Default, PartialEq)]
+pub struct ListParams {
+    pub filter: Option<String>,
+    pub expires_in_days: Option<i64>,
+    pub directory: Option<PathBuf>,
 }
 
 pub type Result = result::Result<Command, Error>;
@@ -93,7 +100,37 @@ pub fn parse<I, S>(args: I) -> Result
 {
     let version = format!("mprovision {}", version!());
     let argv_map = Docopt::new(USAGE)?.argv(args).version(Some(version)).parse()?;
-    Ok(Command::List)
+    if argv_map.get_bool("list") {
+        let mut params = ListParams::default();
+        if argv_map.get_bool("--filter") {
+            let text = argv_map.get_str("--filter");
+            if text.is_empty() {
+                return Err(Error::Custom("<text> is empty".to_string()));
+            }
+            params.filter = Some(text.to_string());
+        }
+        if argv_map.get_bool("--expires-in-days") {
+            if let Some(days) = argv_map.get_str("--expires-in-days").parse::<i64>().ok() {
+                if days < 0 || days > 365 {
+                    return Err(Error::Custom("<days> should be between 0 and 365".to_string()));
+                }
+                params.expires_in_days = Some(days);
+            }
+        }
+        params.directory = directory(&argv_map);
+        Ok(Command::List(params))
+    } else {
+        Err(Error::Custom("Command is not implemented".to_string()))
+    }
+}
+
+fn directory(args: &::docopt::ArgvMap) -> Option<PathBuf> {
+    let dir_name = args.get_str("<directory>");
+    if dir_name.is_empty() {
+        None
+    } else {
+        Some(dir_name.into())
+    }
 }
 
 #[cfg(test)]
@@ -103,8 +140,16 @@ mod tests {
 
     #[test]
     fn list_command() {
-        expect!(parse(&["mprovision", "list"])).to(be_ok());
-        expect!(parse(&["mprovision", "list", "."])).to(be_ok());
+        expect!(parse(&["mprovision", "list"]))
+            .to(be_ok().value(Command::List(ListParams::default())));
+
+        expect!(parse(&["mprovision", "list", "--filter", ""])).to(be_err());
+
+        expect!(parse(&["mprovision", "list", "."])).to(be_ok().value(Command::List(ListParams {
+            filter: None,
+            expires_in_days: None,
+            directory: Some(".".into()),
+        })));
         expect!(parse(&["mprovision", "list", "--filter abc"])).to(be_ok());
         expect!(parse(&["mprovision", "list", "--filter abc", "."])).to(be_ok());
         expect!(parse(&["mprovision", "list", "--expires-in-days 0"])).to(be_ok());
