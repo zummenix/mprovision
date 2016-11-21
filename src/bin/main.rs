@@ -13,7 +13,6 @@ use std::process;
 use std::path::Path;
 use std::error;
 use std::fmt;
-use docopt::Docopt;
 use mprovision as mp;
 use cli::{parse, Error, Result, Command};
 
