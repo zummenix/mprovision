@@ -1,6 +1,5 @@
 
 extern crate mprovision;
-extern crate docopt;
 #[macro_use(version)]
 extern crate version;
 extern crate chrono;
