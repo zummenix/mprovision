@@ -1,7 +1,7 @@
 use clap::{self, Arg, App, SubCommand};
 use std::io::{self, Write};
 use std::process;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::error;
 use std::result;
 use std::fmt;

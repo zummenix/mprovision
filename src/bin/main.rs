@@ -8,18 +8,14 @@ extern crate chrono;
 extern crate expectest;
 extern crate clap;
 
-use std::io::{self, Write};
-use std::process;
-use std::path::Path;
-use std::error;
-use std::fmt;
 use mprovision as mp;
-use cli::{parse, Error, Result, Command};
+use std::env;
+use cli::{Error, Result, Command};
 
 mod cli;
 
 fn main() {
-    match parse(::std::env::args()) {
+    match cli::parse(env::args()) {
         Ok(_) => println!("Ok"),
         Err(e) => e.exit(),
     }
