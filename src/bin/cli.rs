@@ -89,6 +89,7 @@ pub fn parse<I, S>(args: I) -> Result
     let app = App::new("mprovision")
         .about("A tool that helps iOS developers to manage mobileprovision files.")
         .subcommand(SubCommand::with_name("list")
+            .about("Lists provisioning profiles")
             .arg(Arg::with_name("TEXT")
                 .long("--filter")
                 .required(false)
@@ -103,10 +104,12 @@ pub fn parse<I, S>(args: I) -> Result
                 .required(false)
                 .empty_values(false)
                 .takes_value(true)))
-        .subcommand(SubCommand::with_name("cleanup").arg(Arg::with_name("DIRECTORY")
-            .required(false)
-            .empty_values(false)
-            .takes_value(true)));
+        .subcommand(SubCommand::with_name("cleanup")
+            .about("Removes expired provisioning profiles")
+            .arg(Arg::with_name("DIRECTORY")
+                .required(false)
+                .empty_values(false)
+                .takes_value(true)));
 
     let matches = app.get_matches_from_safe(args)?;
     if let Some(list_matches) = matches.subcommand_matches("list") {
