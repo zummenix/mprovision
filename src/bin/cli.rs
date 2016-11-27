@@ -1,4 +1,4 @@
-use clap::{self, Arg, App, SubCommand};
+use clap::{self, Arg, App, SubCommand, AppSettings};
 use std::io::{self, Write};
 use std::process;
 use std::path::PathBuf;
@@ -90,6 +90,7 @@ pub fn parse<I, S>(args: I) -> Result
         .about("A tool that helps iOS developers to manage mobileprovision files.")
         .subcommand(SubCommand::with_name("list")
             .about("Lists provisioning profiles")
+            .setting(AppSettings::DisableVersion)
             .arg(Arg::with_name("TEXT")
                 .long("--filter")
                 .required(false)
@@ -106,6 +107,7 @@ pub fn parse<I, S>(args: I) -> Result
                 .takes_value(true)))
         .subcommand(SubCommand::with_name("cleanup")
             .about("Removes expired provisioning profiles")
+            .setting(AppSettings::DisableVersion)
             .arg(Arg::with_name("DIRECTORY")
                 .required(false)
                 .empty_values(false)
