@@ -10,6 +10,7 @@ use mprovision as mp;
 #[derive(Debug, PartialEq)]
 pub enum Command {
     List(ListParams),
+    Cleanup(Option<PathBuf>),
 }
 
 #[derive(Debug, Default, PartialEq)]
@@ -101,7 +102,12 @@ pub fn parse<I, S>(args: I) -> Result
             .arg(Arg::with_name("DIRECTORY")
                 .required(false)
                 .empty_values(false)
-                .takes_value(true)));
+                .takes_value(true)))
+        .subcommand(SubCommand::with_name("cleanup").arg(Arg::with_name("DIRECTORY")
+            .required(false)
+            .empty_values(false)
+            .takes_value(true)));
+
     let matches = app.get_matches_from_safe(args)?;
     if let Some(list_matches) = matches.subcommand_matches("list") {
         let mut params = ListParams::default();
@@ -115,6 +121,9 @@ pub fn parse<I, S>(args: I) -> Result
         }
         params.directory = list_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::List(params))
+    } else if let Some(cleanup_matches) = matches.subcommand_matches("cleanup") {
+        let directory = cleanup_matches.value_of("DIRECTORY").map(|dir| dir.into());
+        Ok(Command::Cleanup(directory))
     } else {
         Err(Error::Custom("Command isn't implemented".to_string()))
     }
@@ -161,5 +170,13 @@ mod tests {
                 expires_in_days: Some(3),
                 directory: Some(".".into()),
             })));
+    }
+
+    #[test]
+    fn cleanup_command() {
+        expect!(parse(&["mprovision", "cleanup"])).to(be_ok().value(Command::Cleanup(None)));
+
+        expect!(parse(&["mprovision", "cleanup", "."]))
+            .to(be_ok().value(Command::Cleanup(Some(".".into()))));
     }
 }
