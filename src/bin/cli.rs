@@ -11,6 +11,7 @@ use mprovision as mp;
 pub enum Command {
     List(ListParams),
     ShowUuid(String, Option<PathBuf>),
+    ShowPath(PathBuf),
     Cleanup(Option<PathBuf>),
 }
 
@@ -120,11 +121,19 @@ pub fn parse<I, S>(args: I) -> Result
                 .long("--uuid")
                 .required(true)
                 .empty_values(false)
-                .takes_value(true))
+                .takes_value(true)
+                .conflicts_with("PATH"))
             .arg(Arg::with_name("DIRECTORY")
                 .required(false)
                 .empty_values(false)
-                .takes_value(true)));
+                .takes_value(true)
+                .conflicts_with("PATH"))
+            .arg(Arg::with_name("PATH")
+                .long("--path")
+                .required(true)
+                .empty_values(false)
+                .takes_value(true)
+                .required(true)));
 
     let matches = app.get_matches_from_safe(args)?;
     if let Some(list_matches) = matches.subcommand_matches("list") {
@@ -140,9 +149,13 @@ pub fn parse<I, S>(args: I) -> Result
         params.directory = list_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::List(params))
     } else if let Some(show_matches) = matches.subcommand_matches("show") {
-        let uuid = show_matches.value_of("UUID").map(|uuid| uuid.to_string()).unwrap();
-        let directory = show_matches.value_of("DIRECTORY").map(|dir| dir.into());
-        Ok(Command::ShowUuid(uuid, directory))
+        if let Some(uuid) = show_matches.value_of("UUID").map(|uuid| uuid.to_string()) {
+            let directory = show_matches.value_of("DIRECTORY").map(|dir| dir.into());
+            Ok(Command::ShowUuid(uuid, directory))
+        } else {
+            let path = show_matches.value_of("PATH").map(|path| path.into()).unwrap();
+            Ok(Command::ShowPath(path))
+        }
     } else if let Some(cleanup_matches) = matches.subcommand_matches("cleanup") {
         let directory = cleanup_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::Cleanup(directory))
@@ -201,6 +214,16 @@ mod tests {
 
         expect!(parse(&["mprovision", "show", "--uuid", "abcd", "."]))
             .to(be_ok().value(Command::ShowUuid("abcd".to_string(), Some(".".into()))));
+
+        expect!(parse(&["mprovision", "show", "."])).to(be_err());
+    }
+
+    #[test]
+    fn show_path_command() {
+        expect!(parse(&["mprovision", "show", "--path", "file.mprovision"]))
+            .to(be_ok().value(Command::ShowPath("file.mprovision".into())));
+
+        expect!(parse(&["mprovision", "show", "--path", "file.mprovision", "."])).to(be_err());
     }
 
     #[test]
