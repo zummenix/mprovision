@@ -10,6 +10,7 @@ use mprovision as mp;
 #[derive(Debug, PartialEq)]
 pub enum Command {
     List(ListParams),
+    ShowUuid(String, Option<PathBuf>),
     Cleanup(Option<PathBuf>),
 }
 
@@ -111,6 +112,18 @@ pub fn parse<I, S>(args: I) -> Result
             .arg(Arg::with_name("DIRECTORY")
                 .required(false)
                 .empty_values(false)
+                .takes_value(true)))
+        .subcommand(SubCommand::with_name("show")
+            .about("Shows details of a provisioning profile")
+            .setting(AppSettings::DisableVersion)
+            .arg(Arg::with_name("UUID")
+                .long("--uuid")
+                .required(true)
+                .empty_values(false)
+                .takes_value(true))
+            .arg(Arg::with_name("DIRECTORY")
+                .required(false)
+                .empty_values(false)
                 .takes_value(true)));
 
     let matches = app.get_matches_from_safe(args)?;
@@ -126,6 +139,10 @@ pub fn parse<I, S>(args: I) -> Result
         }
         params.directory = list_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::List(params))
+    } else if let Some(show_matches) = matches.subcommand_matches("show") {
+        let uuid = show_matches.value_of("UUID").map(|uuid| uuid.to_string()).unwrap();
+        let directory = show_matches.value_of("DIRECTORY").map(|dir| dir.into());
+        Ok(Command::ShowUuid(uuid, directory))
     } else if let Some(cleanup_matches) = matches.subcommand_matches("cleanup") {
         let directory = cleanup_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::Cleanup(directory))
@@ -175,6 +192,15 @@ mod tests {
                 expires_in_days: Some(3),
                 directory: Some(".".into()),
             })));
+    }
+
+    #[test]
+    fn show_uuid_command() {
+        expect!(parse(&["mprovision", "show", "--uuid", "abcd"]))
+            .to(be_ok().value(Command::ShowUuid("abcd".to_string(), None)));
+
+        expect!(parse(&["mprovision", "show", "--uuid", "abcd", "."]))
+            .to(be_ok().value(Command::ShowUuid("abcd".to_string(), Some(".".into()))));
     }
 
     #[test]
