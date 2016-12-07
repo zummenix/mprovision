@@ -10,16 +10,16 @@ extern crate clap;
 
 use mprovision as mp;
 use std::env;
-use cli::{Error, Result, Command};
 
 mod cli;
 
 fn main() {
-    match cli::parse(env::args()) {
-        Ok(_) => println!("Ok"),
-        Err(e) => e.exit(),
+    let result = cli::parse(env::args()).and_then(|command| Ok(()));
+    if let Err(e) = result {
+        e.exit();
     }
 }
+
 // fn search(args: &::docopt::ArgvMap) -> CliResult {
 //    let text = args.get_str("<text>");
 //    if text.is_empty() {
