@@ -12,6 +12,7 @@ pub enum Command {
     List(ListParams),
     ShowUuid(String, Option<PathBuf>),
     ShowPath(PathBuf),
+    RemoveUuid(String, Option<PathBuf>),
     Cleanup(Option<PathBuf>),
 }
 
@@ -133,7 +134,19 @@ pub fn parse<I, S>(args: I) -> Result
                 .required(true)
                 .empty_values(false)
                 .takes_value(true)
-                .required(true)));
+                .required(true)))
+        .subcommand(SubCommand::with_name("remove")
+            .about("Removes a provisioning profile")
+            .setting(AppSettings::DisableVersion)
+            .arg(Arg::with_name("UUID")
+                .long("--uuid")
+                .required(true)
+                .empty_values(false)
+                .takes_value(true))
+            .arg(Arg::with_name("DIRECTORY")
+                .required(false)
+                .empty_values(false)
+                .takes_value(true)));
 
     let matches = app.get_matches_from_safe(args)?;
     if let Some(list_matches) = matches.subcommand_matches("list") {
@@ -156,6 +169,10 @@ pub fn parse<I, S>(args: I) -> Result
             let path = show_matches.value_of("PATH").map(|path| path.into()).unwrap();
             Ok(Command::ShowPath(path))
         }
+    } else if let Some(remove_matches) = matches.subcommand_matches("remove") {
+        let uuid = remove_matches.value_of("UUID").map(|uuid| uuid.to_string()).unwrap();
+        let directory = remove_matches.value_of("DIRECTORY").map(|dir| dir.into());
+        Ok(Command::RemoveUuid(uuid, directory))
     } else if let Some(cleanup_matches) = matches.subcommand_matches("cleanup") {
         let directory = cleanup_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::Cleanup(directory))
@@ -224,6 +241,17 @@ mod tests {
             .to(be_ok().value(Command::ShowPath("file.mprovision".into())));
 
         expect!(parse(&["mprovision", "show", "--path", "file.mprovision", "."])).to(be_err());
+    }
+
+    #[test]
+    fn remove_uuid_command() {
+        expect!(parse(&["mprovision", "remove", "--uuid", "abcd"]))
+            .to(be_ok().value(Command::RemoveUuid("abcd".to_string(), None)));
+
+        expect!(parse(&["mprovision", "remove", "--uuid", "abcd", "."]))
+            .to(be_ok().value(Command::RemoveUuid("abcd".to_string(), Some(".".into()))));
+
+        expect!(parse(&["mprovision", "remove", "."])).to(be_err());
     }
 
     #[test]
