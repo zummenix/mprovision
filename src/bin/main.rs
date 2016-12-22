@@ -11,6 +11,7 @@ extern crate clap;
 use mprovision as mp;
 use cli::Command;
 use std::env;
+use chrono::*;
 
 mod cli;
 
@@ -22,7 +23,36 @@ fn main() {
             Command::ShowPath(file_path) => Ok(()),
             Command::RemoveUuid(uuid, directory) => Ok(()),
             Command::RemovePath(file_path) => Ok(()),
-            Command::Cleanup(directory) => Ok(()),
+            Command::Cleanup(directory) => {
+                let info = mp::with_dir(directory, |dir| mp::expired_profiles(dir, UTC::now()))?;
+                if info.profiles.is_empty() {
+                    Ok(println!("All provisioning profiles are valid"))
+                } else {
+                    let mut errors_counter = 0;
+                    let mut removals_counter = 0;
+                    for profile in info.profiles {
+                        match std::fs::remove_file(&profile.path) {
+                            Ok(_) => {
+                                removals_counter += 1;
+                                println!("'{}' was removed", profile.uuid)
+                            }
+                            Err(e) => {
+                                errors_counter += 1;
+                                println!("Error while trying to remove '{}'", profile.uuid);
+                                println!("{}", e);
+                            }
+                        }
+                    }
+                    println!("Removed {} of {}", removals_counter, info.total);
+                    if errors_counter > 0 {
+                        Err(cli::Error::Custom("There were some errors while removing \
+                                                provisioning profiles"
+                            .into()))
+                    } else {
+                        Ok(())
+                    }
+                }
+            }
         }
     });
     if let Err(e) = result {
@@ -91,43 +121,4 @@ fn main() {
 //        println!("\nFound {} of {}", info.profiles.len(), info.total);
 //    }
 //    Ok(())
-// }
-//
-// fn remove_expired(args: &::docopt::ArgvMap) -> CliResult {
-//    use chrono::*;
-//
-//    let info = mp::with_dir(directory(args), |dir| mp::expired_profiles(dir, UTC::now()))?;
-//    if info.profiles.is_empty() {
-//        println!("All provisioning profiles are valid");
-//    } else {
-//        let mut errors_counter = 0;
-//        let mut removals_counter = 0;
-//        for profile in info.profiles {
-//            match std::fs::remove_file(&profile.path) {
-//                Ok(_) => {
-//                    removals_counter += 1;
-//                    println!("'{}' was removed", profile.uuid)
-//                }
-//                Err(e) => {
-//                    errors_counter += 1;
-//                    println!("Error while trying to remove '{}'", profile.uuid);
-//                    println!("{}", e);
-//                }
-//            }
-//        }
-//        println!("Removed {} of {}", removals_counter, info.total);
-//        if errors_counter > 0 {
-//            println!("Errors: {}", errors_counter);
-//        }
-//    }
-//    Ok(())
-// }
-//
-// fn directory(args: &::docopt::ArgvMap) -> Option<&Path> {
-//    let dir_name = args.get_str("<directory>");
-//    if dir_name.is_empty() {
-//        None
-//    } else {
-//        Some(dir_name.as_ref())
-//    }
 // }
