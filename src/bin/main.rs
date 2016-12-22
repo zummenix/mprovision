@@ -9,12 +9,22 @@ extern crate expectest;
 extern crate clap;
 
 use mprovision as mp;
+use cli::Command;
 use std::env;
 
 mod cli;
 
 fn main() {
-    let result = cli::parse(env::args()).and_then(|command| Ok(()));
+    let result = cli::parse(env::args()).and_then(|command| {
+        match command {
+            Command::List(list_params) => Ok(()),
+            Command::ShowUuid(uuid, directory) => Ok(()),
+            Command::ShowPath(file_path) => Ok(()),
+            Command::RemoveUuid(uuid, directory) => Ok(()),
+            Command::RemovePath(file_path) => Ok(()),
+            Command::Cleanup(directory) => Ok(()),
+        }
+    });
     if let Err(e) = result {
         e.exit();
     }
