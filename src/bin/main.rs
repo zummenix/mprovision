@@ -12,6 +12,7 @@ use mprovision as mp;
 use cli::Command;
 use std::env;
 use chrono::*;
+use std::error::Error;
 
 mod cli;
 
@@ -25,7 +26,21 @@ fn main() {
                 mp::with_dir(directory, |dir| mp::remove(dir, &uuid))?;
                 Ok(println!("'{}' was removed", uuid))
             }
-            Command::RemovePath(file_path) => Ok(()),
+            Command::RemovePath(file_path) => {
+                if file_path.extension().map(|ext| ext == "mobileprovision").unwrap_or(false) {
+                    if file_path.exists() {
+                        std::fs::remove_file(&file_path)
+                            .map_err(|err| cli::Error::Custom(err.description().to_string()))?;
+                        Ok(println!("'{}' was removed", file_path.display()))
+                    } else {
+                        Err(cli::Error::Custom(format!("'{}' doesn't exist", file_path.display())))
+                    }
+                } else {
+                    Err(cli::Error::Custom(format!("'{}' doesn't have 'mobileprovision' \
+                                                    extension",
+                                                   file_path.display())))
+                }
+            }
             Command::Cleanup(directory) => {
                 let info = mp::with_dir(directory, |dir| mp::expired_profiles(dir, UTC::now()))?;
                 if info.profiles.is_empty() {
