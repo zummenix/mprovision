@@ -21,7 +21,10 @@ fn main() {
             Command::List(list_params) => Ok(()),
             Command::ShowUuid(uuid, directory) => Ok(()),
             Command::ShowPath(file_path) => Ok(()),
-            Command::RemoveUuid(uuid, directory) => Ok(()),
+            Command::RemoveUuid(uuid, directory) => {
+                mp::with_dir(directory, |dir| mp::remove(dir, &uuid))?;
+                Ok(println!("'{}' was removed", uuid))
+            }
             Command::RemovePath(file_path) => Ok(()),
             Command::Cleanup(directory) => {
                 let info = mp::with_dir(directory, |dir| mp::expired_profiles(dir, UTC::now()))?;
@@ -75,17 +78,6 @@ fn main() {
 //        }
 //        println!("\nFound {} of {}", info.profiles.len(), info.total);
 //    }
-//    Ok(())
-// }
-//
-// fn remove(args: &::docopt::ArgvMap) -> CliResult {
-//    let uuid = args.get_str("<uuid>");
-//    if uuid.is_empty() {
-//        return Err(CliError::EmptyParameter("<uuid>"));
-//    }
-//
-//    mp::with_dir(directory(args), |dir| mp::remove(dir, uuid))?;
-//    println!("'{}' was removed", uuid);
 //    Ok(())
 // }
 //
