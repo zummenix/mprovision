@@ -99,6 +99,26 @@ pub fn search(dir: &Path, s: &str) -> Result<SearchInfo> {
 }
 
 pub fn remove(file_path: &Path) -> Result<()> {
+    validate_path(file_path)
+        .and_then(|file_path| std::fs::remove_file(file_path).map_err(|err| err.into()))
+}
+
+pub fn show(file_path: &Path) -> Result<String> {
+    validate_path(file_path).and_then(|file_path| {
+        let context = Context::default();
+        let mut buf = Vec::new();
+        File::open(file_path)
+            .and_then(|mut file| file.read_to_end(&mut buf))
+            .map_err(|err| err.into())
+            .and_then(|_| {
+                context.find_plist(&buf)
+                    .ok_or(Error::Own(format!("Couldn't parse '{}'", file_path.display())))
+            })
+            .and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
+    })
+}
+
+fn validate_path(file_path: &Path) -> Result<&Path> {
     file_path.extension()
         .and_then(|extension| if extension == "mobileprovision" {
             Some(file_path)
@@ -109,20 +129,6 @@ pub fn remove(file_path: &Path) -> Result<()> {
             Error::Own(format!("'{}' doesn't have 'mobileprovision' extension",
                                file_path.display()))
         })
-        .and_then(|file_path| std::fs::remove_file(file_path).map_err(|err| err.into()))
-}
-
-pub fn xml(dir: &Path, uuid: &str) -> Result<String> {
-    match find_by_uuid(dir, uuid) {
-        Ok(profile) => {
-            let context = Context::default();
-            let mut buf = Vec::new();
-            File::open(&profile.path)?.read_to_end(&mut buf)?;
-            let data = context.find_plist(&buf).ok_or(Error::Own("Couldn't parse file.".into()))?;
-            Ok(String::from_utf8(data.to_owned())?)
-        }
-        Err(err) => Err(err),
-    }
 }
 
 pub fn expired_profiles(dir: &Path, date: DateTime<UTC>) -> Result<SearchInfo> {

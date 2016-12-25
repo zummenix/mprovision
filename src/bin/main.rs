@@ -20,8 +20,20 @@ fn main() {
     let result = cli::parse(env::args()).and_then(|command| {
         match command {
             Command::List(list_params) => Ok(()),
-            Command::ShowUuid(uuid, directory) => Ok(()),
-            Command::ShowPath(file_path) => Ok(()),
+            Command::ShowUuid(uuid, directory) => {
+                mp::with_directory(directory)
+                    .and_then(|directory| {
+                        mp::find_by_uuid(&directory, &uuid).and_then(|profile| {
+                            mp::show(&profile.path).map(|xml| println!("{}", xml))
+                        })
+                    })
+                    .map_err(|err| err.into())
+            }
+            Command::ShowPath(file_path) => {
+                mp::show(&file_path)
+                    .map(|xml| println!("{}", xml))
+                    .map_err(|err| err.into())
+            }
             Command::RemoveUuid(uuid, directory) => {
                 mp::with_directory(directory)
                     .and_then(|directory| {
