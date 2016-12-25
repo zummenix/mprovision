@@ -23,7 +23,8 @@ fn main() {
             Command::ShowUuid(uuid, directory) => Ok(()),
             Command::ShowPath(file_path) => Ok(()),
             Command::RemoveUuid(uuid, directory) => {
-                mp::with_dir(directory, |directory| {
+                mp::with_directory(directory)
+                    .and_then(|directory| {
                         mp::find_by_uuid(&directory, &uuid)
                             .and_then(|profile| mp::remove(&profile.path))
                             .map(|_| println!("'{}' was removed", uuid))
@@ -36,7 +37,8 @@ fn main() {
                     .map_err(|err| err.into())
             }
             Command::Cleanup(directory) => {
-                let info = mp::with_dir(directory, |dir| mp::expired_profiles(dir, UTC::now()))?;
+                let info = mp::with_directory(directory)
+                    .and_then(|directory| mp::expired_profiles(&directory, UTC::now()))?;
                 if info.profiles.is_empty() {
                     Ok(println!("All provisioning profiles are valid"))
                 } else {

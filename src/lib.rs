@@ -77,13 +77,11 @@ pub fn directory() -> Result<PathBuf> {
         })
 }
 
-pub fn with_dir<F, T>(dir: Option<PathBuf>, f: F) -> Result<T>
-    where F: FnOnce(&Path) -> Result<T>
-{
-    if let Some(dir) = dir {
-        f(dir.as_path())
+pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
+    if let Some(d) = dir {
+        Ok(d)
     } else {
-        f(&directory()?)
+        directory()
     }
 }
 
