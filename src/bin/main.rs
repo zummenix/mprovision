@@ -12,14 +12,43 @@ use mprovision as mp;
 use cli::Command;
 use std::env;
 use chrono::*;
-use std::error::Error;
 
 mod cli;
 
 fn main() {
     let result = cli::parse(env::args()).and_then(|command| {
         match command {
-            Command::List(list_params) => Ok(()),
+            Command::List(cli::ListParams { filter, expires_in_days, directory }) => {
+                mp::with_directory(directory)
+                    .and_then(|dir| mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>()))
+                    .map_err(|err| err.into())
+                    .map(|entries| {
+                        let total = entries.len();
+                        let date = expires_in_days.map(|days| UTC::now() + Duration::days(days));
+                        let filter_string = filter.as_ref();
+                        let profiles = mp::filter(entries, |profile| {
+                            match (date, filter_string) {
+                                (Some(date), Some(string)) => {
+                                    profile.expiration_date <= date && profile.contains(&string)
+                                }
+                                (Some(date), _) => profile.expiration_date <= date,
+                                (_, Some(string)) => profile.contains(&string),
+                                (_, _) => false,
+                            }
+                        });
+                        (total, profiles)
+                    })
+                    .and_then(|(total, profiles)| {
+                        if profiles.is_empty() {
+                            Ok(println!("Nothing found"))
+                        } else {
+                            for profile in &profiles {
+                                println!("\n{}", profile.description());
+                            }
+                            Ok(println!("\nFound {} of {}", profiles.len(), total))
+                        }
+                    })
+            }
             Command::ShowUuid(uuid, directory) => {
                 mp::with_directory(directory)
                     .and_then(|directory| {
@@ -49,35 +78,37 @@ fn main() {
                     .map_err(|err| err.into())
             }
             Command::Cleanup(directory) => {
-                let info = mp::with_directory(directory)
-                    .and_then(|directory| mp::expired_profiles(&directory, UTC::now()))?;
-                if info.profiles.is_empty() {
-                    Ok(println!("All provisioning profiles are valid"))
-                } else {
-                    let mut errors_counter = 0;
-                    let mut removals_counter = 0;
-                    for profile in info.profiles {
-                        match std::fs::remove_file(&profile.path) {
-                            Ok(_) => {
-                                removals_counter += 1;
-                                println!("'{}' was removed", profile.uuid)
-                            }
-                            Err(e) => {
-                                errors_counter += 1;
-                                println!("Error while trying to remove '{}'", profile.uuid);
-                                println!("{}", e);
-                            }
+                mp::with_directory(directory)
+                    .and_then(|dir| mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>()))
+                    .map_err(|err| err.into())
+                    .map(|entries| {
+                        let date = UTC::now();
+                        let profiles = mp::filter(entries,
+                                                  |profile| profile.expiration_date <= date);
+                        profiles
+                    })
+                    .and_then(|profiles| {
+                        if profiles.is_empty() {
+                            Ok(println!("All provisioning profiles are valid"))
+                        } else {
+                            profiles.iter()
+                                .map(|profile| {
+                                    std::fs::remove_file(&profile.path)
+                                        .map(|_| format!("'{}' was removed", profile.uuid))
+                                        .map_err(|err| format!("'{}' {}", profile.uuid, err))
+                                })
+                                .fold(Ok(String::new()), |acc, s| {
+                                    match (acc, s) {
+                                        (Ok(acc), Ok(s)) => Ok(concat(acc, s)),
+                                        (Err(acc), Ok(s)) => Err(concat(acc, s)),
+                                        (Err(acc), Err(s)) => Err(concat(acc, s)),
+                                        (Ok(acc), Err(s)) => Err(concat(acc, s)),
+                                    }
+                                })
+                                .map(|s| println!("{}", s))
+                                .map_err(|err| cli::Error::Custom(err))
                         }
-                    }
-                    println!("Removed {} of {}", removals_counter, info.total);
-                    if errors_counter > 0 {
-                        Err(cli::Error::Custom("There were some errors while removing \
-                                                provisioning profiles"
-                            .into()))
-                    } else {
-                        Ok(())
-                    }
-                }
+                    })
             }
         }
     });
@@ -86,54 +117,7 @@ fn main() {
     }
 }
 
-// fn search(args: &::docopt::ArgvMap) -> CliResult {
-//    let text = args.get_str("<text>");
-//    if text.is_empty() {
-//        return Err(CliError::EmptyParameter("<text>"));
-//    }
-//
-//    let info = mp::with_dir(directory(args), |dir| mp::search(dir, text))?;
-//    if info.profiles.is_empty() {
-//        println!("Nothing found for '{}'", text);
-//    } else {
-//        for profile in &info.profiles {
-//            println!("\n{}", profile.description());
-//        }
-//        println!("\nFound {} of {}", info.profiles.len(), info.total);
-//    }
-//    Ok(())
-// }
-//
-// fn show_xml(args: &::docopt::ArgvMap) -> CliResult {
-//    let uuid = args.get_str("<uuid>");
-//    if uuid.is_empty() {
-//        return Err(CliError::EmptyParameter("<uuid>"));
-//    }
-//
-//    let xml = mp::with_dir(directory(args), |dir| mp::xml(dir, uuid))?;
-//    println!("{}", xml);
-//    Ok(())
-// }
-//
-// fn show_expired(args: &::docopt::ArgvMap) -> CliResult {
-//    use chrono::*;
-//
-//    let mut date = UTC::now();
-//    if let Some(days) = args.get_str("<days>").parse::<i64>().ok() {
-//        if days < 0 || days > 365 {
-//            return Err(CliError::Custom("<days> should be between 0 and 365".to_string()));
-//        }
-//        date = date + Duration::days(days);
-//    }
-//
-//    let info = mp::with_dir(directory(args), |dir| mp::expired_profiles(dir, date))?;
-//    if info.profiles.is_empty() {
-//        println!("All provisioning profiles are valid");
-//    } else {
-//        for profile in &info.profiles {
-//            println!("\n{}", profile.description());
-//        }
-//        println!("\nFound {} of {}", info.profiles.len(), info.total);
-//    }
-//    Ok(())
-// }
+fn concat(mut s1: String, s2: String) -> String {
+    s1.push_str(&s2);
+    s1
+}

@@ -19,8 +19,6 @@ use futures::stream::Stream;
 use futures::Future;
 use futures_cpupool::CpuPool;
 
-use chrono::*;
-
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
 use std::env;
@@ -85,19 +83,6 @@ pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
     }
 }
 
-pub struct SearchInfo {
-    pub total: usize,
-    pub profiles: Vec<Profile>,
-}
-
-pub fn search(dir: &Path, s: &str) -> Result<SearchInfo> {
-    let entries: Vec<DirEntry> = entries(dir)?.collect();
-    Ok(SearchInfo {
-        total: entries.len(),
-        profiles: parallel(entries, |profile| profile.contains(s)),
-    })
-}
-
 pub fn remove(file_path: &Path) -> Result<()> {
     validate_path(file_path)
         .and_then(|file_path| std::fs::remove_file(file_path).map_err(|err| err.into()))
@@ -131,15 +116,7 @@ fn validate_path(file_path: &Path) -> Result<&Path> {
         })
 }
 
-pub fn expired_profiles(dir: &Path, date: DateTime<UTC>) -> Result<SearchInfo> {
-    let entries: Vec<DirEntry> = entries(dir)?.collect();
-    Ok(SearchInfo {
-        total: entries.len(),
-        profiles: parallel(entries, |profile| profile.expiration_date <= date),
-    })
-}
-
-fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
+pub fn filter<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     where F: Fn(&Profile) -> bool + Sync
 {
     let cpu_pool = CpuPool::new(num_cpus::get());
@@ -155,7 +132,7 @@ fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
 
 pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
     let entries: Vec<DirEntry> = entries(dir)?.collect();
-    if let Some(profile) = parallel(entries, |profile| profile.uuid == uuid).pop() {
+    if let Some(profile) = filter(entries, |profile| profile.uuid == uuid).pop() {
         Ok(profile)
     } else {
         Err(Error::Own(format!("Profile '{}' is not found.", uuid)))
