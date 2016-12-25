@@ -100,9 +100,18 @@ pub fn search(dir: &Path, s: &str) -> Result<SearchInfo> {
     })
 }
 
-pub fn remove(dir: &Path, uuid: &str) -> Result<()> {
-    find_by_uuid(dir, uuid)
-        .and_then(|profile| std::fs::remove_file(&profile.path).map_err(|err| err.into()))
+pub fn remove(file_path: &Path) -> Result<()> {
+    file_path.extension()
+        .and_then(|extension| if extension == "mobileprovision" {
+            Some(file_path)
+        } else {
+            None
+        })
+        .ok_or_else(|| {
+            Error::Own(format!("'{}' doesn't have 'mobileprovision' extension",
+                               file_path.display()))
+        })
+        .and_then(|file_path| std::fs::remove_file(file_path).map_err(|err| err.into()))
 }
 
 pub fn xml(dir: &Path, uuid: &str) -> Result<String> {
@@ -140,7 +149,7 @@ fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     stream.wait().unwrap_or(Vec::new())
 }
 
-fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
+pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
     let entries: Vec<DirEntry> = entries(dir)?.collect();
     if let Some(profile) = parallel(entries, |profile| profile.uuid == uuid).pop() {
         Ok(profile)

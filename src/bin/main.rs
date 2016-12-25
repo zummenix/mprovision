@@ -23,23 +23,17 @@ fn main() {
             Command::ShowUuid(uuid, directory) => Ok(()),
             Command::ShowPath(file_path) => Ok(()),
             Command::RemoveUuid(uuid, directory) => {
-                mp::with_dir(directory, |dir| mp::remove(dir, &uuid))?;
-                Ok(println!("'{}' was removed", uuid))
+                mp::with_dir(directory, |directory| {
+                        mp::find_by_uuid(&directory, &uuid)
+                            .and_then(|profile| mp::remove(&profile.path))
+                            .map(|_| println!("'{}' was removed", uuid))
+                    })
+                    .map_err(|err| err.into())
             }
             Command::RemovePath(file_path) => {
-                if file_path.extension().map(|ext| ext == "mobileprovision").unwrap_or(false) {
-                    if file_path.exists() {
-                        std::fs::remove_file(&file_path)
-                            .map_err(|err| cli::Error::Custom(err.description().to_string()))?;
-                        Ok(println!("'{}' was removed", file_path.display()))
-                    } else {
-                        Err(cli::Error::Custom(format!("'{}' doesn't exist", file_path.display())))
-                    }
-                } else {
-                    Err(cli::Error::Custom(format!("'{}' doesn't have 'mobileprovision' \
-                                                    extension",
-                                                   file_path.display())))
-                }
+                mp::remove(&file_path)
+                    .map(|_| println!("'{}' was removed", file_path.display()))
+                    .map_err(|err| err.into())
             }
             Command::Cleanup(directory) => {
                 let info = mp::with_dir(directory, |dir| mp::expired_profiles(dir, UTC::now()))?;
