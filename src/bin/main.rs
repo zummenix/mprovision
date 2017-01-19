@@ -63,7 +63,7 @@ fn main() {
                     .map(|xml| println!("{}", xml))
                     .map_err(|err| err.into())
             }
-            Command::RemoveUuid(uuid, directory) => {
+            Command::Remove(uuid, directory) => {
                 mp::with_directory(directory)
                     .and_then(|directory| {
                         mp::find_by_uuid(&directory, &uuid)

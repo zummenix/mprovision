@@ -12,7 +12,7 @@ pub enum Command {
     List(ListParams),
     ShowUuid(String, Option<PathBuf>),
     ShowPath(PathBuf),
-    RemoveUuid(String, Option<PathBuf>),
+    Remove(String, Option<PathBuf>),
     Cleanup(Option<PathBuf>),
 }
 
@@ -175,7 +175,7 @@ pub fn parse<I, S>(args: I) -> Result
     } else if let Some(remove_matches) = matches.subcommand_matches("remove") {
         let uuid = remove_matches.value_of("UUID").map(|uuid| uuid.to_string()).unwrap();
         let directory = remove_matches.value_of("DIRECTORY").map(|dir| dir.into());
-        Ok(Command::RemoveUuid(uuid, directory))
+        Ok(Command::Remove(uuid, directory))
     } else if let Some(cleanup_matches) = matches.subcommand_matches("cleanup") {
         let directory = cleanup_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::Cleanup(directory))
@@ -249,10 +249,10 @@ mod tests {
     #[test]
     fn remove_uuid_command() {
         expect!(parse(&["mprovision", "remove", "abcd"]))
-            .to(be_ok().value(Command::RemoveUuid("abcd".to_string(), None)));
+            .to(be_ok().value(Command::Remove("abcd".to_string(), None)));
 
         expect!(parse(&["mprovision", "remove", "abcd", "."]))
-            .to(be_ok().value(Command::RemoveUuid("abcd".to_string(), Some(".".into()))));
+            .to(be_ok().value(Command::Remove("abcd".to_string(), Some(".".into()))));
     }
 
     #[test]
