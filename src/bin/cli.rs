@@ -13,7 +13,6 @@ pub enum Command {
     ShowUuid(String, Option<PathBuf>),
     ShowPath(PathBuf),
     RemoveUuid(String, Option<PathBuf>),
-    RemovePath(PathBuf),
     Cleanup(Option<PathBuf>),
 }
 
@@ -136,22 +135,13 @@ pub fn parse<I, S>(args: I) -> Result
             .display_order(2)
             .setting(AppSettings::DisableVersion)
             .arg(Arg::with_name("UUID")
-                .long("--uuid")
                 .required(true)
                 .empty_values(false)
-                .takes_value(true)
-                .conflicts_with("PATH"))
+                .takes_value(true))
             .arg(Arg::with_name("DIRECTORY")
                 .required(false)
                 .empty_values(false)
-                .takes_value(true)
-                .conflicts_with("PATH"))
-            .arg(Arg::with_name("PATH")
-                .long("--path")
-                .required(true)
-                .empty_values(false)
-                .takes_value(true)
-                .required(true)))
+                .takes_value(true)))
         .subcommand(SubCommand::with_name("cleanup")
             .about("Removes expired provisioning profiles")
             .display_order(4)
@@ -183,13 +173,9 @@ pub fn parse<I, S>(args: I) -> Result
             Ok(Command::ShowPath(path))
         }
     } else if let Some(remove_matches) = matches.subcommand_matches("remove") {
-        if let Some(uuid) = remove_matches.value_of("UUID").map(|uuid| uuid.to_string()) {
-            let directory = remove_matches.value_of("DIRECTORY").map(|dir| dir.into());
-            Ok(Command::RemoveUuid(uuid, directory))
-        } else {
-            let path = remove_matches.value_of("PATH").map(|path| path.into()).unwrap();
-            Ok(Command::RemovePath(path))
-        }
+        let uuid = remove_matches.value_of("UUID").map(|uuid| uuid.to_string()).unwrap();
+        let directory = remove_matches.value_of("DIRECTORY").map(|dir| dir.into());
+        Ok(Command::RemoveUuid(uuid, directory))
     } else if let Some(cleanup_matches) = matches.subcommand_matches("cleanup") {
         let directory = cleanup_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::Cleanup(directory))
@@ -262,21 +248,11 @@ mod tests {
 
     #[test]
     fn remove_uuid_command() {
-        expect!(parse(&["mprovision", "remove", "--uuid", "abcd"]))
+        expect!(parse(&["mprovision", "remove", "abcd"]))
             .to(be_ok().value(Command::RemoveUuid("abcd".to_string(), None)));
 
-        expect!(parse(&["mprovision", "remove", "--uuid", "abcd", "."]))
+        expect!(parse(&["mprovision", "remove", "abcd", "."]))
             .to(be_ok().value(Command::RemoveUuid("abcd".to_string(), Some(".".into()))));
-
-        expect!(parse(&["mprovision", "remove", "."])).to(be_err());
-    }
-
-    #[test]
-    fn remove_path_command() {
-        expect!(parse(&["mprovision", "remove", "--path", "file.mprovision"]))
-            .to(be_ok().value(Command::RemovePath("file.mprovision".into())));
-
-        expect!(parse(&["mprovision", "remove", "--path", "file.mprovision", "."])).to(be_err());
     }
 
     #[test]

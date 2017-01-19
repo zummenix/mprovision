@@ -72,11 +72,6 @@ fn main() {
                     })
                     .map_err(|err| err.into())
             }
-            Command::RemovePath(file_path) => {
-                mp::remove(&file_path)
-                    .map(|_| println!("'{}' was removed", file_path.display()))
-                    .map_err(|err| err.into())
-            }
             Command::Cleanup(directory) => {
                 mp::with_directory(directory)
                     .and_then(|dir| mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>()))
