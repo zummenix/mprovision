@@ -96,14 +96,18 @@ pub fn parse<I, S>(args: I) -> Result
             .display_order(0)
             .setting(AppSettings::DisableVersion)
             .arg(Arg::with_name("TEXT")
-                .long("--text")
+                .long("text")
+                .short("t")
                 .help("Lists provisioning profiles that contain this text")
+                .display_order(0)
                 .required(false)
                 .empty_values(false)
                 .takes_value(true))
             .arg(Arg::with_name("DAYS")
-                .long("--expire-in-days")
-                .help("Lists provisioning profiles that will expire")
+                .long("expire-in-days")
+                .short("d")
+                .help("Lists provisioning profiles that will expire in days")
+                .display_order(1)
                 .required(false)
                 .empty_values(false)
                 .takes_value(true))
@@ -214,7 +218,16 @@ mod tests {
                 directory: None,
             })));
 
+        expect!(parse(&["mprovision", "list", "-t", "abc"]))
+            .to(be_ok().value(Command::List(ListParams {
+                filter: Some("abc".to_string()),
+                expires_in_days: None,
+                directory: None,
+            })));
+
         expect!(parse(&["mprovision", "list", "--text", ""])).to(be_err());
+
+        expect!(parse(&["mprovision", "list", "-t", ""])).to(be_err());
 
         expect!(parse(&["mprovision", "list", "--expire-in-days", "3"]))
             .to(be_ok().value(Command::List(ListParams {
@@ -223,10 +236,26 @@ mod tests {
                 directory: None,
             })));
 
+        expect!(parse(&["mprovision", "list", "-d", "3"]))
+            .to(be_ok().value(Command::List(ListParams {
+                filter: None,
+                expires_in_days: Some(3),
+                directory: None,
+            })));
+
         expect!(parse(&["mprovision", "list", "--expire-in-days", "-3"])).to(be_err());
+        expect!(parse(&["mprovision", "list", "-d", "-3"])).to(be_err());
         expect!(parse(&["mprovision", "list", "--expire-in-days", "366"])).to(be_err());
+        expect!(parse(&["mprovision", "list", "-d", "366"])).to(be_err());
 
         expect!(parse(&["mprovision", "list", "--text", "abc", "--expire-in-days", "3", "."]))
+            .to(be_ok().value(Command::List(ListParams {
+                filter: Some("abc".to_string()),
+                expires_in_days: Some(3),
+                directory: Some(".".into()),
+            })));
+
+        expect!(parse(&["mprovision", "list", "-t", "abc", "-d", "3", "."]))
             .to(be_ok().value(Command::List(ListParams {
                 filter: Some("abc".to_string()),
                 expires_in_days: Some(3),
