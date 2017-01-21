@@ -23,7 +23,7 @@ fn main() {
                 list(filter, expires_in_days, directory)
             }
             Command::ShowUuid(uuid, directory) => show_uuid(uuid, directory),
-            Command::ShowPath(file_path) => show_path(file_path),
+            Command::ShowFile(path) => show_file(path),
             Command::Remove(uuid, directory) => remove(uuid, directory),
             Command::Cleanup(directory) => cleanup(directory),
         }
@@ -77,8 +77,8 @@ fn show_uuid(uuid: String, directory: Option<PathBuf>) -> Result<(), cli::Error>
         .map_err(|err| err.into())
 }
 
-fn show_path(file_path: PathBuf) -> Result<(), cli::Error> {
-    mp::show(&file_path)
+fn show_file(path: PathBuf) -> Result<(), cli::Error> {
+    mp::show(&path)
         .map(|xml| println!("{}", xml))
         .map_err(|err| err.into())
 }

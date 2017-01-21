@@ -11,7 +11,7 @@ use mprovision as mp;
 pub enum Command {
     List(ListParams),
     ShowUuid(String, Option<PathBuf>),
-    ShowPath(PathBuf),
+    ShowFile(PathBuf),
     Remove(String, Option<PathBuf>),
     Cleanup(Option<PathBuf>),
 }
@@ -110,29 +110,28 @@ pub fn parse<I, S>(args: I) -> Result
                 .empty_values(false)
                 .takes_value(true)))
         .subcommand(SubCommand::with_name("show")
-            .about("Shows details of a provisioning profile")
+            .about("Shows details of a provisioning profile using its uuid")
             .display_order(1)
             .setting(AppSettings::DisableVersion)
             .arg(Arg::with_name("UUID")
-                .long("--uuid")
                 .required(true)
                 .empty_values(false)
-                .takes_value(true)
-                .conflicts_with("PATH"))
+                .takes_value(true))
             .arg(Arg::with_name("DIRECTORY")
                 .required(false)
                 .empty_values(false)
-                .takes_value(true)
-                .conflicts_with("PATH"))
+                .takes_value(true)))
+        .subcommand(SubCommand::with_name("show-file")
+            .about("Shows details of a provisioning profile using its file path")
+            .display_order(2)
+            .setting(AppSettings::DisableVersion)
             .arg(Arg::with_name("PATH")
-                .long("--path")
                 .required(true)
                 .empty_values(false)
-                .takes_value(true)
-                .required(true)))
+                .takes_value(true)))
         .subcommand(SubCommand::with_name("remove")
             .about("Removes a provisioning profile")
-            .display_order(2)
+            .display_order(3)
             .setting(AppSettings::DisableVersion)
             .arg(Arg::with_name("UUID")
                 .required(true)
@@ -165,13 +164,12 @@ pub fn parse<I, S>(args: I) -> Result
         params.directory = list_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::List(params))
     } else if let Some(show_matches) = matches.subcommand_matches("show") {
-        if let Some(uuid) = show_matches.value_of("UUID").map(|uuid| uuid.to_string()) {
-            let directory = show_matches.value_of("DIRECTORY").map(|dir| dir.into());
-            Ok(Command::ShowUuid(uuid, directory))
-        } else {
-            let path = show_matches.value_of("PATH").map(|path| path.into()).unwrap();
-            Ok(Command::ShowPath(path))
-        }
+        let uuid = show_matches.value_of("UUID").map(|uuid| uuid.to_string()).unwrap();
+        let directory = show_matches.value_of("DIRECTORY").map(|dir| dir.into());
+        Ok(Command::ShowUuid(uuid, directory))
+    } else if let Some(show_file_matches) = matches.subcommand_matches("show-file") {
+        let path = show_file_matches.value_of("PATH").map(|path| path.into()).unwrap();
+        Ok(Command::ShowFile(path))
     } else if let Some(remove_matches) = matches.subcommand_matches("remove") {
         let uuid = remove_matches.value_of("UUID").map(|uuid| uuid.to_string()).unwrap();
         let directory = remove_matches.value_of("DIRECTORY").map(|dir| dir.into());
@@ -229,21 +227,19 @@ mod tests {
 
     #[test]
     fn show_uuid_command() {
-        expect!(parse(&["mprovision", "show", "--uuid", "abcd"]))
+        expect!(parse(&["mprovision", "show", "abcd"]))
             .to(be_ok().value(Command::ShowUuid("abcd".to_string(), None)));
 
-        expect!(parse(&["mprovision", "show", "--uuid", "abcd", "."]))
+        expect!(parse(&["mprovision", "show", "abcd", "."]))
             .to(be_ok().value(Command::ShowUuid("abcd".to_string(), Some(".".into()))));
-
-        expect!(parse(&["mprovision", "show", "."])).to(be_err());
     }
 
     #[test]
     fn show_path_command() {
-        expect!(parse(&["mprovision", "show", "--path", "file.mprovision"]))
-            .to(be_ok().value(Command::ShowPath("file.mprovision".into())));
+        expect!(parse(&["mprovision", "show-file", "file.mprovision"]))
+            .to(be_ok().value(Command::ShowFile("file.mprovision".into())));
 
-        expect!(parse(&["mprovision", "show", "--path", "file.mprovision", "."])).to(be_err());
+        expect!(parse(&["mprovision", "show-file", "file.mprovision", "."])).to(be_err());
     }
 
     #[test]
