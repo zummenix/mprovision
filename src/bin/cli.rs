@@ -13,7 +13,7 @@ pub enum Command {
     ShowUuid(String, Option<PathBuf>),
     ShowFile(PathBuf),
     Remove(String, Option<PathBuf>),
-    Cleanup(Option<PathBuf>),
+    Clean(Option<PathBuf>),
 }
 
 #[derive(Debug, Default, PartialEq)]
@@ -153,7 +153,7 @@ pub fn parse<I, S>(args: I) -> Result
                 .required(false)
                 .empty_values(false)
                 .takes_value(true)))
-        .subcommand(SubCommand::with_name("cleanup")
+        .subcommand(SubCommand::with_name("clean")
             .about("Removes expired provisioning profiles")
             .display_order(4)
             .setting(AppSettings::DisableVersion)
@@ -187,9 +187,9 @@ pub fn parse<I, S>(args: I) -> Result
         let uuid = remove_matches.value_of("UUID").map(|uuid| uuid.to_string()).unwrap();
         let directory = remove_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::Remove(uuid, directory))
-    } else if let Some(cleanup_matches) = matches.subcommand_matches("cleanup") {
-        let directory = cleanup_matches.value_of("DIRECTORY").map(|dir| dir.into());
-        Ok(Command::Cleanup(directory))
+    } else if let Some(clean_matches) = matches.subcommand_matches("clean") {
+        let directory = clean_matches.value_of("DIRECTORY").map(|dir| dir.into());
+        Ok(Command::Clean(directory))
     } else {
         Err(Error::Custom("Command isn't implemented".to_string()))
     }
@@ -290,10 +290,10 @@ mod tests {
     }
 
     #[test]
-    fn cleanup_command() {
-        expect!(parse(&["mprovision", "cleanup"])).to(be_ok().value(Command::Cleanup(None)));
+    fn clean_command() {
+        expect!(parse(&["mprovision", "clean"])).to(be_ok().value(Command::Clean(None)));
 
-        expect!(parse(&["mprovision", "cleanup", "."]))
-            .to(be_ok().value(Command::Cleanup(Some(".".into()))));
+        expect!(parse(&["mprovision", "clean", "."]))
+            .to(be_ok().value(Command::Clean(Some(".".into()))));
     }
 }

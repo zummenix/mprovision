@@ -25,7 +25,7 @@ fn main() {
             Command::ShowUuid(uuid, directory) => show_uuid(uuid, directory),
             Command::ShowFile(path) => show_file(path),
             Command::Remove(uuid, directory) => remove(uuid, directory),
-            Command::Cleanup(directory) => cleanup(directory),
+            Command::Clean(directory) => clean(directory),
         }
     });
     if let Err(e) = result {
@@ -93,7 +93,7 @@ fn remove(uuid: String, directory: Option<PathBuf>) -> Result<(), cli::Error> {
         .map_err(|err| err.into())
 }
 
-fn cleanup(directory: Option<PathBuf>) -> Result<(), cli::Error> {
+fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
 
     fn concat(mut s1: String, s2: String) -> String {
         s1.push_str(&s2);
