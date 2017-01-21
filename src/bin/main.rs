@@ -114,8 +114,8 @@ fn cleanup(directory: Option<PathBuf>) -> Result<(), cli::Error> {
                 profiles.iter()
                     .map(|profile| {
                         std::fs::remove_file(&profile.path)
-                            .map(|_| format!("'{}' was removed", profile.uuid))
-                            .map_err(|err| format!("'{}' {}", profile.uuid, err))
+                            .map(|_| format!("'{}' was removed\n", profile.uuid))
+                            .map_err(|err| format!("'{}' {}\n", profile.uuid, err))
                     })
                     .fold(Ok(String::new()), |acc, s| {
                         match (acc, s) {
