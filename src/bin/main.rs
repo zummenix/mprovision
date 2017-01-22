@@ -44,7 +44,7 @@ fn list(filter: Option<String>,
             let total = entries.len();
             let date = expires_in_days.map(|days| UTC::now() + Duration::days(days));
             let filter_string = filter.as_ref();
-            let profiles = mp::filter(entries, |profile| {
+            let mut profiles = mp::filter(entries, |profile| {
                 match (date, filter_string) {
                     (Some(date), Some(string)) => {
                         profile.expiration_date <= date && profile.contains(&string)
@@ -54,6 +54,7 @@ fn list(filter: Option<String>,
                     (_, _) => true,
                 }
             });
+            profiles.sort_by(|a, b| a.creation_date.cmp(&b.creation_date));
             (total, profiles)
         })
         .and_then(|(total, profiles)| {
