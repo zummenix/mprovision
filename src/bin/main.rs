@@ -51,7 +51,7 @@ fn list(filter: Option<String>,
                     }
                     (Some(date), _) => profile.expiration_date <= date,
                     (_, Some(string)) => profile.contains(&string),
-                    (_, _) => false,
+                    (_, _) => true,
                 }
             });
             (total, profiles)
