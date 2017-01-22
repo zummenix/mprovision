@@ -75,6 +75,7 @@ pub fn directory() -> Result<PathBuf> {
         })
 }
 
+/// Returns `dir` if it is not `None` otherwise returns `directory()`.
 pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
     if let Some(d) = dir {
         Ok(d)
@@ -83,11 +84,13 @@ pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
     }
 }
 
+/// Removes a provisioning profile.
 pub fn remove(file_path: &Path) -> Result<()> {
     validate_path(file_path)
         .and_then(|file_path| std::fs::remove_file(file_path).map_err(|err| err.into()))
 }
 
+/// Returns internals of a provisioning profile.
 pub fn show(file_path: &Path) -> Result<String> {
     validate_path(file_path).and_then(|file_path| {
         let context = Context::default();
@@ -103,6 +106,7 @@ pub fn show(file_path: &Path) -> Result<String> {
     })
 }
 
+/// Validates that `file_path` has `mobileprovision` extension.
 fn validate_path(file_path: &Path) -> Result<&Path> {
     file_path.extension()
         .and_then(|extension| if extension == "mobileprovision" {
@@ -116,6 +120,7 @@ fn validate_path(file_path: &Path) -> Result<&Path> {
         })
 }
 
+/// Filters entries of a directory using `f`.
 pub fn filter<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     where F: Fn(&Profile) -> bool + Sync
 {
@@ -130,6 +135,7 @@ pub fn filter<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     stream.wait().unwrap_or(Vec::new())
 }
 
+/// Searches a provisioning profile by its uuid.
 pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
     let entries: Vec<DirEntry> = entries(dir)?.collect();
     if let Some(profile) = filter(entries, |profile| profile.uuid == uuid).pop() {

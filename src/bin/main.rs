@@ -19,8 +19,8 @@ mod cli;
 fn main() {
     let result = cli::parse(env::args()).and_then(|command| {
         match command {
-            Command::List(cli::ListParams { filter, expires_in_days, directory }) => {
-                list(filter, expires_in_days, directory)
+            Command::List(cli::ListParams { filter, expire_in_days, directory }) => {
+                list(filter, expire_in_days, directory)
             }
             Command::ShowUuid(uuid, directory) => show_uuid(uuid, directory),
             Command::ShowFile(path) => show_file(path),

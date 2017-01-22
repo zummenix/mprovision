@@ -19,7 +19,7 @@ pub enum Command {
 #[derive(Debug, Default, PartialEq)]
 pub struct ListParams {
     pub filter: Option<String>,
-    pub expires_in_days: Option<i64>,
+    pub expire_in_days: Option<i64>,
     pub directory: Option<PathBuf>,
 }
 
@@ -172,7 +172,7 @@ pub fn parse<I, S>(args: I) -> Result
             if days < 0 || days > 365 {
                 return Err(Error::Custom("DAYS should be between 0 and 365".to_string()));
             }
-            params.expires_in_days = Some(days);
+            params.expire_in_days = Some(days);
         }
         params.directory = list_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::List(params))
@@ -207,21 +207,21 @@ mod tests {
 
         expect!(parse(&["mprovision", "list", "."])).to(be_ok().value(Command::List(ListParams {
             filter: None,
-            expires_in_days: None,
+            expire_in_days: None,
             directory: Some(".".into()),
         })));
 
         expect!(parse(&["mprovision", "list", "--text", "abc"]))
             .to(be_ok().value(Command::List(ListParams {
                 filter: Some("abc".to_string()),
-                expires_in_days: None,
+                expire_in_days: None,
                 directory: None,
             })));
 
         expect!(parse(&["mprovision", "list", "-t", "abc"]))
             .to(be_ok().value(Command::List(ListParams {
                 filter: Some("abc".to_string()),
-                expires_in_days: None,
+                expire_in_days: None,
                 directory: None,
             })));
 
@@ -232,14 +232,14 @@ mod tests {
         expect!(parse(&["mprovision", "list", "--expire-in-days", "3"]))
             .to(be_ok().value(Command::List(ListParams {
                 filter: None,
-                expires_in_days: Some(3),
+                expire_in_days: Some(3),
                 directory: None,
             })));
 
         expect!(parse(&["mprovision", "list", "-d", "3"]))
             .to(be_ok().value(Command::List(ListParams {
                 filter: None,
-                expires_in_days: Some(3),
+                expire_in_days: Some(3),
                 directory: None,
             })));
 
@@ -251,14 +251,14 @@ mod tests {
         expect!(parse(&["mprovision", "list", "--text", "abc", "--expire-in-days", "3", "."]))
             .to(be_ok().value(Command::List(ListParams {
                 filter: Some("abc".to_string()),
-                expires_in_days: Some(3),
+                expire_in_days: Some(3),
                 directory: Some(".".into()),
             })));
 
         expect!(parse(&["mprovision", "list", "-t", "abc", "-d", "3", "."]))
             .to(be_ok().value(Command::List(ListParams {
                 filter: Some("abc".to_string()),
-                expires_in_days: Some(3),
+                expire_in_days: Some(3),
                 directory: Some(".".into()),
             })));
     }
