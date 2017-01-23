@@ -100,7 +100,7 @@ pub fn show(file_path: &Path) -> Result<String> {
             .map_err(|err| err.into())
             .and_then(|_| {
                 context.find_plist(&buf)
-                    .ok_or(Error::Own(format!("Couldn't parse '{}'", file_path.display())))
+                    .ok_or_else(|| Error::Own(format!("Couldn't parse '{}'", file_path.display())))
             })
             .and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
     })
@@ -126,7 +126,7 @@ pub fn filter<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
 {
     let cpu_pool = CpuPool::new(num_cpus::get());
 
-    let stream = futures::stream::iter(entries.into_iter().map(|entry| Ok(entry)))
+    let stream = futures::stream::iter(entries.into_iter().map(Ok))
         .map(|entry| cpu_pool.spawn_fn(move || Profile::from_file(&entry.path())))
         .buffered(num_cpus::get() * 2)
         .filter(f)

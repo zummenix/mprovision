@@ -47,10 +47,10 @@ fn list(filter: Option<String>,
             let mut profiles = mp::filter(entries, |profile| {
                 match (date, filter_string) {
                     (Some(date), Some(string)) => {
-                        profile.expiration_date <= date && profile.contains(&string)
+                        profile.expiration_date <= date && profile.contains(string)
                     }
                     (Some(date), _) => profile.expiration_date <= date,
-                    (_, Some(string)) => profile.contains(&string),
+                    (_, Some(string)) => profile.contains(string),
                     (_, _) => true,
                 }
             });
@@ -121,13 +121,13 @@ fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
                     .fold(Ok(String::new()), |acc, s| {
                         match (acc, s) {
                             (Ok(acc), Ok(s)) => Ok(concat(acc, s)),
-                            (Err(acc), Ok(s)) => Err(concat(acc, s)),
+                            (Ok(acc), Err(s)) |
+                            (Err(acc), Ok(s)) |
                             (Err(acc), Err(s)) => Err(concat(acc, s)),
-                            (Ok(acc), Err(s)) => Err(concat(acc, s)),
                         }
                     })
                     .map(|s| println!("{}", s))
-                    .map_err(|err| cli::Error::Custom(err))
+                    .map_err(cli::Error::Custom)
             }
         })
 }
