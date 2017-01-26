@@ -12,7 +12,7 @@ pub enum Command {
     List(ListParams),
     ShowUuid(String, Option<PathBuf>),
     ShowFile(PathBuf),
-    Remove(String, Option<PathBuf>),
+    Remove(Vec<String>, Option<PathBuf>),
     Clean(Option<PathBuf>),
 }
 
@@ -149,6 +149,7 @@ pub fn parse<I, S>(args: I) -> Result
                 .help("An uuid of a provisioning profile")
                 .required(true)
                 .empty_values(false)
+                .multiple(true)
                 .takes_value(true))
             .arg(Arg::with_name("DIRECTORY")
                 .long("source")
@@ -188,9 +189,9 @@ pub fn parse<I, S>(args: I) -> Result
         let path = show_file_matches.value_of("PATH").map(|path| path.into()).unwrap();
         Ok(Command::ShowFile(path))
     } else if let Some(remove_matches) = matches.subcommand_matches("remove") {
-        let uuid = remove_matches.value_of("UUID").map(|uuid| uuid.to_string()).unwrap();
+        let uuids = remove_matches.values_of("UUID").unwrap().map(String::from).collect();
         let directory = remove_matches.value_of("DIRECTORY").map(|dir| dir.into());
-        Ok(Command::Remove(uuid, directory))
+        Ok(Command::Remove(uuids, directory))
     } else if let Some(clean_matches) = matches.subcommand_matches("clean") {
         let directory = clean_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::Clean(directory))
@@ -295,10 +296,17 @@ mod tests {
     #[test]
     fn remove_uuid_command() {
         expect!(parse(&["mprovision", "remove", "abcd"]))
-            .to(be_ok().value(Command::Remove("abcd".to_string(), None)));
+            .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], None)));
+
+        expect!(parse(&["mprovision", "remove", "abcd", "ef"]))
+            .to(be_ok().value(Command::Remove(vec!["abcd".to_string(), "ef".to_string()], None)));
 
         expect!(parse(&["mprovision", "remove", "abcd", "--source", "."]))
-            .to(be_ok().value(Command::Remove("abcd".to_string(), Some(".".into()))));
+            .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], Some(".".into()))));
+
+        expect!(parse(&["mprovision", "remove", "abcd", "ef", "--source", "."]))
+            .to(be_ok().value(Command::Remove(vec!["abcd".to_string(), "ef".to_string()],
+                                              Some(".".into()))));
     }
 
     #[test]
