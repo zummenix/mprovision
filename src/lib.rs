@@ -145,6 +145,13 @@ pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
     }
 }
 
+/// Searches provisioning profiles by their uuid.
+pub fn find_by_uuids(dir: &Path, uuids: Vec<String>) -> Result<Vec<Profile>> {
+    let entries: Vec<DirEntry> = entries(dir)?.collect();
+    let profiles = filter(entries, |profile| uuids.contains(&profile.uuid));
+    Ok(profiles)
+}
+
 #[cfg(test)]
 mod tests {
     use expectest::prelude::*;

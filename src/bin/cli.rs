@@ -12,7 +12,7 @@ pub enum Command {
     List(ListParams),
     ShowUuid(String, Option<PathBuf>),
     ShowFile(PathBuf),
-    Remove(String, Option<PathBuf>),
+    Remove(Vec<String>, Option<PathBuf>),
     Clean(Option<PathBuf>),
 }
 
@@ -112,6 +112,7 @@ pub fn parse<I, S>(args: I) -> Result
                 .empty_values(false)
                 .takes_value(true))
             .arg(Arg::with_name("DIRECTORY")
+                .long("source")
                 .help("A directory where to search provisioning profiles")
                 .required(false)
                 .empty_values(false)
@@ -126,6 +127,7 @@ pub fn parse<I, S>(args: I) -> Result
                 .empty_values(false)
                 .takes_value(true))
             .arg(Arg::with_name("DIRECTORY")
+                .long("source")
                 .help("A directory where to search a provisioning profile")
                 .required(false)
                 .empty_values(false)
@@ -147,8 +149,10 @@ pub fn parse<I, S>(args: I) -> Result
                 .help("An uuid of a provisioning profile")
                 .required(true)
                 .empty_values(false)
+                .multiple(true)
                 .takes_value(true))
             .arg(Arg::with_name("DIRECTORY")
+                .long("source")
                 .help("A directory where to search a provisioning profile")
                 .required(false)
                 .empty_values(false)
@@ -158,6 +162,7 @@ pub fn parse<I, S>(args: I) -> Result
             .display_order(4)
             .setting(AppSettings::DisableVersion)
             .arg(Arg::with_name("DIRECTORY")
+                .long("source")
                 .help("A directory where to clean")
                 .required(false)
                 .empty_values(false)
@@ -184,9 +189,9 @@ pub fn parse<I, S>(args: I) -> Result
         let path = show_file_matches.value_of("PATH").map(|path| path.into()).unwrap();
         Ok(Command::ShowFile(path))
     } else if let Some(remove_matches) = matches.subcommand_matches("remove") {
-        let uuid = remove_matches.value_of("UUID").map(|uuid| uuid.to_string()).unwrap();
+        let uuids = remove_matches.values_of("UUID").unwrap().map(String::from).collect();
         let directory = remove_matches.value_of("DIRECTORY").map(|dir| dir.into());
-        Ok(Command::Remove(uuid, directory))
+        Ok(Command::Remove(uuids, directory))
     } else if let Some(clean_matches) = matches.subcommand_matches("clean") {
         let directory = clean_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::Clean(directory))
@@ -205,11 +210,12 @@ mod tests {
         expect!(parse(&["mprovision", "list"]))
             .to(be_ok().value(Command::List(ListParams::default())));
 
-        expect!(parse(&["mprovision", "list", "."])).to(be_ok().value(Command::List(ListParams {
-            filter: None,
-            expire_in_days: None,
-            directory: Some(".".into()),
-        })));
+        expect!(parse(&["mprovision", "list", "--source", "."]))
+            .to(be_ok().value(Command::List(ListParams {
+                filter: None,
+                expire_in_days: None,
+                directory: Some(".".into()),
+            })));
 
         expect!(parse(&["mprovision", "list", "--text", "abc"]))
             .to(be_ok().value(Command::List(ListParams {
@@ -248,14 +254,21 @@ mod tests {
         expect!(parse(&["mprovision", "list", "--expire-in-days", "366"])).to(be_err());
         expect!(parse(&["mprovision", "list", "-d", "366"])).to(be_err());
 
-        expect!(parse(&["mprovision", "list", "--text", "abc", "--expire-in-days", "3", "."]))
+        expect!(parse(&["mprovision",
+                        "list",
+                        "--text",
+                        "abc",
+                        "--expire-in-days",
+                        "3",
+                        "--source",
+                        "."]))
             .to(be_ok().value(Command::List(ListParams {
                 filter: Some("abc".to_string()),
                 expire_in_days: Some(3),
                 directory: Some(".".into()),
             })));
 
-        expect!(parse(&["mprovision", "list", "-t", "abc", "-d", "3", "."]))
+        expect!(parse(&["mprovision", "list", "-t", "abc", "-d", "3", "--source", "."]))
             .to(be_ok().value(Command::List(ListParams {
                 filter: Some("abc".to_string()),
                 expire_in_days: Some(3),
@@ -268,7 +281,7 @@ mod tests {
         expect!(parse(&["mprovision", "show", "abcd"]))
             .to(be_ok().value(Command::ShowUuid("abcd".to_string(), None)));
 
-        expect!(parse(&["mprovision", "show", "abcd", "."]))
+        expect!(parse(&["mprovision", "show", "abcd", "--source", "."]))
             .to(be_ok().value(Command::ShowUuid("abcd".to_string(), Some(".".into()))));
     }
 
@@ -283,17 +296,24 @@ mod tests {
     #[test]
     fn remove_uuid_command() {
         expect!(parse(&["mprovision", "remove", "abcd"]))
-            .to(be_ok().value(Command::Remove("abcd".to_string(), None)));
+            .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], None)));
 
-        expect!(parse(&["mprovision", "remove", "abcd", "."]))
-            .to(be_ok().value(Command::Remove("abcd".to_string(), Some(".".into()))));
+        expect!(parse(&["mprovision", "remove", "abcd", "ef"]))
+            .to(be_ok().value(Command::Remove(vec!["abcd".to_string(), "ef".to_string()], None)));
+
+        expect!(parse(&["mprovision", "remove", "abcd", "--source", "."]))
+            .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], Some(".".into()))));
+
+        expect!(parse(&["mprovision", "remove", "abcd", "ef", "--source", "."]))
+            .to(be_ok().value(Command::Remove(vec!["abcd".to_string(), "ef".to_string()],
+                                              Some(".".into()))));
     }
 
     #[test]
     fn clean_command() {
         expect!(parse(&["mprovision", "clean"])).to(be_ok().value(Command::Clean(None)));
 
-        expect!(parse(&["mprovision", "clean", "."]))
+        expect!(parse(&["mprovision", "clean", "--source", "."]))
             .to(be_ok().value(Command::Clean(Some(".".into()))));
     }
 }

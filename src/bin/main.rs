@@ -23,7 +23,7 @@ fn main() {
         }
         Command::ShowUuid(uuid, directory) => show_uuid(uuid, directory),
         Command::ShowFile(path) => show_file(path),
-        Command::Remove(uuid, directory) => remove(uuid, directory),
+        Command::Remove(uuids, directory) => remove(uuids, directory),
         Command::Clean(directory) => clean(directory),
     });
     if let Err(e) = result {
@@ -78,12 +78,19 @@ fn show_file(path: PathBuf) -> Result<(), cli::Error> {
         .map_err(|err| err.into())
 }
 
-fn remove(uuid: String, directory: Option<PathBuf>) -> Result<(), cli::Error> {
+fn remove(uuids: Vec<String>, directory: Option<PathBuf>) -> Result<(), cli::Error> {
     mp::with_directory(directory)
         .and_then(|directory| {
-            mp::find_by_uuid(&directory, &uuid)
-                .and_then(|profile| mp::remove(&profile.path))
-                .map(|_| println!("'{}' was removed", uuid))
+
+            mp::find_by_uuids(&directory, uuids).and_then(|profiles| {
+                for profile in profiles {
+                    match mp::remove(&profile.path) {
+                        Ok(_) => println!("'{}' was removed", profile.uuid),
+                        Err(_) => println!("Error while removing '{}'", profile.uuid),
+                    }
+                }
+                Ok(())
+            })
         })
         .map_err(|err| err.into())
 }
