@@ -112,6 +112,7 @@ pub fn parse<I, S>(args: I) -> Result
                 .empty_values(false)
                 .takes_value(true))
             .arg(Arg::with_name("DIRECTORY")
+                .long("source")
                 .help("A directory where to search provisioning profiles")
                 .required(false)
                 .empty_values(false)
@@ -126,6 +127,7 @@ pub fn parse<I, S>(args: I) -> Result
                 .empty_values(false)
                 .takes_value(true))
             .arg(Arg::with_name("DIRECTORY")
+                .long("source")
                 .help("A directory where to search a provisioning profile")
                 .required(false)
                 .empty_values(false)
@@ -149,6 +151,7 @@ pub fn parse<I, S>(args: I) -> Result
                 .empty_values(false)
                 .takes_value(true))
             .arg(Arg::with_name("DIRECTORY")
+                .long("source")
                 .help("A directory where to search a provisioning profile")
                 .required(false)
                 .empty_values(false)
@@ -158,6 +161,7 @@ pub fn parse<I, S>(args: I) -> Result
             .display_order(4)
             .setting(AppSettings::DisableVersion)
             .arg(Arg::with_name("DIRECTORY")
+                .long("source")
                 .help("A directory where to clean")
                 .required(false)
                 .empty_values(false)
@@ -205,11 +209,12 @@ mod tests {
         expect!(parse(&["mprovision", "list"]))
             .to(be_ok().value(Command::List(ListParams::default())));
 
-        expect!(parse(&["mprovision", "list", "."])).to(be_ok().value(Command::List(ListParams {
-            filter: None,
-            expire_in_days: None,
-            directory: Some(".".into()),
-        })));
+        expect!(parse(&["mprovision", "list", "--source", "."]))
+            .to(be_ok().value(Command::List(ListParams {
+                filter: None,
+                expire_in_days: None,
+                directory: Some(".".into()),
+            })));
 
         expect!(parse(&["mprovision", "list", "--text", "abc"]))
             .to(be_ok().value(Command::List(ListParams {
@@ -248,14 +253,21 @@ mod tests {
         expect!(parse(&["mprovision", "list", "--expire-in-days", "366"])).to(be_err());
         expect!(parse(&["mprovision", "list", "-d", "366"])).to(be_err());
 
-        expect!(parse(&["mprovision", "list", "--text", "abc", "--expire-in-days", "3", "."]))
+        expect!(parse(&["mprovision",
+                        "list",
+                        "--text",
+                        "abc",
+                        "--expire-in-days",
+                        "3",
+                        "--source",
+                        "."]))
             .to(be_ok().value(Command::List(ListParams {
                 filter: Some("abc".to_string()),
                 expire_in_days: Some(3),
                 directory: Some(".".into()),
             })));
 
-        expect!(parse(&["mprovision", "list", "-t", "abc", "-d", "3", "."]))
+        expect!(parse(&["mprovision", "list", "-t", "abc", "-d", "3", "--source", "."]))
             .to(be_ok().value(Command::List(ListParams {
                 filter: Some("abc".to_string()),
                 expire_in_days: Some(3),
@@ -268,7 +280,7 @@ mod tests {
         expect!(parse(&["mprovision", "show", "abcd"]))
             .to(be_ok().value(Command::ShowUuid("abcd".to_string(), None)));
 
-        expect!(parse(&["mprovision", "show", "abcd", "."]))
+        expect!(parse(&["mprovision", "show", "abcd", "--source", "."]))
             .to(be_ok().value(Command::ShowUuid("abcd".to_string(), Some(".".into()))));
     }
 
@@ -285,7 +297,7 @@ mod tests {
         expect!(parse(&["mprovision", "remove", "abcd"]))
             .to(be_ok().value(Command::Remove("abcd".to_string(), None)));
 
-        expect!(parse(&["mprovision", "remove", "abcd", "."]))
+        expect!(parse(&["mprovision", "remove", "abcd", "--source", "."]))
             .to(be_ok().value(Command::Remove("abcd".to_string(), Some(".".into()))));
     }
 
@@ -293,7 +305,7 @@ mod tests {
     fn clean_command() {
         expect!(parse(&["mprovision", "clean"])).to(be_ok().value(Command::Clean(None)));
 
-        expect!(parse(&["mprovision", "clean", "."]))
+        expect!(parse(&["mprovision", "clean", "--source", "."]))
             .to(be_ok().value(Command::Clean(Some(".".into()))));
     }
 }
