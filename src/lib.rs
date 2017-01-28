@@ -26,11 +26,10 @@ use std::io::Read;
 
 pub use error::Error;
 pub use profile::Profile;
-pub use context::Context;
 
 mod error;
 mod profile;
-mod context;
+mod plist_extractor;
 
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -93,20 +92,19 @@ pub fn remove(file_path: &Path) -> Result<()> {
 /// Returns internals of a provisioning profile.
 pub fn show(file_path: &Path) -> Result<String> {
     validate_path(file_path).and_then(|file_path| {
-        let context = Context::default();
         let mut buf = Vec::new();
         File::open(file_path)
             .and_then(|mut file| file.read_to_end(&mut buf))
             .map_err(|err| err.into())
             .and_then(|_| {
-                context.find_plist(&buf)
+                plist_extractor::find(&buf)
                     .ok_or_else(|| Error::Own(format!("Couldn't parse '{}'", file_path.display())))
             })
             .and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
     })
 }
 
-/// Validates that `file_path` has `mobileprovision` extension.
+/// Validates that `file_path` has a `mobileprovision` extension.
 fn validate_path(file_path: &Path) -> Result<&Path> {
     file_path.extension()
         .and_then(|extension| if extension == "mobileprovision" {
