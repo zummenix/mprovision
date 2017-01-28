@@ -106,16 +106,13 @@ pub fn show(file_path: &Path) -> Result<String> {
 
 /// Validates that `file_path` has a `mobileprovision` extension.
 fn validate_path(file_path: &Path) -> Result<&Path> {
-    file_path.extension()
-        .and_then(|extension| if extension == "mobileprovision" {
-            Some(file_path)
-        } else {
-            None
-        })
-        .ok_or_else(|| {
-            Error::Own(format!("'{}' doesn't have 'mobileprovision' extension",
-                               file_path.display()))
-        })
+    match file_path.extension() {
+        Some(extension) if extension == "mobileprovision" => Ok(file_path),
+        _ => {
+            Err(Error::Own(format!("'{}' doesn't have 'mobileprovision' extension",
+                                   file_path.display())))
+        }
+    }
 }
 
 /// Filters entries of a directory using `f`.
