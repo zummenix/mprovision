@@ -11,10 +11,10 @@ test = true
 
 [dependencies]
 version = "2.0.1"
-plist = "0.0.15"
+plist = "0.1.0"
 chrono = "~0.2.0" # used in plist.
 memmem = "0.1.1"
-futures = "0.1.9"
+futures = "0.1.10"
 futures-cpupool = "0.1.2"
 num_cpus = "1.2.1"
 clap = "2.20.0"
