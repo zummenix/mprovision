@@ -1,11 +1,9 @@
-
 extern crate mprovision;
-#[macro_use(version)]
-extern crate version;
 extern crate chrono;
 #[cfg(test)]
 #[macro_use(expect)]
 extern crate expectest;
+#[macro_use(crate_version)]
 extern crate clap;
 
 use mprovision as mp;

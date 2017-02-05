@@ -91,6 +91,7 @@ pub fn parse<I, S>(args: I) -> Result
 {
     let app = App::new("mprovision")
         .about("A tool that helps iOS developers to manage mobileprovision files.")
+        .version(crate_version!())
         .subcommand(SubCommand::with_name("list")
             .about("Lists provisioning profiles")
             .display_order(0)
