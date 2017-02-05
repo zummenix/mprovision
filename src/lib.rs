@@ -19,8 +19,6 @@ use futures::stream::Stream;
 use futures::Future;
 use futures_cpupool::CpuPool;
 
-use chrono::*;
-
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
 use std::env;
@@ -28,11 +26,10 @@ use std::io::Read;
 
 pub use error::Error;
 pub use profile::Profile;
-pub use context::Context;
 
 mod error;
 mod profile;
-mod context;
+mod plist_extractor;
 
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -77,61 +74,54 @@ pub fn directory() -> Result<PathBuf> {
         })
 }
 
-pub fn with_dir<F, T>(dir: Option<&Path>, f: F) -> Result<T>
-    where F: FnOnce(&Path) -> Result<T>
-{
-    if let Some(dir) = dir {
-        f(dir)
+/// Returns `dir` if it is not `None` otherwise returns `directory()`.
+pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
+    if let Some(d) = dir {
+        Ok(d)
     } else {
-        f(&directory()?)
+        directory()
     }
 }
 
-pub struct SearchInfo {
-    pub total: usize,
-    pub profiles: Vec<Profile>,
+/// Removes a provisioning profile.
+pub fn remove(file_path: &Path) -> Result<()> {
+    validate_path(file_path)
+        .and_then(|file_path| std::fs::remove_file(file_path).map_err(|err| err.into()))
 }
 
-pub fn search(dir: &Path, s: &str) -> Result<SearchInfo> {
-    let entries: Vec<DirEntry> = entries(dir)?.collect();
-    Ok(SearchInfo {
-        total: entries.len(),
-        profiles: parallel(entries, |profile| profile.contains(s)),
+/// Returns internals of a provisioning profile.
+pub fn show(file_path: &Path) -> Result<String> {
+    validate_path(file_path).and_then(|file_path| {
+        let mut buf = Vec::new();
+        File::open(file_path)
+            .and_then(|mut file| file.read_to_end(&mut buf))
+            .map_err(|err| err.into())
+            .and_then(|_| {
+                plist_extractor::find(&buf)
+                    .ok_or_else(|| Error::Own(format!("Couldn't parse '{}'", file_path.display())))
+            })
+            .and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
     })
 }
 
-pub fn remove(dir: &Path, uuid: &str) -> Result<()> {
-    find_by_uuid(dir, uuid)
-        .and_then(|profile| std::fs::remove_file(&profile.path).map_err(|err| err.into()))
-}
-
-pub fn xml(dir: &Path, uuid: &str) -> Result<String> {
-    match find_by_uuid(dir, uuid) {
-        Ok(profile) => {
-            let context = Context::default();
-            let mut buf = Vec::new();
-            File::open(&profile.path)?.read_to_end(&mut buf)?;
-            let data = context.find_plist(&buf).ok_or(Error::Own("Couldn't parse file.".into()))?;
-            Ok(String::from_utf8(data.to_owned())?)
+/// Validates that `file_path` has a `mobileprovision` extension.
+fn validate_path(file_path: &Path) -> Result<&Path> {
+    match file_path.extension() {
+        Some(extension) if extension == "mobileprovision" => Ok(file_path),
+        _ => {
+            Err(Error::Own(format!("'{}' doesn't have 'mobileprovision' extension",
+                                   file_path.display())))
         }
-        Err(err) => Err(err),
     }
 }
 
-pub fn expired_profiles(dir: &Path, date: DateTime<UTC>) -> Result<SearchInfo> {
-    let entries: Vec<DirEntry> = entries(dir)?.collect();
-    Ok(SearchInfo {
-        total: entries.len(),
-        profiles: parallel(entries, |profile| profile.expiration_date <= date),
-    })
-}
-
-fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
+/// Filters entries of a directory using `f`.
+pub fn filter<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     where F: Fn(&Profile) -> bool + Sync
 {
     let cpu_pool = CpuPool::new(num_cpus::get());
 
-    let stream = futures::stream::iter(entries.into_iter().map(|entry| Ok(entry)))
+    let stream = futures::stream::iter(entries.into_iter().map(Ok))
         .map(|entry| cpu_pool.spawn_fn(move || Profile::from_file(&entry.path())))
         .buffered(num_cpus::get() * 2)
         .filter(f)
@@ -140,13 +130,21 @@ fn parallel<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
     stream.wait().unwrap_or(Vec::new())
 }
 
-fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
+/// Searches a provisioning profile by its uuid.
+pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
     let entries: Vec<DirEntry> = entries(dir)?.collect();
-    if let Some(profile) = parallel(entries, |profile| profile.uuid == uuid).pop() {
+    if let Some(profile) = filter(entries, |profile| profile.uuid == uuid).pop() {
         Ok(profile)
     } else {
         Err(Error::Own(format!("Profile '{}' is not found.", uuid)))
     }
+}
+
+/// Searches provisioning profiles by their uuid.
+pub fn find_by_uuids(dir: &Path, uuids: Vec<String>) -> Result<Vec<Profile>> {
+    let entries: Vec<DirEntry> = entries(dir)?.collect();
+    let profiles = filter(entries, |profile| uuids.contains(&profile.uuid));
+    Ok(profiles)
 }
 
 #[cfg(test)]

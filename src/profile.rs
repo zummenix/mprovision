@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use chrono::{DateTime, UTC, TimeZone};
 use plist::PlistEvent::*;
 use plist;
-use {Context, Error, Result};
+use {Error, Result};
 
 /// Represents provisioning profile data.
 #[derive(Debug, Clone)]
@@ -21,10 +21,9 @@ pub struct Profile {
 impl Profile {
     /// Returns instance of the `Profile` parsed from a file.
     pub fn from_file(path: &Path) -> Result<Self> {
-
         let mut buf = Vec::new();
         File::open(path)?.read_to_end(&mut buf)?;
-        Profile::from_xml_data(&buf, Context::default())
+        Profile::from_xml_data(&buf)
             .map(|mut p| {
                 p.path = path.to_owned();
                 p
@@ -33,8 +32,8 @@ impl Profile {
     }
 
     /// Returns instance of the `Profile` parsed from a `data`.
-    pub fn from_xml_data(data: &[u8], context: Context) -> Option<Self> {
-        if let Some(data) = context.find_plist(data) {
+    pub fn from_xml_data(data: &[u8]) -> Option<Self> {
+        if let Some(data) = ::plist_extractor::find(data) {
             let mut profile = Profile::empty();
             let mut iter = plist::xml::EventReader::new(io::Cursor::new(data)).into_iter();
             while let Some(item) = iter.next() {

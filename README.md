@@ -2,82 +2,79 @@
 A tool that helps iOS developers to manage local provisioning profiles.
 Written in Rust.
 
-## Installation
+## How to install
 
-### Easy way
-
-Download `mprovision.zip` from
-[release page](https://github.com/zummenix/mprovision/releases) and unarchive.
-This archive contains standalone executable that you can place in your `/usr/bin`
-
-### Compilation from source
-
-To compile you need to install Rust Compiler either by downloading from
+1. You need to install Rust Compiler either by downloading from 
 [official site](https://www.rust-lang.org/downloads.html) or using
-[rustup](https://www.rustup.rs) and then `clone` and `build`:
+[rustup](https://www.rustup.rs)(which is preferable).
 
+2. You have two options:
+
+- Manual
 ```bash
 git clone https://github.com/zummenix/mprovision
 cd mprovision
 cargo build --release
 ```
 
-Result binary will be `./target/release/mprovision`.
+The result binary will be `./target/release/mprovision` and you can place it in your `PATH`.
+
+- Automatic
+
+```bash
+cargo install --git https://github.com/zummenix/mprovision
+```
 
 ## Usage
 
-The following commands are supported:
-```bash
-mprovision search <text> [<directory>]
-mprovision remove <uuid> [<directory>]
-mprovision show-xml <uuid> [<directory>]
-mprovision show-expired --days <days> [<directory>]
-mprovision remove-expired [<directory>]
-```
-Parameter `<directory>` is optional, all commands work on
-`~/Library/MobileDevice/Provisioning Profiles` directory by default.
+Type `mprovision help` in your terminal to see the list of subcommands and options.
+Most of subcommands work on `~/Library/MobileDevice/Provisioning Profiles` directory by default but you can specify a
+full path using a `--source` argument.
 
 ## Use cases
 
+### See all profiles in your system
+
+It's very simple: `mprovision list`
+
 ### Searching and Removing
 
-If you don't want to have a particular provisioning profile in your system,
-just search it using `search` subcommand with text, find it in results and then
-delete it using `remove` subcommand with uuid of the provisioning profile you
-want to delete.
+1. The `list` subcommand accepts an optional argument `-t` or `--text` that allows you to filter the list of 
+provisioning profiles by some text. 
+2. The `remove` subcommand allows you to remove one or more profiles by their uuids.
 
-> WARNING: `remove` subcommand is dangerous since it removes profiles from the
+> WARNING: the `remove` subcommand is relatively dangerous since it removes profiles from the
 system completely.
 
 ### View details of a provisioning profile
 
-Use `show-xml` subcommand followed by uuid of a provisioning profile to see details
+The `show` subcommand followed by uuid of a provisioning profile allows you to see details
 in xml format.
 
 ### View profiles that will expire soon
 
-Use `show-expired` subcommand followed by `--days` parameter to see provisioning
-profiles that already expired (`--days 0`) or will expire, for example, in a
-next week (`--days 7`).
+The `list` subcommand accepts an optional argument `-d` or `--expire-in-days` followed by a number of days and shows the
+list of profiles that will expire. For example the `mprovision list -d 0` command will show profiles that have already 
+been expired.
 
-### Remove already expired profiles
+### Remove expired profiles
 
-Use `remove-expired` subcommand to remove expired provisioning profiles.
+The `clean` subcommand removes expired provisioning profiles.
 
-> NOTE: you can see provisioning profiles that will be removed using
-`mprovision show-expired --days 0` command.
+> NOTE: you can see provisioning profiles that will be removed using the
+`mprovision list -d 0` command.
 
 ## Performance
 
 I expect that main bottleneck will be your machine's disk and cpu.
-And when you run this tool first time, performance probably will be slow.
+When you run this tool for the first time, performance probably will be not so good as subsequent times.
 
 For comparison, on my machine with ssd and 4 cpu cores I see the following results:
 ```
-$ time mprovision search any
+$ time mprovision list -t any
 ...
 Found 4 of 789
-mprovision search any  1.94s user 0.03s system 667% cpu 0.295 total
+mprovision list -t any  1.94s user 0.03s system 667% cpu 0.295 total
 ```
 As you can see the execution time for almost 1000 profiles is reasonable.
 
