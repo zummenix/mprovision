@@ -1,7 +1,7 @@
 use memmem::{Searcher, TwoWaySearcher};
 
-const PLIST_PREFIX: &'static [u8] = b"<?xml version=";
-const PLIST_SUFFIX: &'static [u8] = b"</plist>";
+const PLIST_PREFIX: &[u8] = b"<?xml version=";
+const PLIST_SUFFIX: &[u8] = b"</plist>";
 
 /// Attempts to find a plist content in a `data` and return it as a slice.
 ///
