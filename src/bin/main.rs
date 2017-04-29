@@ -16,14 +16,22 @@ mod cli;
 
 fn main() {
     let result = cli::parse(env::args()).and_then(|command| match command {
-        Command::List(cli::ListParams { filter, expire_in_days, directory }) => {
-            list(filter, expire_in_days, directory)
-        }
-        Command::ShowUuid(uuid, directory) => show_uuid(uuid, directory),
-        Command::ShowFile(path) => show_file(path),
-        Command::Remove(uuids, directory) => remove(uuids, directory),
-        Command::Clean(directory) => clean(directory),
-    });
+                                                      Command::List(cli::ListParams {
+                                                                        filter,
+                                                                        expire_in_days,
+                                                                        directory,
+                                                                    }) => {
+                                                          list(filter, expire_in_days, directory)
+                                                      }
+                                                      Command::ShowUuid(uuid, directory) => {
+                                                          show_uuid(uuid, directory)
+                                                      }
+                                                      Command::ShowFile(path) => show_file(path),
+                                                      Command::Remove(uuids, directory) => {
+                                                          remove(uuids, directory)
+                                                      }
+                                                      Command::Clean(directory) => clean(directory),
+                                                  });
     if let Err(e) = result {
         e.exit();
     }
@@ -52,13 +60,13 @@ fn list(filter: Option<String>,
             (total, profiles)
         })
         .and_then(|(total, profiles)| if profiles.is_empty() {
-            Ok(println!("Nothing found"))
-        } else {
-            for profile in &profiles {
-                println!("\n{}", profile.description());
-            }
-            Ok(println!("\nFound {} of {}", profiles.len(), total))
-        })
+                      Ok(println!("Nothing found"))
+                  } else {
+                      for profile in &profiles {
+                          println!("\n{}", profile.description());
+                      }
+                      Ok(println!("\nFound {} of {}", profiles.len(), total))
+                  })
 }
 
 fn show_uuid(uuid: String, directory: Option<PathBuf>) -> Result<(), cli::Error> {
@@ -104,25 +112,26 @@ fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
         .and_then(|dir| mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>()))
         .map_err(|err| err.into())
         .map(|entries| {
-            let date = UTC::now();
-            mp::filter(entries, |profile| profile.expiration_date <= date)
-        })
+                 let date = UTC::now();
+                 mp::filter(entries, |profile| profile.expiration_date <= date)
+             })
         .and_then(|profiles| if profiles.is_empty() {
-            Ok(println!("All provisioning profiles are valid"))
-        } else {
-            profiles.iter()
-                .map(|profile| {
-                    std::fs::remove_file(&profile.path)
-                        .map(|_| format!("'{}' was removed\n", profile.uuid))
-                        .map_err(|err| format!("'{}' {}\n", profile.uuid, err))
-                })
-                .fold(Ok(String::new()), |acc, s| match (acc, s) {
-                    (Ok(acc), Ok(s)) => Ok(concat(acc, s)),
-                    (Ok(acc), Err(s)) |
-                    (Err(acc), Ok(s)) |
-                    (Err(acc), Err(s)) => Err(concat(acc, s)),
-                })
-                .map(|s| println!("{}", s))
-                .map_err(cli::Error::Custom)
-        })
+                      Ok(println!("All provisioning profiles are valid"))
+                  } else {
+                      profiles
+                          .iter()
+                          .map(|profile| {
+                                   std::fs::remove_file(&profile.path)
+                                       .map(|_| format!("'{}' was removed\n", profile.uuid))
+                                       .map_err(|err| format!("'{}' {}\n", profile.uuid, err))
+                               })
+                          .fold(Ok(String::new()), |acc, s| match (acc, s) {
+                (Ok(acc), Ok(s)) => Ok(concat(acc, s)),
+                (Ok(acc), Err(s)) |
+                (Err(acc), Ok(s)) |
+                (Err(acc), Err(s)) => Err(concat(acc, s)),
+            })
+                          .map(|s| println!("{}", s))
+                          .map_err(cli::Error::Custom)
+                  })
 }

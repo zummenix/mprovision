@@ -1,7 +1,7 @@
 use memmem::{Searcher, TwoWaySearcher};
 
-const PLIST_PREFIX: &'static [u8] = b"<?xml version=";
-const PLIST_SUFFIX: &'static [u8] = b"</plist>";
+const PLIST_PREFIX: &[u8] = b"<?xml version=";
+const PLIST_SUFFIX: &[u8] = b"</plist>";
 
 /// Attempts to find a plist content in a `data` and return it as a slice.
 ///
@@ -11,7 +11,9 @@ pub fn find(data: &[u8]) -> Option<&[u8]> {
     let prefix_searcher = TwoWaySearcher::new(PLIST_PREFIX);
     let suffix_searcher = TwoWaySearcher::new(PLIST_SUFFIX);
     let start_i = prefix_searcher.search_in(data);
-    let end_i = suffix_searcher.search_in(data).map(|i| i + PLIST_SUFFIX.len());
+    let end_i = suffix_searcher
+        .search_in(data)
+        .map(|i| i + PLIST_SUFFIX.len());
 
     if let (Some(start_i), Some(end_i)) = (start_i, end_i) {
         if end_i <= data.len() {
