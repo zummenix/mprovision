@@ -25,9 +25,9 @@ impl Profile {
         File::open(path)?.read_to_end(&mut buf)?;
         Profile::from_xml_data(&buf)
             .map(|mut p| {
-                p.path = path.to_owned();
-                p
-            })
+                     p.path = path.to_owned();
+                     p
+                 })
             .ok_or_else(|| Error::Own("Couldn't parse file.".into()))
     }
 

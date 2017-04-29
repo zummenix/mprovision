@@ -45,15 +45,16 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// - the provided path is not a directory
 pub fn entries(dir: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
     let entries = fs::read_dir(dir)?;
-    let filtered = entries.filter_map(|entry| entry.ok())
+    let filtered = entries
+        .filter_map(|entry| entry.ok())
         .filter_map(|entry| {
-            if let Some(ext) = entry.path().extension() {
-                if ext == "mobileprovision" {
-                    return Some(entry);
-                }
-            }
-            None
-        });
+                        if let Some(ext) = entry.path().extension() {
+                            if ext == "mobileprovision" {
+                                return Some(entry);
+                            }
+                        }
+                        None
+                    });
     Ok(Box::new(filtered))
 }
 
@@ -85,8 +86,9 @@ pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
 
 /// Removes a provisioning profile.
 pub fn remove(file_path: &Path) -> Result<()> {
-    validate_path(file_path)
-        .and_then(|file_path| std::fs::remove_file(file_path).map_err(|err| err.into()))
+    validate_path(file_path).and_then(|file_path| {
+                                          std::fs::remove_file(file_path).map_err(|err| err.into())
+                                      })
 }
 
 /// Returns internals of a provisioning profile.
@@ -97,9 +99,9 @@ pub fn show(file_path: &Path) -> Result<String> {
             .and_then(|mut file| file.read_to_end(&mut buf))
             .map_err(|err| err.into())
             .and_then(|_| {
-                plist_extractor::find(&buf)
+                          plist_extractor::find(&buf)
                     .ok_or_else(|| Error::Own(format!("Couldn't parse '{}'", file_path.display())))
-            })
+                      })
             .and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
     })
 }

@@ -93,88 +93,91 @@ pub fn parse<I, S>(args: I) -> Result
         .about("A tool that helps iOS developers to manage mobileprovision files.")
         .version(crate_version!())
         .subcommand(SubCommand::with_name("list")
-            .about("Lists provisioning profiles")
-            .display_order(0)
-            .setting(AppSettings::DisableVersion)
-            .arg(Arg::with_name("TEXT")
-                .long("text")
-                .short("t")
-                .help("Lists provisioning profiles that contain this text")
-                .display_order(0)
-                .required(false)
-                .empty_values(false)
-                .takes_value(true))
-            .arg(Arg::with_name("DAYS")
-                .long("expire-in-days")
-                .short("d")
-                .help("Lists provisioning profiles that will expire in days")
-                .display_order(1)
-                .required(false)
-                .empty_values(false)
-                .takes_value(true))
-            .arg(Arg::with_name("DIRECTORY")
-                .long("source")
-                .help("A directory where to search provisioning profiles")
-                .required(false)
-                .empty_values(false)
-                .takes_value(true)))
+                        .about("Lists provisioning profiles")
+                        .display_order(0)
+                        .setting(AppSettings::DisableVersion)
+                        .arg(Arg::with_name("TEXT")
+                                 .long("text")
+                                 .short("t")
+                                 .help("Lists provisioning profiles that contain this text")
+                                 .display_order(0)
+                                 .required(false)
+                                 .empty_values(false)
+                                 .takes_value(true))
+                        .arg(Arg::with_name("DAYS")
+                                 .long("expire-in-days")
+                                 .short("d")
+                                 .help("Lists provisioning profiles that will expire in days")
+                                 .display_order(1)
+                                 .required(false)
+                                 .empty_values(false)
+                                 .takes_value(true))
+                        .arg(Arg::with_name("DIRECTORY")
+                                 .long("source")
+                                 .help("A directory where to search provisioning profiles")
+                                 .required(false)
+                                 .empty_values(false)
+                                 .takes_value(true)))
         .subcommand(SubCommand::with_name("show")
-            .about("Shows details of a provisioning profile using its uuid")
-            .display_order(1)
-            .setting(AppSettings::DisableVersion)
-            .arg(Arg::with_name("UUID")
-                .help("An uuid of a provisioning profile")
-                .required(true)
-                .empty_values(false)
-                .takes_value(true))
-            .arg(Arg::with_name("DIRECTORY")
-                .long("source")
-                .help("A directory where to search a provisioning profile")
-                .required(false)
-                .empty_values(false)
-                .takes_value(true)))
+                        .about("Shows details of a provisioning profile using its uuid")
+                        .display_order(1)
+                        .setting(AppSettings::DisableVersion)
+                        .arg(Arg::with_name("UUID")
+                                 .help("An uuid of a provisioning profile")
+                                 .required(true)
+                                 .empty_values(false)
+                                 .takes_value(true))
+                        .arg(Arg::with_name("DIRECTORY")
+                                 .long("source")
+                                 .help("A directory where to search a provisioning profile")
+                                 .required(false)
+                                 .empty_values(false)
+                                 .takes_value(true)))
         .subcommand(SubCommand::with_name("show-file")
-            .about("Shows details of a provisioning profile")
-            .display_order(2)
-            .setting(AppSettings::DisableVersion)
-            .arg(Arg::with_name("PATH")
-                .help("A file path of a provisioning profile")
-                .required(true)
-                .empty_values(false)
-                .takes_value(true)))
+                        .about("Shows details of a provisioning profile")
+                        .display_order(2)
+                        .setting(AppSettings::DisableVersion)
+                        .arg(Arg::with_name("PATH")
+                                 .help("A file path of a provisioning profile")
+                                 .required(true)
+                                 .empty_values(false)
+                                 .takes_value(true)))
         .subcommand(SubCommand::with_name("remove")
-            .about("Removes a provisioning profile")
-            .display_order(3)
-            .setting(AppSettings::DisableVersion)
-            .arg(Arg::with_name("UUID")
-                .help("An uuid of a provisioning profile")
-                .required(true)
-                .empty_values(false)
-                .multiple(true)
-                .takes_value(true))
-            .arg(Arg::with_name("DIRECTORY")
-                .long("source")
-                .help("A directory where to search a provisioning profile")
-                .required(false)
-                .empty_values(false)
-                .takes_value(true)))
+                        .about("Removes a provisioning profile")
+                        .display_order(3)
+                        .setting(AppSettings::DisableVersion)
+                        .arg(Arg::with_name("UUID")
+                                 .help("An uuid of a provisioning profile")
+                                 .required(true)
+                                 .empty_values(false)
+                                 .multiple(true)
+                                 .takes_value(true))
+                        .arg(Arg::with_name("DIRECTORY")
+                                 .long("source")
+                                 .help("A directory where to search a provisioning profile")
+                                 .required(false)
+                                 .empty_values(false)
+                                 .takes_value(true)))
         .subcommand(SubCommand::with_name("clean")
-            .about("Removes expired provisioning profiles")
-            .display_order(4)
-            .setting(AppSettings::DisableVersion)
-            .arg(Arg::with_name("DIRECTORY")
-                .long("source")
-                .help("A directory where to clean")
-                .required(false)
-                .empty_values(false)
-                .takes_value(true)));
+                        .about("Removes expired provisioning profiles")
+                        .display_order(4)
+                        .setting(AppSettings::DisableVersion)
+                        .arg(Arg::with_name("DIRECTORY")
+                                 .long("source")
+                                 .help("A directory where to clean")
+                                 .required(false)
+                                 .empty_values(false)
+                                 .takes_value(true)));
 
     let matches = app.get_matches_from_safe(args)?;
     if let Some(list_matches) = matches.subcommand_matches("list") {
         let mut params = ListParams::default();
-        params.filter = list_matches.value_of("TEXT").map(|text| text.to_string());
-        if let Some(days) = list_matches.value_of("DAYS")
-            .and_then(|days| days.parse::<i64>().ok()) {
+        params.filter = list_matches
+            .value_of("TEXT")
+            .map(|text| text.to_string());
+        if let Some(days) = list_matches
+               .value_of("DAYS")
+               .and_then(|days| days.parse::<i64>().ok()) {
             if days < 0 || days > 365 {
                 return Err(Error::Custom("DAYS should be between 0 and 365".to_string()));
             }
@@ -183,15 +186,27 @@ pub fn parse<I, S>(args: I) -> Result
         params.directory = list_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::List(params))
     } else if let Some(show_matches) = matches.subcommand_matches("show") {
-        let uuid = show_matches.value_of("UUID").map(|uuid| uuid.to_string()).unwrap();
+        let uuid = show_matches
+            .value_of("UUID")
+            .map(|uuid| uuid.to_string())
+            .unwrap();
         let directory = show_matches.value_of("DIRECTORY").map(|dir| dir.into());
         Ok(Command::ShowUuid(uuid, directory))
     } else if let Some(show_file_matches) = matches.subcommand_matches("show-file") {
-        let path = show_file_matches.value_of("PATH").map(|path| path.into()).unwrap();
+        let path = show_file_matches
+            .value_of("PATH")
+            .map(|path| path.into())
+            .unwrap();
         Ok(Command::ShowFile(path))
     } else if let Some(remove_matches) = matches.subcommand_matches("remove") {
-        let uuids = remove_matches.values_of("UUID").unwrap().map(String::from).collect();
-        let directory = remove_matches.value_of("DIRECTORY").map(|dir| dir.into());
+        let uuids = remove_matches
+            .values_of("UUID")
+            .unwrap()
+            .map(String::from)
+            .collect();
+        let directory = remove_matches
+            .value_of("DIRECTORY")
+            .map(|dir| dir.into());
         Ok(Command::Remove(uuids, directory))
     } else if let Some(clean_matches) = matches.subcommand_matches("clean") {
         let directory = clean_matches.value_of("DIRECTORY").map(|dir| dir.into());
@@ -213,24 +228,24 @@ mod tests {
 
         expect!(parse(&["mprovision", "list", "--source", "."]))
             .to(be_ok().value(Command::List(ListParams {
-                filter: None,
-                expire_in_days: None,
-                directory: Some(".".into()),
-            })));
+                                                filter: None,
+                                                expire_in_days: None,
+                                                directory: Some(".".into()),
+                                            })));
 
         expect!(parse(&["mprovision", "list", "--text", "abc"]))
             .to(be_ok().value(Command::List(ListParams {
-                filter: Some("abc".to_string()),
-                expire_in_days: None,
-                directory: None,
-            })));
+                                                filter: Some("abc".to_string()),
+                                                expire_in_days: None,
+                                                directory: None,
+                                            })));
 
         expect!(parse(&["mprovision", "list", "-t", "abc"]))
             .to(be_ok().value(Command::List(ListParams {
-                filter: Some("abc".to_string()),
-                expire_in_days: None,
-                directory: None,
-            })));
+                                                filter: Some("abc".to_string()),
+                                                expire_in_days: None,
+                                                directory: None,
+                                            })));
 
         expect!(parse(&["mprovision", "list", "--text", ""])).to(be_err());
 
@@ -238,17 +253,17 @@ mod tests {
 
         expect!(parse(&["mprovision", "list", "--expire-in-days", "3"]))
             .to(be_ok().value(Command::List(ListParams {
-                filter: None,
-                expire_in_days: Some(3),
-                directory: None,
-            })));
+                                                filter: None,
+                                                expire_in_days: Some(3),
+                                                directory: None,
+                                            })));
 
         expect!(parse(&["mprovision", "list", "-d", "3"]))
             .to(be_ok().value(Command::List(ListParams {
-                filter: None,
-                expire_in_days: Some(3),
-                directory: None,
-            })));
+                                                filter: None,
+                                                expire_in_days: Some(3),
+                                                directory: None,
+                                            })));
 
         expect!(parse(&["mprovision", "list", "--expire-in-days", "-3"])).to(be_err());
         expect!(parse(&["mprovision", "list", "-d", "-3"])).to(be_err());
@@ -263,18 +278,25 @@ mod tests {
                         "3",
                         "--source",
                         "."]))
-            .to(be_ok().value(Command::List(ListParams {
-                filter: Some("abc".to_string()),
-                expire_in_days: Some(3),
-                directory: Some(".".into()),
-            })));
+                .to(be_ok().value(Command::List(ListParams {
+                                                    filter: Some("abc".to_string()),
+                                                    expire_in_days: Some(3),
+                                                    directory: Some(".".into()),
+                                                })));
 
-        expect!(parse(&["mprovision", "list", "-t", "abc", "-d", "3", "--source", "."]))
-            .to(be_ok().value(Command::List(ListParams {
-                filter: Some("abc".to_string()),
-                expire_in_days: Some(3),
-                directory: Some(".".into()),
-            })));
+        expect!(parse(&["mprovision",
+                        "list",
+                        "-t",
+                        "abc",
+                        "-d",
+                        "3",
+                        "--source",
+                        "."]))
+                .to(be_ok().value(Command::List(ListParams {
+                                                    filter: Some("abc".to_string()),
+                                                    expire_in_days: Some(3),
+                                                    directory: Some(".".into()),
+                                                })));
     }
 
     #[test]
