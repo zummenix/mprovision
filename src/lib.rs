@@ -2,14 +2,14 @@
 //! files. Main purpose of this crate is to contain functions and types
 //! for **mprovision**.
 
+extern crate chrono;
 #[cfg(test)]
 #[macro_use(expect)]
 extern crate expectest;
+extern crate memmem;
+extern crate plist;
 #[cfg(test)]
 extern crate tempdir;
-extern crate plist;
-extern crate chrono;
-extern crate memmem;
 
 extern crate futures;
 extern crate futures_cpupool;
@@ -45,16 +45,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// - the provided path is not a directory
 pub fn entries(dir: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
     let entries = fs::read_dir(dir)?;
-    let filtered = entries
-        .filter_map(|entry| entry.ok())
-        .filter_map(|entry| {
-                        if let Some(ext) = entry.path().extension() {
-                            if ext == "mobileprovision" {
-                                return Some(entry);
-                            }
-                        }
-                        None
-                    });
+    let filtered = entries.filter_map(|entry| entry.ok()).filter_map(|entry| {
+        if let Some(ext) = entry.path().extension() {
+            if ext == "mobileprovision" {
+                return Some(entry);
+            }
+        }
+        None
+    });
     Ok(Box::new(filtered))
 }
 
@@ -68,10 +66,13 @@ pub fn entries(dir: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
 /// or equal to the empty string.
 pub fn directory() -> Result<PathBuf> {
     env::home_dir()
-        .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
+        .map(|path| {
+            path.join("Library/MobileDevice/Provisioning Profiles")
+        })
         .ok_or_else(|| {
-            Error::Own("'HOME' environment variable is not set or equal to the empty string."
-                .to_owned())
+            Error::Own(
+                "'HOME' environment variable is not set or equal to the empty string.".to_owned(),
+            )
         })
 }
 
@@ -87,8 +88,8 @@ pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
 /// Removes a provisioning profile.
 pub fn remove(file_path: &Path) -> Result<()> {
     validate_path(file_path).and_then(|file_path| {
-                                          std::fs::remove_file(file_path).map_err(|err| err.into())
-                                      })
+        std::fs::remove_file(file_path).map_err(|err| err.into())
+    })
 }
 
 /// Returns internals of a provisioning profile.
@@ -99,10 +100,13 @@ pub fn show(file_path: &Path) -> Result<String> {
             .and_then(|mut file| file.read_to_end(&mut buf))
             .map_err(|err| err.into())
             .and_then(|_| {
-                          plist_extractor::find(&buf)
-                    .ok_or_else(|| Error::Own(format!("Couldn't parse '{}'", file_path.display())))
-                      })
-            .and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
+                plist_extractor::find(&buf).ok_or_else(|| {
+                    Error::Own(format!("Couldn't parse '{}'", file_path.display()))
+                })
+            })
+            .and_then(|data| {
+                String::from_utf8(data.to_owned()).map_err(|err| err.into())
+            })
     })
 }
 
@@ -110,21 +114,24 @@ pub fn show(file_path: &Path) -> Result<String> {
 fn validate_path(file_path: &Path) -> Result<&Path> {
     match file_path.extension() {
         Some(extension) if extension == "mobileprovision" => Ok(file_path),
-        _ => {
-            Err(Error::Own(format!("'{}' doesn't have 'mobileprovision' extension",
-                                   file_path.display())))
-        }
+        _ => Err(Error::Own(format!(
+            "'{}' doesn't have 'mobileprovision' extension",
+            file_path.display()
+        ))),
     }
 }
 
 /// Filters entries of a directory using `f`.
 pub fn filter<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
-    where F: Fn(&Profile) -> bool + Sync
+where
+    F: Fn(&Profile) -> bool + Sync,
 {
     let cpu_pool = CpuPool::new(num_cpus::get());
 
-    let stream = futures::stream::iter(entries.into_iter().map(Ok))
-        .map(|entry| cpu_pool.spawn_fn(move || Profile::from_file(&entry.path())))
+    let stream = futures::stream::iter_ok(entries.into_iter())
+        .map(|entry| {
+            cpu_pool.spawn_fn(move || Profile::from_file(&entry.path()))
+        })
         .buffered(num_cpus::get() * 2)
         .filter(f)
         .collect();
