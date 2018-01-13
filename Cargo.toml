@@ -19,5 +19,5 @@ num_cpus = "1.4.0"
 clap = "2.23.3"
 
 [dev-dependencies]
-expectest = "0.7.0"
-tempdir = "0.3.4"
+expectest = "0.9.1"
+tempdir = "0.3.5"
