@@ -43,7 +43,7 @@ fn list(
         .map_err(|err| err.into())
         .map(|entries| {
             let total = entries.len();
-            let date = expires_in_days.map(|days| UTC::now() + Duration::days(days));
+            let date = expires_in_days.map(|days| Utc::now() + Duration::days(days));
             let filter_string = filter.as_ref();
             let mut profiles = mp::filter(entries, |profile| match (date, filter_string) {
                 (Some(date), Some(string)) => {
@@ -112,7 +112,7 @@ fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
         })
         .map_err(|err| err.into())
         .map(|entries| {
-            let date = UTC::now();
+            let date = Utc::now();
             mp::filter(entries, |profile| profile.expiration_date <= date)
         })
         .and_then(|profiles| {

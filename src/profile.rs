@@ -1,7 +1,7 @@
 use std::io::{self, Read};
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use chrono::{DateTime, TimeZone, UTC};
+use chrono::{DateTime, TimeZone, Utc};
 use plist::PlistEvent::*;
 use plist;
 use {Error, Result};
@@ -13,8 +13,8 @@ pub struct Profile {
     pub uuid: String,
     pub name: String,
     pub app_identifier: String,
-    pub creation_date: DateTime<UTC>,
-    pub expiration_date: DateTime<UTC>,
+    pub creation_date: DateTime<Utc>,
+    pub expiration_date: DateTime<Utc>,
 }
 
 impl Profile {
@@ -54,12 +54,12 @@ impl Profile {
                     }
                     if key == "CreationDate" {
                         if let Some(Ok(DateValue(value))) = iter.next() {
-                            profile.creation_date = value;
+                            profile.creation_date = value.into();
                         }
                     }
                     if key == "ExpirationDate" {
                         if let Some(Ok(DateValue(value))) = iter.next() {
-                            profile.expiration_date = value;
+                            profile.expiration_date = value.into();
                         }
                     }
                 }
@@ -76,8 +76,8 @@ impl Profile {
             uuid: "".into(),
             name: "".into(),
             app_identifier: "".into(),
-            creation_date: UTC.timestamp(0, 0),
-            expiration_date: UTC.timestamp(0, 0),
+            creation_date: Utc.timestamp(0, 0),
+            expiration_date: Utc.timestamp(0, 0),
         }
     }
 
@@ -115,7 +115,7 @@ impl Profile {
 mod tests {
     use expectest::prelude::*;
     use std::path::PathBuf;
-    use chrono::{TimeZone, UTC};
+    use chrono::{TimeZone, Utc};
     use super::*;
 
     #[test]
@@ -125,8 +125,8 @@ mod tests {
             uuid: "123".into(),
             name: "name".into(),
             app_identifier: "id".into(),
-            creation_date: UTC.timestamp(0, 0),
-            expiration_date: UTC.timestamp(0, 0),
+            creation_date: Utc.timestamp(0, 0),
+            expiration_date: Utc.timestamp(0, 0),
         };
         expect!(profile.contains("12")).to(be_true());
         expect!(profile.contains("me")).to(be_true());
