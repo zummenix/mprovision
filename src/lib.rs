@@ -128,7 +128,7 @@ where
 {
     let cpu_pool = CpuPool::new(num_cpus::get());
 
-    let stream = futures::stream::iter(entries.into_iter().map(Ok))
+    let stream = futures::stream::iter_ok(entries.into_iter())
         .map(|entry| {
             cpu_pool.spawn_fn(move || Profile::from_file(&entry.path()))
         })
