@@ -1,8 +1,7 @@
-
 use std::io::{self, Read};
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use chrono::{DateTime, UTC, TimeZone};
+use chrono::{DateTime, TimeZone, UTC};
 use plist::PlistEvent::*;
 use plist;
 use {Error, Result};
@@ -25,9 +24,9 @@ impl Profile {
         File::open(path)?.read_to_end(&mut buf)?;
         Profile::from_xml_data(&buf)
             .map(|mut p| {
-                     p.path = path.to_owned();
-                     p
-                 })
+                p.path = path.to_owned();
+                p
+            })
             .ok_or_else(|| Error::Own("Couldn't parse file.".into()))
     }
 
@@ -103,7 +102,11 @@ impl Profile {
         desc.push_str("\n");
         desc.push_str(&self.name);
         desc.push_str("\n");
-        desc.push_str(&format!("{} - {}", self.creation_date, self.expiration_date));
+        desc.push_str(&format!(
+            "{} - {}",
+            self.creation_date,
+            self.expiration_date
+        ));
         desc
     }
 }
@@ -112,7 +115,7 @@ impl Profile {
 mod tests {
     use expectest::prelude::*;
     use std::path::PathBuf;
-    use chrono::{UTC, TimeZone};
+    use chrono::{TimeZone, UTC};
     use super::*;
 
     #[test]
