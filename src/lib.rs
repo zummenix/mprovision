@@ -66,9 +66,7 @@ pub fn entries(dir: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
 /// or equal to the empty string.
 pub fn directory() -> Result<PathBuf> {
     env::home_dir()
-        .map(|path| {
-            path.join("Library/MobileDevice/Provisioning Profiles")
-        })
+        .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
         .ok_or_else(|| {
             Error::Own(
                 "'HOME' environment variable is not set or equal to the empty string.".to_owned(),
@@ -87,9 +85,8 @@ pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
 
 /// Removes a provisioning profile.
 pub fn remove(file_path: &Path) -> Result<()> {
-    validate_path(file_path).and_then(|file_path| {
-        std::fs::remove_file(file_path).map_err(|err| err.into())
-    })
+    validate_path(file_path)
+        .and_then(|file_path| std::fs::remove_file(file_path).map_err(|err| err.into()))
 }
 
 /// Returns internals of a provisioning profile.
@@ -100,13 +97,10 @@ pub fn show(file_path: &Path) -> Result<String> {
             .and_then(|mut file| file.read_to_end(&mut buf))
             .map_err(|err| err.into())
             .and_then(|_| {
-                plist_extractor::find(&buf).ok_or_else(|| {
-                    Error::Own(format!("Couldn't parse '{}'", file_path.display()))
-                })
+                plist_extractor::find(&buf)
+                    .ok_or_else(|| Error::Own(format!("Couldn't parse '{}'", file_path.display())))
             })
-            .and_then(|data| {
-                String::from_utf8(data.to_owned()).map_err(|err| err.into())
-            })
+            .and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
     })
 }
 
@@ -129,9 +123,7 @@ where
     let cpu_pool = CpuPool::new(num_cpus::get());
 
     let stream = futures::stream::iter_ok(entries.into_iter())
-        .map(|entry| {
-            cpu_pool.spawn_fn(move || Profile::from_file(&entry.path()))
-        })
+        .map(|entry| cpu_pool.spawn_fn(move || Profile::from_file(&entry.path())))
         .buffered(num_cpus::get() * 2)
         .filter(f)
         .collect();

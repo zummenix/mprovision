@@ -254,49 +254,49 @@ mod tests {
         expect!(parse(&["mprovision", "list"]))
             .to(be_ok().value(Command::List(ListParams::default())));
 
-        expect!(parse(&["mprovision", "list", "--source", "."])).to(
-            be_ok().value(Command::List(ListParams {
+        expect!(parse(&["mprovision", "list", "--source", "."])).to(be_ok().value(Command::List(
+            ListParams {
                 filter: None,
                 expire_in_days: None,
                 directory: Some(".".into()),
-            })),
-        );
+            },
+        )));
 
-        expect!(parse(&["mprovision", "list", "--text", "abc"])).to(
-            be_ok().value(Command::List(ListParams {
+        expect!(parse(&["mprovision", "list", "--text", "abc"])).to(be_ok().value(Command::List(
+            ListParams {
                 filter: Some("abc".to_string()),
                 expire_in_days: None,
                 directory: None,
-            })),
-        );
+            },
+        )));
 
-        expect!(parse(&["mprovision", "list", "-t", "abc"])).to(
-            be_ok().value(Command::List(ListParams {
+        expect!(parse(&["mprovision", "list", "-t", "abc"])).to(be_ok().value(Command::List(
+            ListParams {
                 filter: Some("abc".to_string()),
                 expire_in_days: None,
                 directory: None,
-            })),
-        );
+            },
+        )));
 
         expect!(parse(&["mprovision", "list", "--text", ""])).to(be_err());
 
         expect!(parse(&["mprovision", "list", "-t", ""])).to(be_err());
 
-        expect!(parse(&["mprovision", "list", "--expire-in-days", "3"])).to(
-            be_ok().value(Command::List(ListParams {
+        expect!(parse(&["mprovision", "list", "--expire-in-days", "3"])).to(be_ok().value(
+            Command::List(ListParams {
                 filter: None,
                 expire_in_days: Some(3),
                 directory: None,
-            })),
-        );
+            }),
+        ));
 
-        expect!(parse(&["mprovision", "list", "-d", "3"])).to(
-            be_ok().value(Command::List(ListParams {
+        expect!(parse(&["mprovision", "list", "-d", "3"])).to(be_ok().value(Command::List(
+            ListParams {
                 filter: None,
                 expire_in_days: Some(3),
                 directory: None,
-            })),
-        );
+            },
+        )));
 
         expect!(parse(&["mprovision", "list", "--expire-in-days", "-3"])).to(be_err());
         expect!(parse(&["mprovision", "list", "-d", "-3"])).to(be_err());
@@ -356,17 +356,21 @@ mod tests {
         expect!(parse(&["mprovision", "remove", "abcd"]))
             .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], None)));
 
-        expect!(parse(&["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(Command::Remove(
-            vec!["abcd".to_string(), "ef".to_string()],
-            None,
-        )));
+        expect!(parse(&["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(
+            Command::Remove(vec!["abcd".to_string(), "ef".to_string()], None),
+        ));
 
         expect!(parse(&["mprovision", "remove", "abcd", "--source", "."]))
             .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], Some(".".into()))));
 
-        expect!(parse(
-            &["mprovision", "remove", "abcd", "ef", "--source", "."]
-        )).to(be_ok().value(Command::Remove(
+        expect!(parse(&[
+            "mprovision",
+            "remove",
+            "abcd",
+            "ef",
+            "--source",
+            "."
+        ])).to(be_ok().value(Command::Remove(
             vec!["abcd".to_string(), "ef".to_string()],
             Some(".".into()),
         )));

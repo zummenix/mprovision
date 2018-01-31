@@ -37,9 +37,7 @@ fn list(
     directory: Option<PathBuf>,
 ) -> Result<(), cli::Error> {
     mp::with_directory(directory)
-        .and_then(|dir| {
-            mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>())
-        })
+        .and_then(|dir| mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>()))
         .map_err(|err| err.into())
         .map(|entries| {
             let total = entries.len();
@@ -71,9 +69,8 @@ fn list(
 fn show_uuid(uuid: String, directory: Option<PathBuf>) -> Result<(), cli::Error> {
     mp::with_directory(directory)
         .and_then(|directory| {
-            mp::find_by_uuid(&directory, &uuid).and_then(|profile| {
-                mp::show(&profile.path).map(|xml| println!("{}", xml))
-            })
+            mp::find_by_uuid(&directory, &uuid)
+                .and_then(|profile| mp::show(&profile.path).map(|xml| println!("{}", xml)))
         })
         .map_err(|err| err.into())
 }
@@ -107,9 +104,7 @@ fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
     }
 
     mp::with_directory(directory)
-        .and_then(|dir| {
-            mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>())
-        })
+        .and_then(|dir| mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>()))
         .map_err(|err| err.into())
         .map(|entries| {
             let date = Utc::now();

@@ -104,8 +104,7 @@ impl Profile {
         desc.push_str("\n");
         desc.push_str(&format!(
             "{} - {}",
-            self.creation_date,
-            self.expiration_date
+            self.creation_date, self.expiration_date
         ));
         desc
     }
