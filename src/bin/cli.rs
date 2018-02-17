@@ -13,7 +13,7 @@ pub enum Command {
     #[structopt(name = "list", about = "List provisioning profiles")] List(ListParams),
     #[structopt(name = "show")] ShowUuid(ShowUuidParams),
     #[structopt(name = "show-file")] ShowFile(ShowFileParams),
-    // #[structopt(name = "remove")] Remove(Vec<String>, Option<PathBuf>),
+    #[structopt(name = "remove")] Remove(RemoveParams),
     // #[structopt(name = "clean")] Clean(Option<PathBuf>),
 }
 
@@ -40,6 +40,14 @@ pub struct ShowFileParams {
     #[structopt(parse(from_os_str))]
     pub file: PathBuf,
 }
+
+#[derive(Debug, Default, PartialEq, StructOpt)]
+pub struct RemoveParams {
+    pub uuids: Vec<String>,
+    #[structopt(long = "source", parse(from_os_str))]
+    pub directory: Option<PathBuf>,
+}
+
 pub type Result = result::Result<Command, Error>;
 
 #[derive(Debug)]
@@ -403,30 +411,41 @@ mod tests {
         expect!(parse(&["mprovision", "show-file", "file.mprovision", "."])).to(be_err());
     }
 
-    // #[test]
-    // fn remove_uuid_command() {
-    //     expect!(parse(&["mprovision", "remove", "abcd"]))
-    //         .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], None)));
+    #[test]
+    fn remove_uuid_command() {
+        expect!(parse(&["mprovision", "remove", "abcd"])).to(be_ok().value(Command::Remove(
+            RemoveParams {
+                uuids: vec!["abcd".to_string()],
+                directory: None,
+            },
+        )));
 
-    //     expect!(parse(&["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(
-    //         Command::Remove(vec!["abcd".to_string(), "ef".to_string()], None),
-    //     ));
+        expect!(parse(&["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(
+            Command::Remove(RemoveParams {
+                uuids: vec!["abcd".to_string(), "ef".to_string()],
+                directory: None,
+            }),
+        ));
 
-    //     expect!(parse(&["mprovision", "remove", "abcd", "--source", "."]))
-    //         .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], Some(".".into()))));
+        expect!(parse(&["mprovision", "remove", "abcd", "--source", "."])).to(be_ok().value(
+            Command::Remove(RemoveParams {
+                uuids: vec!["abcd".to_string()],
+                directory: Some(".".into()),
+            }),
+        ));
 
-    //     expect!(parse(&[
-    //         "mprovision",
-    //         "remove",
-    //         "abcd",
-    //         "ef",
-    //         "--source",
-    //         "."
-    //     ])).to(be_ok().value(Command::Remove(
-    //         vec!["abcd".to_string(), "ef".to_string()],
-    //         Some(".".into()),
-    //     )));
-    // }
+        expect!(parse(&[
+            "mprovision",
+            "remove",
+            "abcd",
+            "ef",
+            "--source",
+            "."
+        ])).to(be_ok().value(Command::Remove(RemoveParams {
+            uuids: vec!["abcd".to_string(), "ef".to_string()],
+            directory: Some(".".into()),
+        })));
+    }
 
     // #[test]
     // fn clean_command() {
