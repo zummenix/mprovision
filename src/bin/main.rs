@@ -30,7 +30,7 @@ fn run(command: cli::Command) -> Result<(), cli::Error> {
             directory,
         }) => list(text, expire_in_days, directory),
         Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => show_uuid(uuid, directory),
-        // Command::ShowFile(path) => show_file(path),
+        Command::ShowFile(cli::ShowFileParams { file }) => show_file(file),
         // Command::Remove(uuids, directory) => remove(uuids, directory),
         // Command::Clean(directory) => clean(directory),
     }

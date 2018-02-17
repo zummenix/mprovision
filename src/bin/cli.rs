@@ -12,7 +12,7 @@ use mprovision as mp;
 pub enum Command {
     #[structopt(name = "list", about = "List provisioning profiles")] List(ListParams),
     #[structopt(name = "show")] ShowUuid(ShowUuidParams),
-    // #[structopt(name = "show-file")] ShowFile(PathBuf),
+    #[structopt(name = "show-file")] ShowFile(ShowFileParams),
     // #[structopt(name = "remove")] Remove(Vec<String>, Option<PathBuf>),
     // #[structopt(name = "clean")] Clean(Option<PathBuf>),
 }
@@ -35,6 +35,11 @@ pub struct ShowUuidParams {
     pub directory: Option<PathBuf>,
 }
 
+#[derive(Debug, Default, PartialEq, StructOpt)]
+pub struct ShowFileParams {
+    #[structopt(parse(from_os_str))]
+    pub file: PathBuf,
+}
 pub type Result = result::Result<Command, Error>;
 
 #[derive(Debug)]
@@ -387,13 +392,16 @@ mod tests {
         ));
     }
 
-    // #[test]
-    // fn show_path_command() {
-    //     expect!(parse(&["mprovision", "show-file", "file.mprovision"]))
-    //         .to(be_ok().value(Command::ShowFile("file.mprovision".into())));
+    #[test]
+    fn show_path_command() {
+        expect!(parse(&["mprovision", "show-file", "file.mprovision"])).to(be_ok().value(
+            Command::ShowFile(ShowFileParams {
+                file: "file.mprovision".into(),
+            }),
+        ));
 
-    //     expect!(parse(&["mprovision", "show-file", "file.mprovision", "."])).to(be_err());
-    // }
+        expect!(parse(&["mprovision", "show-file", "file.mprovision", "."])).to(be_err());
+    }
 
     // #[test]
     // fn remove_uuid_command() {
