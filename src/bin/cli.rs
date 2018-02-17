@@ -1,4 +1,4 @@
-use clap::{self, App, AppSettings, Arg, SubCommand};
+use clap;
 use std::io::{self, Write};
 use std::process;
 use std::path::PathBuf;
