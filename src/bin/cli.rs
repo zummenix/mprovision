@@ -5,21 +5,25 @@ use std::path::PathBuf;
 use std::error;
 use std::result;
 use std::fmt;
+use structopt::StructOpt;
 use mprovision as mp;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, StructOpt)]
 pub enum Command {
-    List(ListParams),
-    ShowUuid(String, Option<PathBuf>),
-    ShowFile(PathBuf),
-    Remove(Vec<String>, Option<PathBuf>),
-    Clean(Option<PathBuf>),
+    #[structopt(name = "list", about = "List provisioning profiles")] List(ListParams),
+    // #[structopt(name = "show")] ShowUuid(String, Option<PathBuf>),
+    // #[structopt(name = "show-file")] ShowFile(PathBuf),
+    // #[structopt(name = "remove")] Remove(Vec<String>, Option<PathBuf>),
+    // #[structopt(name = "clean")] Clean(Option<PathBuf>),
 }
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct ListParams {
+    #[structopt(short = "t", long = "text", raw(empty_values = "false"))]
     pub filter: Option<String>,
+    #[structopt(short = "d", long = "expire-in-days")]
     pub expire_in_days: Option<i64>,
+    #[structopt(long = "source", parse(from_os_str))]
     pub directory: Option<PathBuf>,
 }
 
@@ -90,159 +94,169 @@ where
     S: Clone,
     ::std::ffi::OsString: From<S>,
 {
-    let app = App::new("mprovision")
-        .about("A tool that helps iOS developers to manage mobileprovision files.")
-        .version(crate_version!())
-        .subcommand(
-            SubCommand::with_name("list")
-                .about("Lists provisioning profiles")
-                .display_order(0)
-                .setting(AppSettings::DisableVersion)
-                .arg(
-                    Arg::with_name("TEXT")
-                        .long("text")
-                        .short("t")
-                        .help("Lists provisioning profiles that contain this text")
-                        .display_order(0)
-                        .required(false)
-                        .empty_values(false)
-                        .takes_value(true),
-                )
-                .arg(
-                    Arg::with_name("DAYS")
-                        .long("expire-in-days")
-                        .short("d")
-                        .help("Lists provisioning profiles that will expire in days")
-                        .display_order(1)
-                        .required(false)
-                        .empty_values(false)
-                        .takes_value(true),
-                )
-                .arg(
-                    Arg::with_name("DIRECTORY")
-                        .long("source")
-                        .help("A directory where to search provisioning profiles")
-                        .required(false)
-                        .empty_values(false)
-                        .takes_value(true),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("show")
-                .about("Shows details of a provisioning profile using its uuid")
-                .display_order(1)
-                .setting(AppSettings::DisableVersion)
-                .arg(
-                    Arg::with_name("UUID")
-                        .help("An uuid of a provisioning profile")
-                        .required(true)
-                        .empty_values(false)
-                        .takes_value(true),
-                )
-                .arg(
-                    Arg::with_name("DIRECTORY")
-                        .long("source")
-                        .help("A directory where to search a provisioning profile")
-                        .required(false)
-                        .empty_values(false)
-                        .takes_value(true),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("show-file")
-                .about("Shows details of a provisioning profile")
-                .display_order(2)
-                .setting(AppSettings::DisableVersion)
-                .arg(
-                    Arg::with_name("PATH")
-                        .help("A file path of a provisioning profile")
-                        .required(true)
-                        .empty_values(false)
-                        .takes_value(true),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("remove")
-                .about("Removes a provisioning profile")
-                .display_order(3)
-                .setting(AppSettings::DisableVersion)
-                .arg(
-                    Arg::with_name("UUID")
-                        .help("An uuid of a provisioning profile")
-                        .required(true)
-                        .empty_values(false)
-                        .multiple(true)
-                        .takes_value(true),
-                )
-                .arg(
-                    Arg::with_name("DIRECTORY")
-                        .long("source")
-                        .help("A directory where to search a provisioning profile")
-                        .required(false)
-                        .empty_values(false)
-                        .takes_value(true),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("clean")
-                .about("Removes expired provisioning profiles")
-                .display_order(4)
-                .setting(AppSettings::DisableVersion)
-                .arg(
-                    Arg::with_name("DIRECTORY")
-                        .long("source")
-                        .help("A directory where to clean")
-                        .required(false)
-                        .empty_values(false)
-                        .takes_value(true),
-                ),
-        );
-
-    let matches = app.get_matches_from_safe(args)?;
-    if let Some(list_matches) = matches.subcommand_matches("list") {
-        let mut params = ListParams::default();
-        params.filter = list_matches.value_of("TEXT").map(|text| text.to_string());
-        if let Some(days) = list_matches
-            .value_of("DAYS")
-            .and_then(|days| days.parse::<i64>().ok())
-        {
-            if days < 0 || days > 365 {
-                return Err(Error::Custom(
-                    "DAYS should be between 0 and 365".to_string(),
-                ));
-            }
-            params.expire_in_days = Some(days);
-        }
-        params.directory = list_matches.value_of("DIRECTORY").map(|dir| dir.into());
-        Ok(Command::List(params))
-    } else if let Some(show_matches) = matches.subcommand_matches("show") {
-        let uuid = show_matches
-            .value_of("UUID")
-            .map(|uuid| uuid.to_string())
-            .unwrap();
-        let directory = show_matches.value_of("DIRECTORY").map(|dir| dir.into());
-        Ok(Command::ShowUuid(uuid, directory))
-    } else if let Some(show_file_matches) = matches.subcommand_matches("show-file") {
-        let path = show_file_matches
-            .value_of("PATH")
-            .map(|path| path.into())
-            .unwrap();
-        Ok(Command::ShowFile(path))
-    } else if let Some(remove_matches) = matches.subcommand_matches("remove") {
-        let uuids = remove_matches
-            .values_of("UUID")
-            .unwrap()
-            .map(String::from)
-            .collect();
-        let directory = remove_matches.value_of("DIRECTORY").map(|dir| dir.into());
-        Ok(Command::Remove(uuids, directory))
-    } else if let Some(clean_matches) = matches.subcommand_matches("clean") {
-        let directory = clean_matches.value_of("DIRECTORY").map(|dir| dir.into());
-        Ok(Command::Clean(directory))
-    } else {
-        Err(Error::Custom("Command isn't implemented".to_string()))
-    }
+    let command = Command::from_iter(args);
+    Ok(command)
 }
+
+// pub fn parse<I, S>(args: I) -> Result
+// where
+//     I: IntoIterator<Item = S>,
+//     S: Clone,
+//     ::std::ffi::OsString: From<S>,
+// {
+//     let app = App::new("mprovision")
+//         .about("A tool that helps iOS developers to manage mobileprovision files.")
+//         .version(crate_version!())
+//         .subcommand(
+//             SubCommand::with_name("list")
+//                 .about("Lists provisioning profiles")
+//                 .display_order(0)
+//                 .setting(AppSettings::DisableVersion)
+//                 .arg(
+//                     Arg::with_name("TEXT")
+//                         .long("text")
+//                         .short("t")
+//                         .help("Lists provisioning profiles that contain this text")
+//                         .display_order(0)
+//                         .required(false)
+//                         .empty_values(false)
+//                         .takes_value(true),
+//                 )
+//                 .arg(
+//                     Arg::with_name("DAYS")
+//                         .long("expire-in-days")
+//                         .short("d")
+//                         .help("Lists provisioning profiles that will expire in days")
+//                         .display_order(1)
+//                         .required(false)
+//                         .empty_values(false)
+//                         .takes_value(true),
+//                 )
+//                 .arg(
+//                     Arg::with_name("DIRECTORY")
+//                         .long("source")
+//                         .help("A directory where to search provisioning profiles")
+//                         .required(false)
+//                         .empty_values(false)
+//                         .takes_value(true),
+//                 ),
+//         )
+//         .subcommand(
+//             SubCommand::with_name("show")
+//                 .about("Shows details of a provisioning profile using its uuid")
+//                 .display_order(1)
+//                 .setting(AppSettings::DisableVersion)
+//                 .arg(
+//                     Arg::with_name("UUID")
+//                         .help("An uuid of a provisioning profile")
+//                         .required(true)
+//                         .empty_values(false)
+//                         .takes_value(true),
+//                 )
+//                 .arg(
+//                     Arg::with_name("DIRECTORY")
+//                         .long("source")
+//                         .help("A directory where to search a provisioning profile")
+//                         .required(false)
+//                         .empty_values(false)
+//                         .takes_value(true),
+//                 ),
+//         )
+//         .subcommand(
+//             SubCommand::with_name("show-file")
+//                 .about("Shows details of a provisioning profile")
+//                 .display_order(2)
+//                 .setting(AppSettings::DisableVersion)
+//                 .arg(
+//                     Arg::with_name("PATH")
+//                         .help("A file path of a provisioning profile")
+//                         .required(true)
+//                         .empty_values(false)
+//                         .takes_value(true),
+//                 ),
+//         )
+//         .subcommand(
+//             SubCommand::with_name("remove")
+//                 .about("Removes a provisioning profile")
+//                 .display_order(3)
+//                 .setting(AppSettings::DisableVersion)
+//                 .arg(
+//                     Arg::with_name("UUID")
+//                         .help("An uuid of a provisioning profile")
+//                         .required(true)
+//                         .empty_values(false)
+//                         .multiple(true)
+//                         .takes_value(true),
+//                 )
+//                 .arg(
+//                     Arg::with_name("DIRECTORY")
+//                         .long("source")
+//                         .help("A directory where to search a provisioning profile")
+//                         .required(false)
+//                         .empty_values(false)
+//                         .takes_value(true),
+//                 ),
+//         )
+//         .subcommand(
+//             SubCommand::with_name("clean")
+//                 .about("Removes expired provisioning profiles")
+//                 .display_order(4)
+//                 .setting(AppSettings::DisableVersion)
+//                 .arg(
+//                     Arg::with_name("DIRECTORY")
+//                         .long("source")
+//                         .help("A directory where to clean")
+//                         .required(false)
+//                         .empty_values(false)
+//                         .takes_value(true),
+//                 ),
+//         );
+
+//     let matches = app.get_matches_from_safe(args)?;
+//     if let Some(list_matches) = matches.subcommand_matches("list") {
+//         let mut params = ListParams::default();
+//         params.filter = list_matches.value_of("TEXT").map(|text| text.to_string());
+//         if let Some(days) = list_matches
+//             .value_of("DAYS")
+//             .and_then(|days| days.parse::<i64>().ok())
+//         {
+//             if days < 0 || days > 365 {
+//                 return Err(Error::Custom(
+//                     "DAYS should be between 0 and 365".to_string(),
+//                 ));
+//             }
+//             params.expire_in_days = Some(days);
+//         }
+//         params.directory = list_matches.value_of("DIRECTORY").map(|dir| dir.into());
+//         Ok(Command::List(params))
+//     } else if let Some(show_matches) = matches.subcommand_matches("show") {
+//         let uuid = show_matches
+//             .value_of("UUID")
+//             .map(|uuid| uuid.to_string())
+//             .unwrap();
+//         let directory = show_matches.value_of("DIRECTORY").map(|dir| dir.into());
+//         Ok(Command::ShowUuid(uuid, directory))
+//     } else if let Some(show_file_matches) = matches.subcommand_matches("show-file") {
+//         let path = show_file_matches
+//             .value_of("PATH")
+//             .map(|path| path.into())
+//             .unwrap();
+//         Ok(Command::ShowFile(path))
+//     } else if let Some(remove_matches) = matches.subcommand_matches("remove") {
+//         let uuids = remove_matches
+//             .values_of("UUID")
+//             .unwrap()
+//             .map(String::from)
+//             .collect();
+//         let directory = remove_matches.value_of("DIRECTORY").map(|dir| dir.into());
+//         Ok(Command::Remove(uuids, directory))
+//     } else if let Some(clean_matches) = matches.subcommand_matches("clean") {
+//         let directory = clean_matches.value_of("DIRECTORY").map(|dir| dir.into());
+//         Ok(Command::Clean(directory))
+//     } else {
+//         Err(Error::Custom("Command isn't implemented".to_string()))
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
@@ -334,53 +348,53 @@ mod tests {
         })));
     }
 
-    #[test]
-    fn show_uuid_command() {
-        expect!(parse(&["mprovision", "show", "abcd"]))
-            .to(be_ok().value(Command::ShowUuid("abcd".to_string(), None)));
+    // #[test]
+    // fn show_uuid_command() {
+    //     expect!(parse(&["mprovision", "show", "abcd"]))
+    //         .to(be_ok().value(Command::ShowUuid("abcd".to_string(), None)));
 
-        expect!(parse(&["mprovision", "show", "abcd", "--source", "."]))
-            .to(be_ok().value(Command::ShowUuid("abcd".to_string(), Some(".".into()))));
-    }
+    //     expect!(parse(&["mprovision", "show", "abcd", "--source", "."]))
+    //         .to(be_ok().value(Command::ShowUuid("abcd".to_string(), Some(".".into()))));
+    // }
 
-    #[test]
-    fn show_path_command() {
-        expect!(parse(&["mprovision", "show-file", "file.mprovision"]))
-            .to(be_ok().value(Command::ShowFile("file.mprovision".into())));
+    // #[test]
+    // fn show_path_command() {
+    //     expect!(parse(&["mprovision", "show-file", "file.mprovision"]))
+    //         .to(be_ok().value(Command::ShowFile("file.mprovision".into())));
 
-        expect!(parse(&["mprovision", "show-file", "file.mprovision", "."])).to(be_err());
-    }
+    //     expect!(parse(&["mprovision", "show-file", "file.mprovision", "."])).to(be_err());
+    // }
 
-    #[test]
-    fn remove_uuid_command() {
-        expect!(parse(&["mprovision", "remove", "abcd"]))
-            .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], None)));
+    // #[test]
+    // fn remove_uuid_command() {
+    //     expect!(parse(&["mprovision", "remove", "abcd"]))
+    //         .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], None)));
 
-        expect!(parse(&["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(
-            Command::Remove(vec!["abcd".to_string(), "ef".to_string()], None),
-        ));
+    //     expect!(parse(&["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(
+    //         Command::Remove(vec!["abcd".to_string(), "ef".to_string()], None),
+    //     ));
 
-        expect!(parse(&["mprovision", "remove", "abcd", "--source", "."]))
-            .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], Some(".".into()))));
+    //     expect!(parse(&["mprovision", "remove", "abcd", "--source", "."]))
+    //         .to(be_ok().value(Command::Remove(vec!["abcd".to_string()], Some(".".into()))));
 
-        expect!(parse(&[
-            "mprovision",
-            "remove",
-            "abcd",
-            "ef",
-            "--source",
-            "."
-        ])).to(be_ok().value(Command::Remove(
-            vec!["abcd".to_string(), "ef".to_string()],
-            Some(".".into()),
-        )));
-    }
+    //     expect!(parse(&[
+    //         "mprovision",
+    //         "remove",
+    //         "abcd",
+    //         "ef",
+    //         "--source",
+    //         "."
+    //     ])).to(be_ok().value(Command::Remove(
+    //         vec!["abcd".to_string(), "ef".to_string()],
+    //         Some(".".into()),
+    //     )));
+    // }
 
-    #[test]
-    fn clean_command() {
-        expect!(parse(&["mprovision", "clean"])).to(be_ok().value(Command::Clean(None)));
+    // #[test]
+    // fn clean_command() {
+    //     expect!(parse(&["mprovision", "clean"])).to(be_ok().value(Command::Clean(None)));
 
-        expect!(parse(&["mprovision", "clean", "--source", "."]))
-            .to(be_ok().value(Command::Clean(Some(".".into()))));
-    }
+    //     expect!(parse(&["mprovision", "clean", "--source", "."]))
+    //         .to(be_ok().value(Command::Clean(Some(".".into()))));
+    // }
 }

@@ -5,6 +5,8 @@ extern crate clap;
 #[macro_use(expect)]
 extern crate expectest;
 extern crate mprovision;
+#[macro_use]
+extern crate structopt;
 
 use mprovision as mp;
 use cli::Command;
@@ -27,10 +29,10 @@ fn run(command: cli::Command) -> Result<(), cli::Error> {
             expire_in_days,
             directory,
         }) => list(filter, expire_in_days, directory),
-        Command::ShowUuid(uuid, directory) => show_uuid(uuid, directory),
-        Command::ShowFile(path) => show_file(path),
-        Command::Remove(uuids, directory) => remove(uuids, directory),
-        Command::Clean(directory) => clean(directory),
+        // Command::ShowUuid(uuid, directory) => show_uuid(uuid, directory),
+        // Command::ShowFile(path) => show_file(path),
+        // Command::Remove(uuids, directory) => remove(uuids, directory),
+        // Command::Clean(directory) => clean(directory),
     }
 }
 
