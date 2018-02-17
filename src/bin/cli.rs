@@ -14,7 +14,7 @@ pub enum Command {
     #[structopt(name = "show")] ShowUuid(ShowUuidParams),
     #[structopt(name = "show-file")] ShowFile(ShowFileParams),
     #[structopt(name = "remove")] Remove(RemoveParams),
-    // #[structopt(name = "clean")] Clean(Option<PathBuf>),
+    #[structopt(name = "clean")] Clean(CleanParams),
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
@@ -44,6 +44,12 @@ pub struct ShowFileParams {
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct RemoveParams {
     pub uuids: Vec<String>,
+    #[structopt(long = "source", parse(from_os_str))]
+    pub directory: Option<PathBuf>,
+}
+
+#[derive(Debug, Default, PartialEq, StructOpt)]
+pub struct CleanParams {
     #[structopt(long = "source", parse(from_os_str))]
     pub directory: Option<PathBuf>,
 }
@@ -447,11 +453,15 @@ mod tests {
         })));
     }
 
-    // #[test]
-    // fn clean_command() {
-    //     expect!(parse(&["mprovision", "clean"])).to(be_ok().value(Command::Clean(None)));
+    #[test]
+    fn clean_command() {
+        expect!(parse(&["mprovision", "clean"]))
+            .to(be_ok().value(Command::Clean(CleanParams { directory: None })));
 
-    //     expect!(parse(&["mprovision", "clean", "--source", "."]))
-    //         .to(be_ok().value(Command::Clean(Some(".".into()))));
-    // }
+        expect!(parse(&["mprovision", "clean", "--source", "."])).to(be_ok().value(
+            Command::Clean(CleanParams {
+                directory: Some(".".into()),
+            }),
+        ));
+    }
 }

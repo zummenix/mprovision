@@ -1,5 +1,4 @@
 extern crate chrono;
-#[macro_use(crate_version)]
 extern crate clap;
 #[cfg(test)]
 #[macro_use(expect)]
@@ -32,7 +31,7 @@ fn run(command: cli::Command) -> Result<(), cli::Error> {
         Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => show_uuid(uuid, directory),
         Command::ShowFile(cli::ShowFileParams { file }) => show_file(file),
         Command::Remove(cli::RemoveParams { uuids, directory }) => remove(uuids, directory),
-        // Command::Clean(directory) => clean(directory),
+        Command::Clean(cli::CleanParams { directory }) => clean(directory),
     }
 }
 
