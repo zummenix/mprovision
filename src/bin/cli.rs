@@ -9,48 +9,68 @@ use structopt::StructOpt;
 use mprovision as mp;
 
 #[derive(Debug, PartialEq, StructOpt)]
+/// A tool that helps iOS developers to manage mobileprovision files.
 pub enum Command {
-    #[structopt(name = "list", about = "List provisioning profiles")] List(ListParams),
-    #[structopt(name = "show")] ShowUuid(ShowUuidParams),
-    #[structopt(name = "show-file")] ShowFile(ShowFileParams),
-    #[structopt(name = "remove")] Remove(RemoveParams),
-    #[structopt(name = "clean")] Clean(CleanParams),
+    #[structopt(name = "list", raw(display_order = "0"))]
+    /// Lists provisioning profiles
+    List(ListParams),
+    #[structopt(name = "show", raw(display_order = "1"))]
+    /// Shows details of a provisioning profile using its uuid
+    ShowUuid(ShowUuidParams),
+    #[structopt(name = "show-file", raw(display_order = "2"))]
+    /// Shows details of a provisioning profile
+    ShowFile(ShowFileParams),
+    #[structopt(name = "remove", raw(display_order = "3"))]
+    /// Removes provisioning profiles
+    Remove(RemoveParams),
+    #[structopt(name = "clean", raw(display_order = "4"))]
+    /// Removes expired provisioning profiles
+    Clean(CleanParams),
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct ListParams {
     #[structopt(short = "t", long = "text", raw(empty_values = "false"))]
+    /// Lists provisioning profiles that contain this text
     pub text: Option<String>,
     #[structopt(short = "d", long = "expire-in-days", parse(try_from_str = "parse_days"))]
+    /// Lists provisioning profiles that will expire in days
     pub expire_in_days: Option<i64>,
     #[structopt(long = "source", parse(from_os_str))]
+    /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct ShowUuidParams {
     #[structopt(raw(empty_values = "false"))]
+    /// An uuid of a provisioning profile
     pub uuid: String,
     #[structopt(long = "source", parse(from_os_str))]
+    /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct ShowFileParams {
     #[structopt(parse(from_os_str))]
+    /// A file path of a provisioning profile
     pub file: PathBuf,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct RemoveParams {
+    /// uuid(s) of provisioning profiles
     pub uuids: Vec<String>,
     #[structopt(long = "source", parse(from_os_str))]
+    /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct CleanParams {
     #[structopt(long = "source", parse(from_os_str))]
+    /// A directory where to clean
     pub directory: Option<PathBuf>,
 }
 
@@ -115,6 +135,7 @@ impl From<clap::Error> for Error {
     }
 }
 
+/// Parses arguments and returns a `Command`.
 pub fn parse<I, S>(args: I) -> Result
 where
     I: IntoIterator<Item = S>,
@@ -126,13 +147,13 @@ where
     Ok(Command::from_clap(&matches))
 }
 
+/// Parses and validates days argument.
 fn parse_days(s: &str) -> result::Result<i64, Error> {
     let days = s.parse::<i64>()
         .map_err(|err| Error::Custom(err.to_string()))?;
     if days < 0 || days > 365 {
-        return Err(Error::Custom(
-            "DAYS should be between 0 and 365".to_string(),
-        ));
+        let message = format!("should be between 0 and 365, got {}", days);
+        return Err(Error::Custom(message));
     }
     Ok(days)
 }
