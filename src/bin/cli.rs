@@ -11,7 +11,7 @@ use mprovision as mp;
 #[derive(Debug, PartialEq, StructOpt)]
 pub enum Command {
     #[structopt(name = "list", about = "List provisioning profiles")] List(ListParams),
-    // #[structopt(name = "show")] ShowUuid(String, Option<PathBuf>),
+    #[structopt(name = "show")] ShowUuid(ShowUuidParams),
     // #[structopt(name = "show-file")] ShowFile(PathBuf),
     // #[structopt(name = "remove")] Remove(Vec<String>, Option<PathBuf>),
     // #[structopt(name = "clean")] Clean(Option<PathBuf>),
@@ -20,9 +20,17 @@ pub enum Command {
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct ListParams {
     #[structopt(short = "t", long = "text", raw(empty_values = "false"))]
-    pub filter: Option<String>,
-    #[structopt(short = "d", long = "expire-in-days")]
+    pub text: Option<String>,
+    #[structopt(short = "d", long = "expire-in-days", parse(try_from_str = "parse_days"))]
     pub expire_in_days: Option<i64>,
+    #[structopt(long = "source", parse(from_os_str))]
+    pub directory: Option<PathBuf>,
+}
+
+#[derive(Debug, Default, PartialEq, StructOpt)]
+pub struct ShowUuidParams {
+    #[structopt(raw(empty_values = "false"))]
+    pub uuid: String,
     #[structopt(long = "source", parse(from_os_str))]
     pub directory: Option<PathBuf>,
 }
@@ -94,8 +102,20 @@ where
     S: Clone,
     ::std::ffi::OsString: From<S>,
 {
-    let command = Command::from_iter(args);
-    Ok(command)
+    let app = Command::clap();
+    let matches = app.get_matches_from_safe(args)?;
+    Ok(Command::from_clap(&matches))
+}
+
+fn parse_days(s: &str) -> result::Result<i64, Error> {
+    let days = s.parse::<i64>()
+        .map_err(|err| Error::Custom(err.to_string()))?;
+    if days < 0 || days > 365 {
+        return Err(Error::Custom(
+            "DAYS should be between 0 and 365".to_string(),
+        ));
+    }
+    Ok(days)
 }
 
 // pub fn parse<I, S>(args: I) -> Result
@@ -270,7 +290,7 @@ mod tests {
 
         expect!(parse(&["mprovision", "list", "--source", "."])).to(be_ok().value(Command::List(
             ListParams {
-                filter: None,
+                text: None,
                 expire_in_days: None,
                 directory: Some(".".into()),
             },
@@ -278,7 +298,7 @@ mod tests {
 
         expect!(parse(&["mprovision", "list", "--text", "abc"])).to(be_ok().value(Command::List(
             ListParams {
-                filter: Some("abc".to_string()),
+                text: Some("abc".to_string()),
                 expire_in_days: None,
                 directory: None,
             },
@@ -286,7 +306,7 @@ mod tests {
 
         expect!(parse(&["mprovision", "list", "-t", "abc"])).to(be_ok().value(Command::List(
             ListParams {
-                filter: Some("abc".to_string()),
+                text: Some("abc".to_string()),
                 expire_in_days: None,
                 directory: None,
             },
@@ -298,7 +318,7 @@ mod tests {
 
         expect!(parse(&["mprovision", "list", "--expire-in-days", "3"])).to(be_ok().value(
             Command::List(ListParams {
-                filter: None,
+                text: None,
                 expire_in_days: Some(3),
                 directory: None,
             }),
@@ -306,7 +326,7 @@ mod tests {
 
         expect!(parse(&["mprovision", "list", "-d", "3"])).to(be_ok().value(Command::List(
             ListParams {
-                filter: None,
+                text: None,
                 expire_in_days: Some(3),
                 directory: None,
             },
@@ -327,7 +347,7 @@ mod tests {
             "--source",
             "."
         ])).to(be_ok().value(Command::List(ListParams {
-            filter: Some("abc".to_string()),
+            text: Some("abc".to_string()),
             expire_in_days: Some(3),
             directory: Some(".".into()),
         })));
@@ -342,20 +362,30 @@ mod tests {
             "--source",
             "."
         ])).to(be_ok().value(Command::List(ListParams {
-            filter: Some("abc".to_string()),
+            text: Some("abc".to_string()),
             expire_in_days: Some(3),
             directory: Some(".".into()),
         })));
     }
 
-    // #[test]
-    // fn show_uuid_command() {
-    //     expect!(parse(&["mprovision", "show", "abcd"]))
-    //         .to(be_ok().value(Command::ShowUuid("abcd".to_string(), None)));
+    #[test]
+    fn show_uuid_command() {
+        expect!(parse(&["mprovision", "show", "abcd"])).to(be_ok().value(Command::ShowUuid(
+            ShowUuidParams {
+                uuid: "abcd".to_string(),
+                directory: None,
+            },
+        )));
 
-    //     expect!(parse(&["mprovision", "show", "abcd", "--source", "."]))
-    //         .to(be_ok().value(Command::ShowUuid("abcd".to_string(), Some(".".into()))));
-    // }
+        expect!(parse(&["mprovision", "show", ""])).to(be_err());
+
+        expect!(parse(&["mprovision", "show", "abcd", "--source", "."])).to(be_ok().value(
+            Command::ShowUuid(ShowUuidParams {
+                uuid: "abcd".to_string(),
+                directory: Some(".".into()),
+            }),
+        ));
+    }
 
     // #[test]
     // fn show_path_command() {

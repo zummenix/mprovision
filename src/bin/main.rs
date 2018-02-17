@@ -25,11 +25,11 @@ fn main() {
 fn run(command: cli::Command) -> Result<(), cli::Error> {
     match command {
         Command::List(cli::ListParams {
-            filter,
+            text,
             expire_in_days,
             directory,
-        }) => list(filter, expire_in_days, directory),
-        // Command::ShowUuid(uuid, directory) => show_uuid(uuid, directory),
+        }) => list(text, expire_in_days, directory),
+        Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => show_uuid(uuid, directory),
         // Command::ShowFile(path) => show_file(path),
         // Command::Remove(uuids, directory) => remove(uuids, directory),
         // Command::Clean(directory) => clean(directory),
@@ -37,7 +37,7 @@ fn run(command: cli::Command) -> Result<(), cli::Error> {
 }
 
 fn list(
-    filter: Option<String>,
+    text: Option<String>,
     expires_in_days: Option<i64>,
     directory: Option<PathBuf>,
 ) -> Result<(), cli::Error> {
@@ -47,7 +47,7 @@ fn list(
         .map(|entries| {
             let total = entries.len();
             let date = expires_in_days.map(|days| Utc::now() + Duration::days(days));
-            let filter_string = filter.as_ref();
+            let filter_string = text.as_ref();
             let mut profiles = mp::filter(entries, |profile| match (date, filter_string) {
                 (Some(date), Some(string)) => {
                     profile.expiration_date <= date && profile.contains(string)
