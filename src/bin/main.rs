@@ -15,7 +15,13 @@ use chrono::*;
 mod cli;
 
 fn main() {
-    let result = cli::parse(env::args()).and_then(|command| match command {
+    if let Err(e) = cli::parse(env::args()).and_then(run) {
+        e.exit();
+    }
+}
+
+fn run(command: cli::Command) -> Result<(), cli::Error> {
+    match command {
         Command::List(cli::ListParams {
             filter,
             expire_in_days,
@@ -25,9 +31,6 @@ fn main() {
         Command::ShowFile(path) => show_file(path),
         Command::Remove(uuids, directory) => remove(uuids, directory),
         Command::Clean(directory) => clean(directory),
-    });
-    if let Err(e) = result {
-        e.exit();
     }
 }
 
