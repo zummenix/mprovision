@@ -1,10 +1,11 @@
 extern crate chrono;
-#[macro_use(crate_version)]
 extern crate clap;
 #[cfg(test)]
 #[macro_use(expect)]
 extern crate expectest;
 extern crate mprovision;
+#[macro_use]
+extern crate structopt;
 
 use mprovision as mp;
 use cli::Command;
@@ -15,24 +16,27 @@ use chrono::*;
 mod cli;
 
 fn main() {
-    let result = cli::parse(env::args()).and_then(|command| match command {
-        Command::List(cli::ListParams {
-            filter,
-            expire_in_days,
-            directory,
-        }) => list(filter, expire_in_days, directory),
-        Command::ShowUuid(uuid, directory) => show_uuid(uuid, directory),
-        Command::ShowFile(path) => show_file(path),
-        Command::Remove(uuids, directory) => remove(uuids, directory),
-        Command::Clean(directory) => clean(directory),
-    });
-    if let Err(e) = result {
+    if let Err(e) = cli::parse(env::args()).and_then(run) {
         e.exit();
     }
 }
 
+fn run(command: cli::Command) -> Result<(), cli::Error> {
+    match command {
+        Command::List(cli::ListParams {
+            text,
+            expire_in_days,
+            directory,
+        }) => list(text, expire_in_days, directory),
+        Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => show_uuid(uuid, directory),
+        Command::ShowFile(cli::ShowFileParams { file }) => show_file(file),
+        Command::Remove(cli::RemoveParams { uuids, directory }) => remove(uuids, directory),
+        Command::Clean(cli::CleanParams { directory }) => clean(directory),
+    }
+}
+
 fn list(
-    filter: Option<String>,
+    text: Option<String>,
     expires_in_days: Option<i64>,
     directory: Option<PathBuf>,
 ) -> Result<(), cli::Error> {
@@ -42,7 +46,7 @@ fn list(
         .map(|entries| {
             let total = entries.len();
             let date = expires_in_days.map(|days| Utc::now() + Duration::days(days));
-            let filter_string = filter.as_ref();
+            let filter_string = text.as_ref();
             let mut profiles = mp::filter(entries, |profile| match (date, filter_string) {
                 (Some(date), Some(string)) => {
                     profile.expiration_date <= date && profile.contains(string)
