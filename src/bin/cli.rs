@@ -36,7 +36,7 @@ pub struct ListParams {
     #[structopt(short = "d", long = "expire-in-days", parse(try_from_str = "parse_days"))]
     /// Lists provisioning profiles that will expire in days
     pub expire_in_days: Option<i64>,
-    #[structopt(long = "source", parse(from_os_str))]
+    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
@@ -46,30 +46,31 @@ pub struct ShowUuidParams {
     #[structopt(raw(empty_values = "false"))]
     /// An uuid of a provisioning profile
     pub uuid: String,
-    #[structopt(long = "source", parse(from_os_str))]
+    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct ShowFileParams {
-    #[structopt(parse(from_os_str))]
+    #[structopt(parse(from_os_str), raw(empty_values = "false"))]
     /// A file path of a provisioning profile
     pub file: PathBuf,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct RemoveParams {
+    #[structopt(raw(empty_values = "false"))]
     /// uuid(s) of provisioning profiles
     pub uuids: Vec<String>,
-    #[structopt(long = "source", parse(from_os_str))]
+    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct CleanParams {
-    #[structopt(long = "source", parse(from_os_str))]
+    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
     /// A directory where to clean
     pub directory: Option<PathBuf>,
 }
@@ -176,6 +177,8 @@ mod tests {
             },
         )));
 
+        expect!(parse(&["mprovision", "list", "--source", ""])).to(be_err());
+
         expect!(parse(&["mprovision", "list", "--text", "abc"])).to(be_ok().value(Command::List(
             ListParams {
                 text: Some("abc".to_string()),
@@ -265,10 +268,12 @@ mod tests {
                 directory: Some(".".into()),
             }),
         ));
+
+        expect!(parse(&["mprovision", "show", "abcd", "--source", ""])).to(be_err());
     }
 
     #[test]
-    fn show_path_command() {
+    fn show_file_command() {
         expect!(parse(&["mprovision", "show-file", "file.mprovision"])).to(be_ok().value(
             Command::ShowFile(ShowFileParams {
                 file: "file.mprovision".into(),
@@ -276,6 +281,8 @@ mod tests {
         ));
 
         expect!(parse(&["mprovision", "show-file", "file.mprovision", "."])).to(be_err());
+
+        expect!(parse(&["mprovision", "show-file", ""])).to(be_err());
     }
 
     #[test]
@@ -293,6 +300,8 @@ mod tests {
                 directory: None,
             }),
         ));
+
+        expect!(parse(&["mprovision", "remove", ""])).to(be_err());
 
         expect!(parse(&["mprovision", "remove", "abcd", "--source", "."])).to(be_ok().value(
             Command::Remove(RemoveParams {
@@ -312,6 +321,8 @@ mod tests {
             uuids: vec!["abcd".to_string(), "ef".to_string()],
             directory: Some(".".into()),
         })));
+
+        expect!(parse(&["mprovision", "remove", "abcd", "--source", ""])).to(be_err());
     }
 
     #[test]
@@ -324,5 +335,7 @@ mod tests {
                 directory: Some(".".into()),
             }),
         ));
+
+        expect!(parse(&["mprovision", "clean", "--source", ""])).to(be_err());
     }
 }
