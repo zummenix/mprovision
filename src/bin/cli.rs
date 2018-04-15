@@ -1,29 +1,30 @@
 use clap;
-use std::io::{self, Write};
-use std::process;
-use std::path::PathBuf;
-use std::error;
-use std::result;
-use std::fmt;
-use structopt::StructOpt;
 use mprovision as mp;
+use std::error;
+use std::fmt;
+use std::io::{self, Write};
+use std::path::PathBuf;
+use std::process;
+use std::result;
+use structopt::StructOpt;
 
 #[derive(Debug, PartialEq, StructOpt)]
+#[structopt(raw(global_settings = "&[clap::AppSettings::DeriveDisplayOrder]"))]
 /// A tool that helps iOS developers to manage mobileprovision files.
 pub enum Command {
-    #[structopt(name = "list", raw(display_order = "0"))]
+    #[structopt(name = "list")]
     /// Lists provisioning profiles
     List(ListParams),
-    #[structopt(name = "show", raw(display_order = "1"))]
+    #[structopt(name = "show")]
     /// Shows details of a provisioning profile using its uuid
     ShowUuid(ShowUuidParams),
-    #[structopt(name = "show-file", raw(display_order = "2"))]
+    #[structopt(name = "show-file")]
     /// Shows details of a provisioning profile
     ShowFile(ShowFileParams),
-    #[structopt(name = "remove", raw(display_order = "3"))]
+    #[structopt(name = "remove")]
     /// Removes provisioning profiles
     Remove(RemoveParams),
-    #[structopt(name = "clean", raw(display_order = "4"))]
+    #[structopt(name = "clean")]
     /// Removes expired provisioning profiles
     Clean(CleanParams),
 }
@@ -228,7 +229,7 @@ mod tests {
             "--expire-in-days",
             "3",
             "--source",
-            "."
+            ".",
         ])).to(be_ok().value(Command::List(ListParams {
             text: Some("abc".to_string()),
             expire_in_days: Some(3),
@@ -243,7 +244,7 @@ mod tests {
             "-d",
             "3",
             "--source",
-            "."
+            ".",
         ])).to(be_ok().value(Command::List(ListParams {
             text: Some("abc".to_string()),
             expire_in_days: Some(3),
@@ -294,12 +295,12 @@ mod tests {
             },
         )));
 
-        expect!(parse(&["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(
-            Command::Remove(RemoveParams {
+        expect!(parse(&["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(Command::Remove(
+            RemoveParams {
                 uuids: vec!["abcd".to_string(), "ef".to_string()],
                 directory: None,
-            }),
-        ));
+            },
+        )));
 
         expect!(parse(&["mprovision", "remove", ""])).to(be_err());
 
@@ -316,7 +317,7 @@ mod tests {
             "abcd",
             "ef",
             "--source",
-            "."
+            ".",
         ])).to(be_ok().value(Command::Remove(RemoveParams {
             uuids: vec!["abcd".to_string(), "ef".to_string()],
             directory: Some(".".into()),
