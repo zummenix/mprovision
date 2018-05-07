@@ -78,6 +78,7 @@ impl ProfileInfo {
         }
     }
 
+    /// Returns an empty profile info.
     pub fn empty() -> Self {
         ProfileInfo {
             uuid: "".into(),
@@ -98,6 +99,13 @@ impl ProfileInfo {
             }
         }
         false
+    }
+
+    /// Returns a bundle id of a profile.
+    pub fn bundle_id(&self) -> Option<&str> {
+        self.app_identifier
+            .find(|ch| ch == '.')
+            .map(|i| &self.app_identifier[(i + 1)..])
     }
 
     /// Returns profile in a text form.
@@ -122,7 +130,6 @@ mod tests {
     use super::*;
     use chrono::{TimeZone, Utc};
     use expectest::prelude::*;
-    use std::path::PathBuf;
 
     #[test]
     fn contains() {
@@ -136,5 +143,26 @@ mod tests {
         expect!(profile.contains("12")).to(be_true());
         expect!(profile.contains("me")).to(be_true());
         expect!(profile.contains("id")).to(be_true());
+    }
+
+    #[test]
+    fn correct_bundle_id() {
+        let mut profile = ProfileInfo::empty();
+        profile.app_identifier = "12345ABCDE.com.exmaple.app".to_owned();
+        expect!(profile.bundle_id()).to(be_some().value("com.exmaple.app"));
+    }
+
+    #[test]
+    fn incorrect_bundle_id() {
+        let mut profile = ProfileInfo::empty();
+        profile.app_identifier = "12345ABCDE".to_owned();
+        expect!(profile.bundle_id()).to(be_none());
+    }
+
+    #[test]
+    fn wildcard_bundle_id() {
+        let mut profile = ProfileInfo::empty();
+        profile.app_identifier = "12345ABCDE.*".to_owned();
+        expect!(profile.bundle_id()).to(be_some().value("*"));
     }
 }
