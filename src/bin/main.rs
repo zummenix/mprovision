@@ -30,7 +30,7 @@ fn run(command: cli::Command) -> Result<(), cli::Error> {
         }) => list(text, expire_in_days, directory),
         Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => show_uuid(uuid, directory),
         Command::ShowFile(cli::ShowFileParams { file }) => show_file(file),
-        Command::Remove(cli::RemoveParams { uuids, directory }) => remove(uuids, directory),
+        Command::Remove(cli::RemoveParams { ids, directory }) => remove(ids, directory),
         Command::Clean(cli::CleanParams { directory }) => clean(directory),
     }
 }
@@ -85,10 +85,10 @@ fn show_file(path: PathBuf) -> Result<(), cli::Error> {
         .map_err(|err| err.into())
 }
 
-fn remove(uuids: Vec<String>, directory: Option<PathBuf>) -> Result<(), cli::Error> {
+fn remove(ids: Vec<String>, directory: Option<PathBuf>) -> Result<(), cli::Error> {
     mp::with_directory(directory)
         .and_then(|directory| {
-            mp::find_by_uuids(&directory, uuids).and_then(|profiles| {
+            mp::find_by_ids(&directory, ids).and_then(|profiles| {
                 for profile in profiles {
                     match mp::remove(&profile.path) {
                         Ok(_) => println!("'{}' was removed", profile.info.uuid),
