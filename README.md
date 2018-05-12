@@ -41,7 +41,7 @@ It's very simple: `mprovision list`
 
 1. The `list` subcommand accepts an optional argument `-t` or `--text` that allows you to filter the list of 
 provisioning profiles by some text. 
-2. The `remove` subcommand allows you to remove one or more profiles by their uuids.
+2. The `remove` subcommand allows you to remove one or more profiles by their uuids or bundle ids.
 
 > WARNING: the `remove` subcommand is relatively dangerous since it removes profiles from the
 system completely.

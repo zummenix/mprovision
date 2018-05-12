@@ -19,17 +19,17 @@ use futures::stream::Stream;
 use futures::Future;
 use futures_cpupool::CpuPool;
 
-use std::fs::{self, DirEntry, File};
-use std::path::{Path, PathBuf};
 use std::env;
+use std::fs::{self, DirEntry, File};
 use std::io::Read;
+use std::path::{Path, PathBuf};
 
 pub use error::Error;
 pub use profile::Profile;
 
 mod error;
-mod profile;
 mod plist_extractor;
+mod profile;
 
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -134,29 +134,32 @@ where
 /// Searches a provisioning profile by its uuid.
 pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
     let entries: Vec<DirEntry> = entries(dir)?.collect();
-    if let Some(profile) = filter(entries, |profile| profile.uuid == uuid).pop() {
+    if let Some(profile) = filter(entries, |profile| profile.info.uuid == uuid).pop() {
         Ok(profile)
     } else {
         Err(Error::Own(format!("Profile '{}' is not found.", uuid)))
     }
 }
 
-/// Searches provisioning profiles by their uuid.
-pub fn find_by_uuids(dir: &Path, uuids: Vec<String>) -> Result<Vec<Profile>> {
+/// Searches provisioning profiles by their uuid(s) or bundle id(s).
+pub fn find_by_ids(dir: &Path, ids: Vec<String>) -> Result<Vec<Profile>> {
     let entries: Vec<DirEntry> = entries(dir)?.collect();
-    let profiles = filter(entries, |profile| uuids.contains(&profile.uuid));
+    let profiles = filter(entries, |profile| {
+        ids.iter()
+            .any(|id| id == &profile.info.uuid || profile.info.bundle_id() == Some(&id))
+    });
     Ok(profiles)
 }
 
 #[cfg(test)]
 mod tests {
-    use expectest::prelude::*;
     use super::*;
+    use expectest::prelude::*;
 
     #[test]
     fn filter_mobileprovision_files() {
-        use tempdir::TempDir;
         use std::fs::File;
+        use tempdir::TempDir;
 
         let temp_dir = TempDir::new("test").unwrap();
         let result = entries(temp_dir.path()).map(|iter| iter.count());

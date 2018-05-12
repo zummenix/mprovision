@@ -1,20 +1,16 @@
-use std::io::{self, Read};
-use std::fs::File;
-use std::path::{Path, PathBuf};
 use chrono::{DateTime, TimeZone, Utc};
-use plist::PlistEvent::*;
 use plist;
+use plist::PlistEvent::*;
+use std::fs::File;
+use std::io::{self, Read};
+use std::path::{Path, PathBuf};
 use {Error, Result};
 
-/// Represents provisioning profile data.
+/// Represents a file with a provisioning profile info.
 #[derive(Debug, Clone)]
 pub struct Profile {
     pub path: PathBuf,
-    pub uuid: String,
-    pub name: String,
-    pub app_identifier: String,
-    pub creation_date: DateTime<Utc>,
-    pub expiration_date: DateTime<Utc>,
+    pub info: ProfileInfo,
 }
 
 impl Profile {
@@ -22,18 +18,30 @@ impl Profile {
     pub fn from_file(path: &Path) -> Result<Self> {
         let mut buf = Vec::new();
         File::open(path)?.read_to_end(&mut buf)?;
-        Profile::from_xml_data(&buf)
-            .map(|mut p| {
-                p.path = path.to_owned();
-                p
-            })
-            .ok_or_else(|| Error::Own("Couldn't parse file.".into()))
+        let info = ProfileInfo::from_xml_data(&buf)
+            .ok_or_else(|| Error::Own("Couldn't parse file.".into()))?;
+        Ok(Profile {
+            path: path.to_owned(),
+            info,
+        })
     }
+}
 
+/// Represents provisioning profile info.
+#[derive(Debug, Clone)]
+pub struct ProfileInfo {
+    pub uuid: String,
+    pub name: String,
+    pub app_identifier: String,
+    pub creation_date: DateTime<Utc>,
+    pub expiration_date: DateTime<Utc>,
+}
+
+impl ProfileInfo {
     /// Returns instance of the `Profile` parsed from a `data`.
     pub fn from_xml_data(data: &[u8]) -> Option<Self> {
         if let Some(data) = ::plist_extractor::find(data) {
-            let mut profile = Profile::empty();
+            let mut profile = ProfileInfo::empty();
             let mut iter = plist::xml::EventReader::new(io::Cursor::new(data)).into_iter();
             while let Some(item) = iter.next() {
                 if let Ok(StringValue(key)) = item {
@@ -70,9 +78,9 @@ impl Profile {
         }
     }
 
+    /// Returns an empty profile info.
     pub fn empty() -> Self {
-        Profile {
-            path: PathBuf::new(),
+        ProfileInfo {
             uuid: "".into(),
             name: "".into(),
             app_identifier: "".into(),
@@ -91,6 +99,13 @@ impl Profile {
             }
         }
         false
+    }
+
+    /// Returns a bundle id of a profile.
+    pub fn bundle_id(&self) -> Option<&str> {
+        self.app_identifier
+            .find(|ch| ch == '.')
+            .map(|i| &self.app_identifier[(i + 1)..])
     }
 
     /// Returns profile in a text form.
@@ -112,15 +127,13 @@ impl Profile {
 
 #[cfg(test)]
 mod tests {
-    use expectest::prelude::*;
-    use std::path::PathBuf;
-    use chrono::{TimeZone, Utc};
     use super::*;
+    use chrono::{TimeZone, Utc};
+    use expectest::prelude::*;
 
     #[test]
     fn contains() {
-        let profile = Profile {
-            path: PathBuf::new(),
+        let profile = ProfileInfo {
             uuid: "123".into(),
             name: "name".into(),
             app_identifier: "id".into(),
@@ -130,5 +143,26 @@ mod tests {
         expect!(profile.contains("12")).to(be_true());
         expect!(profile.contains("me")).to(be_true());
         expect!(profile.contains("id")).to(be_true());
+    }
+
+    #[test]
+    fn correct_bundle_id() {
+        let mut profile = ProfileInfo::empty();
+        profile.app_identifier = "12345ABCDE.com.exmaple.app".to_owned();
+        expect!(profile.bundle_id()).to(be_some().value("com.exmaple.app"));
+    }
+
+    #[test]
+    fn incorrect_bundle_id() {
+        let mut profile = ProfileInfo::empty();
+        profile.app_identifier = "12345ABCDE".to_owned();
+        expect!(profile.bundle_id()).to(be_none());
+    }
+
+    #[test]
+    fn wildcard_bundle_id() {
+        let mut profile = ProfileInfo::empty();
+        profile.app_identifier = "12345ABCDE.*".to_owned();
+        expect!(profile.bundle_id()).to(be_some().value("*"));
     }
 }

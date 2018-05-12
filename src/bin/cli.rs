@@ -62,8 +62,8 @@ pub struct ShowFileParams {
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct RemoveParams {
     #[structopt(raw(empty_values = "false"))]
-    /// uuid(s) of provisioning profiles
-    pub uuids: Vec<String>,
+    /// uuid(s) or bundle id(s) of provisioning profiles
+    pub ids: Vec<String>,
     #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
@@ -287,17 +287,17 @@ mod tests {
     }
 
     #[test]
-    fn remove_uuid_command() {
+    fn remove_id_command() {
         expect!(parse(&["mprovision", "remove", "abcd"])).to(be_ok().value(Command::Remove(
             RemoveParams {
-                uuids: vec!["abcd".to_string()],
+                ids: vec!["abcd".to_string()],
                 directory: None,
             },
         )));
 
         expect!(parse(&["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(Command::Remove(
             RemoveParams {
-                uuids: vec!["abcd".to_string(), "ef".to_string()],
+                ids: vec!["abcd".to_string(), "ef".to_string()],
                 directory: None,
             },
         )));
@@ -306,7 +306,7 @@ mod tests {
 
         expect!(parse(&["mprovision", "remove", "abcd", "--source", "."])).to(be_ok().value(
             Command::Remove(RemoveParams {
-                uuids: vec!["abcd".to_string()],
+                ids: vec!["abcd".to_string()],
                 directory: Some(".".into()),
             }),
         ));
@@ -319,7 +319,7 @@ mod tests {
             "--source",
             ".",
         ])).to(be_ok().value(Command::Remove(RemoveParams {
-            uuids: vec!["abcd".to_string(), "ef".to_string()],
+            ids: vec!["abcd".to_string(), "ef".to_string()],
             directory: Some(".".into()),
         })));
 
