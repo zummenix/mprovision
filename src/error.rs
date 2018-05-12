@@ -1,6 +1,6 @@
-use std::io;
-use std::fmt;
 use std::error;
+use std::fmt;
+use std::io;
 use std::string::FromUtf8Error;
 
 /// An Error type.
