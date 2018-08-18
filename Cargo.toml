@@ -22,3 +22,7 @@ structopt = "0.2.3"
 [dev-dependencies]
 expectest = "0.9.1"
 tempdir = "0.3.5"
+
+[profile.release]
+panic = "abort"
+lto = true
