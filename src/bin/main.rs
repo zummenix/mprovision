@@ -1,4 +1,3 @@
-extern crate chrono;
 extern crate clap;
 #[cfg(test)]
 #[macro_use(expect)]
@@ -7,11 +6,11 @@ extern crate mprovision;
 #[macro_use]
 extern crate structopt;
 
-use chrono::*;
 use cli::Command;
 use mprovision as mp;
 use std::env;
 use std::path::PathBuf;
+use std::time::{Duration, SystemTime};
 
 mod cli;
 
@@ -45,7 +44,8 @@ fn list(
         .map_err(|err| err.into())
         .map(|entries| {
             let total = entries.len();
-            let date = expires_in_days.map(|days| Utc::now() + Duration::days(days));
+            let date = expires_in_days
+                .map(|days| SystemTime::now() + Duration::from_secs(days as u64 * 24 * 60 * 60));
             let filter_string = text.as_ref();
             let mut profiles = mp::filter(entries, |profile| match (date, filter_string) {
                 (Some(date), Some(string)) => {
@@ -107,13 +107,11 @@ fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
         s1
     }
 
+    let date = SystemTime::now();
     mp::with_directory(directory)
         .and_then(|dir| mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>()))
         .map_err(|err| err.into())
-        .map(|entries| {
-            let date = Utc::now();
-            mp::filter(entries, |profile| profile.info.expiration_date <= date)
-        })
+        .map(|entries| mp::filter(entries, |profile| profile.info.expiration_date <= date))
         .and_then(|profiles| {
             if profiles.is_empty() {
                 Ok(println!("All provisioning profiles are valid"))

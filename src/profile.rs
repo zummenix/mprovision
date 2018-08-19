@@ -1,9 +1,10 @@
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use plist;
 use plist::PlistEvent::*;
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 use {Error, Result};
 
 /// Represents a file with a provisioning profile info.
@@ -33,8 +34,8 @@ pub struct ProfileInfo {
     pub uuid: String,
     pub name: String,
     pub app_identifier: String,
-    pub creation_date: DateTime<Utc>,
-    pub expiration_date: DateTime<Utc>,
+    pub creation_date: SystemTime,
+    pub expiration_date: SystemTime,
 }
 
 impl ProfileInfo {
@@ -84,8 +85,8 @@ impl ProfileInfo {
             uuid: "".into(),
             name: "".into(),
             app_identifier: "".into(),
-            creation_date: Utc.timestamp(0, 0),
-            expiration_date: Utc.timestamp(0, 0),
+            creation_date: SystemTime::UNIX_EPOCH,
+            expiration_date: SystemTime::UNIX_EPOCH,
         }
     }
 
@@ -119,7 +120,8 @@ impl ProfileInfo {
         desc.push_str("\n");
         desc.push_str(&format!(
             "{} - {}",
-            self.creation_date, self.expiration_date
+            DateTime::<Utc>::from(self.creation_date),
+            DateTime::<Utc>::from(self.expiration_date)
         ));
         desc
     }
@@ -128,7 +130,6 @@ impl ProfileInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{TimeZone, Utc};
     use expectest::prelude::*;
 
     #[test]
@@ -137,8 +138,8 @@ mod tests {
             uuid: "123".into(),
             name: "name".into(),
             app_identifier: "id".into(),
-            creation_date: Utc.timestamp(0, 0),
-            expiration_date: Utc.timestamp(0, 0),
+            creation_date: SystemTime::UNIX_EPOCH,
+            expiration_date: SystemTime::UNIX_EPOCH,
         };
         expect!(profile.contains("12")).to(be_true());
         expect!(profile.contains("me")).to(be_true());
