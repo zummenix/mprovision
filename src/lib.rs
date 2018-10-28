@@ -11,6 +11,7 @@ extern crate plist;
 #[cfg(test)]
 extern crate tempdir;
 
+extern crate dirs;
 extern crate futures;
 extern crate futures_cpupool;
 extern crate num_cpus;
@@ -19,7 +20,6 @@ use futures::stream::Stream;
 use futures::Future;
 use futures_cpupool::CpuPool;
 
-use std::env;
 use std::fs::{self, DirEntry, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -65,7 +65,7 @@ pub fn entries(dir: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
 /// This function will return an error if 'HOME' environment variable is not set
 /// or equal to the empty string.
 pub fn directory() -> Result<PathBuf> {
-    env::home_dir()
+    dirs::home_dir()
         .map(|path| path.join("Library/MobileDevice/Provisioning Profiles"))
         .ok_or_else(|| {
             Error::Own(
