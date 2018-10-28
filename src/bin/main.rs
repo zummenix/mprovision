@@ -57,8 +57,7 @@ fn list(
             });
             profiles.sort_by(|a, b| a.info.creation_date.cmp(&b.info.creation_date));
             (total, profiles)
-        })
-        .and_then(|(total, profiles)| {
+        }).and_then(|(total, profiles)| {
             if profiles.is_empty() {
                 Ok(println!("Nothing found"))
             } else {
@@ -75,8 +74,7 @@ fn show_uuid(uuid: String, directory: Option<PathBuf>) -> Result<(), cli::Error>
         .and_then(|directory| {
             mp::find_by_uuid(&directory, &uuid)
                 .and_then(|profile| mp::show(&profile.path).map(|xml| println!("{}", xml)))
-        })
-        .map_err(|err| err.into())
+        }).map_err(|err| err.into())
 }
 
 fn show_file(path: PathBuf) -> Result<(), cli::Error> {
@@ -97,8 +95,7 @@ fn remove(ids: Vec<String>, directory: Option<PathBuf>) -> Result<(), cli::Error
                 }
                 Ok(())
             })
-        })
-        .map_err(|err| err.into())
+        }).map_err(|err| err.into())
 }
 
 fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
@@ -122,14 +119,12 @@ fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
                         std::fs::remove_file(&profile.path)
                             .map(|_| format!("'{}' was removed\n", profile.info.uuid))
                             .map_err(|err| format!("'{}' {}\n", profile.info.uuid, err))
-                    })
-                    .fold(Ok(String::new()), |acc, s| match (acc, s) {
+                    }).fold(Ok(String::new()), |acc, s| match (acc, s) {
                         (Ok(acc), Ok(s)) => Ok(concat(acc, s)),
                         (Ok(acc), Err(s)) | (Err(acc), Ok(s)) | (Err(acc), Err(s)) => {
                             Err(concat(acc, s))
                         }
-                    })
-                    .map(|s| println!("{}", s))
+                    }).map(|s| println!("{}", s))
                     .map_err(cli::Error::Custom)
             }
         })

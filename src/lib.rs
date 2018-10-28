@@ -99,8 +99,7 @@ pub fn show(file_path: &Path) -> Result<String> {
             .and_then(|_| {
                 plist_extractor::find(&buf)
                     .ok_or_else(|| Error::Own(format!("Couldn't parse '{}'", file_path.display())))
-            })
-            .and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
+            }).and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
     })
 }
 

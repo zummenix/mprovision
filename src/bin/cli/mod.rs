@@ -34,10 +34,18 @@ pub struct ListParams {
     #[structopt(short = "t", long = "text", raw(empty_values = "false"))]
     /// Lists provisioning profiles that contain this text
     pub text: Option<String>,
-    #[structopt(short = "d", long = "expire-in-days", parse(try_from_str = "parse_days"))]
+    #[structopt(
+        short = "d",
+        long = "expire-in-days",
+        parse(try_from_str = "parse_days")
+    )]
     /// Lists provisioning profiles that will expire in days
     pub expire_in_days: Option<i64>,
-    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
+    #[structopt(
+        long = "source",
+        parse(from_os_str),
+        raw(empty_values = "false")
+    )]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
@@ -47,7 +55,11 @@ pub struct ShowUuidParams {
     #[structopt(raw(empty_values = "false"))]
     /// An uuid of a provisioning profile
     pub uuid: String,
-    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
+    #[structopt(
+        long = "source",
+        parse(from_os_str),
+        raw(empty_values = "false")
+    )]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
@@ -64,14 +76,22 @@ pub struct RemoveParams {
     #[structopt(raw(empty_values = "false"))]
     /// uuid(s) or bundle id(s) of provisioning profiles
     pub ids: Vec<String>,
-    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
+    #[structopt(
+        long = "source",
+        parse(from_os_str),
+        raw(empty_values = "false")
+    )]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct CleanParams {
-    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
+    #[structopt(
+        long = "source",
+        parse(from_os_str),
+        raw(empty_values = "false")
+    )]
     /// A directory where to clean
     pub directory: Option<PathBuf>,
 }
@@ -151,7 +171,8 @@ where
 
 /// Parses and validates days argument.
 fn parse_days(s: &str) -> result::Result<i64, Error> {
-    let days = s.parse::<i64>()
+    let days = s
+        .parse::<i64>()
         .map_err(|err| Error::Custom(err.to_string()))?;
     if days < 0 || days > 365 {
         let message = format!("should be between 0 and 365, got {}", days);
