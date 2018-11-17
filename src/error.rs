@@ -14,15 +14,15 @@ pub enum Error {
 
 impl error::Error for Error {
     fn description(&self) -> &str {
-        match *self {
-            Error::Io(ref e) => e.description(),
-            Error::Own(ref e) => e,
+        match self {
+            Error::Io(e) => e.description(),
+            Error::Own(e) => e,
         }
     }
 
     fn cause(&self) -> Option<&error::Error> {
-        match *self {
-            Error::Io(ref e) => Some(e),
+        match self {
+            Error::Io(e) => Some(e),
             Error::Own(_) => None,
         }
     }

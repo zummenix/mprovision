@@ -107,8 +107,8 @@ pub enum Error {
 
 impl Error {
     pub fn exit(&self) -> ! {
-        match *self {
-            Error::Clap(ref e) => e.exit(),
+        match self {
+            Error::Clap(e) => e.exit(),
             _ => {
                 writeln!(&mut io::stderr(), "{}", self).unwrap();
                 process::exit(1);
@@ -119,17 +119,17 @@ impl Error {
 
 impl error::Error for Error {
     fn description(&self) -> &str {
-        match *self {
-            Error::Lib(ref e) => e.description(),
-            Error::Clap(ref e) => e.description(),
-            Error::Custom(ref e) => e,
+        match self {
+            Error::Lib(e) => e.description(),
+            Error::Clap(e) => e.description(),
+            Error::Custom(e) => e,
         }
     }
 
     fn cause(&self) -> Option<&error::Error> {
-        match *self {
-            Error::Lib(ref e) => Some(e),
-            Error::Clap(ref e) => Some(e),
+        match self {
+            Error::Lib(e) => Some(e),
+            Error::Clap(e) => Some(e),
             Error::Custom(_) => None,
         }
     }
@@ -137,10 +137,10 @@ impl error::Error for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::Lib(ref e) => error::Error::description(e).fmt(f),
-            Error::Clap(ref e) => error::Error::description(e).fmt(f),
-            Error::Custom(ref e) => e.fmt(f),
+        match self {
+            Error::Lib(e) => error::Error::description(e).fmt(f),
+            Error::Clap(e) => error::Error::description(e).fmt(f),
+            Error::Custom(e) => e.fmt(f),
         }
     }
 }
