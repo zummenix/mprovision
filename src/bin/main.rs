@@ -6,7 +6,7 @@ extern crate mprovision;
 #[macro_use]
 extern crate structopt;
 
-use cli::Command;
+use crate::cli::Command;
 use mprovision as mp;
 use std::env;
 use std::path::PathBuf;

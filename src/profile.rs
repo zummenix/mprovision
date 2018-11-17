@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-use {Error, Result};
+use crate::{Error, Result};
 
 /// Represents a file with a provisioning profile info.
 #[derive(Debug, Clone)]
@@ -41,7 +41,7 @@ pub struct ProfileInfo {
 impl ProfileInfo {
     /// Returns instance of the `Profile` parsed from a `data`.
     pub fn from_xml_data(data: &[u8]) -> Option<Self> {
-        if let Some(data) = ::plist_extractor::find(data) {
+        if let Some(data) = crate::plist_extractor::find(data) {
             let mut profile = ProfileInfo::empty();
             let mut iter = plist::xml::EventReader::new(io::Cursor::new(data)).into_iter();
             while let Some(item) = iter.next() {

@@ -24,8 +24,8 @@ use std::fs::{self, DirEntry, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-pub use error::Error;
-pub use profile::Profile;
+pub use crate::error::Error;
+pub use crate::profile::Profile;
 
 mod error;
 mod plist_extractor;
