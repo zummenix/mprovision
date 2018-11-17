@@ -127,7 +127,7 @@ where
         .filter(f)
         .collect();
 
-    stream.wait().unwrap_or(Vec::new())
+    stream.wait().unwrap_or_default()
 }
 
 /// Searches a provisioning profile by its uuid.
@@ -141,7 +141,7 @@ pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
 }
 
 /// Searches provisioning profiles by their uuid(s) or bundle id(s).
-pub fn find_by_ids(dir: &Path, ids: Vec<String>) -> Result<Vec<Profile>> {
+pub fn find_by_ids(dir: &Path, ids: &[String]) -> Result<Vec<Profile>> {
     let entries: Vec<DirEntry> = entries(dir)?.collect();
     let profiles = filter(entries, |profile| {
         ids.iter()

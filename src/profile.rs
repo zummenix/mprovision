@@ -1,11 +1,11 @@
 use chrono::{DateTime, Utc};
+use crate::{Error, Result};
 use plist;
 use plist::PlistEvent::*;
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-use crate::{Error, Result};
 
 /// Represents a file with a provisioning profile info.
 #[derive(Debug, Clone)]
@@ -43,7 +43,7 @@ impl ProfileInfo {
     pub fn from_xml_data(data: &[u8]) -> Option<Self> {
         if let Some(data) = crate::plist_extractor::find(data) {
             let mut profile = ProfileInfo::empty();
-            let mut iter = plist::xml::EventReader::new(io::Cursor::new(data)).into_iter();
+            let mut iter = plist::xml::EventReader::new(io::Cursor::new(data));
             while let Some(item) = iter.next() {
                 if let Ok(StringValue(key)) = item {
                     if key == "UUID" {

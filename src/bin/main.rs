@@ -9,6 +9,7 @@ extern crate structopt;
 use crate::cli::Command;
 use mprovision as mp;
 use std::env;
+use std::path::Path;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
 
@@ -26,16 +27,16 @@ fn run(command: cli::Command) -> Result<(), cli::Error> {
             text,
             expire_in_days,
             directory,
-        }) => list(text, expire_in_days, directory),
-        Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => show_uuid(uuid, directory),
-        Command::ShowFile(cli::ShowFileParams { file }) => show_file(file),
-        Command::Remove(cli::RemoveParams { ids, directory }) => remove(ids, directory),
+        }) => list(&text, expire_in_days, directory),
+        Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => show_uuid(&uuid, directory),
+        Command::ShowFile(cli::ShowFileParams { file }) => show_file(&file),
+        Command::Remove(cli::RemoveParams { ids, directory }) => remove(&ids, directory),
         Command::Clean(cli::CleanParams { directory }) => clean(directory),
     }
 }
 
 fn list(
-    text: Option<String>,
+    text: &Option<String>,
     expires_in_days: Option<i64>,
     directory: Option<PathBuf>,
 ) -> Result<(), cli::Error> {
@@ -59,17 +60,19 @@ fn list(
             (total, profiles)
         }).and_then(|(total, profiles)| {
             if profiles.is_empty() {
-                Ok(println!("Nothing found"))
+                println!("Nothing found");
+                Ok(())
             } else {
                 for profile in &profiles {
                     println!("\n{}", profile.info.description());
                 }
-                Ok(println!("\nFound {} of {}", profiles.len(), total))
+                println!("\nFound {} of {}", profiles.len(), total);
+                Ok(())
             }
         })
 }
 
-fn show_uuid(uuid: String, directory: Option<PathBuf>) -> Result<(), cli::Error> {
+fn show_uuid(uuid: &str, directory: Option<PathBuf>) -> Result<(), cli::Error> {
     mp::with_directory(directory)
         .and_then(|directory| {
             mp::find_by_uuid(&directory, &uuid)
@@ -77,16 +80,16 @@ fn show_uuid(uuid: String, directory: Option<PathBuf>) -> Result<(), cli::Error>
         }).map_err(|err| err.into())
 }
 
-fn show_file(path: PathBuf) -> Result<(), cli::Error> {
+fn show_file(path: &Path) -> Result<(), cli::Error> {
     mp::show(&path)
         .map(|xml| println!("{}", xml))
         .map_err(|err| err.into())
 }
 
-fn remove(ids: Vec<String>, directory: Option<PathBuf>) -> Result<(), cli::Error> {
+fn remove(ids: &[String], directory: Option<PathBuf>) -> Result<(), cli::Error> {
     mp::with_directory(directory)
         .and_then(|directory| {
-            mp::find_by_ids(&directory, ids).and_then(|profiles| {
+            mp::find_by_ids(&directory, &ids).and_then(|profiles| {
                 for profile in profiles {
                     match mp::remove(&profile.path) {
                         Ok(_) => println!("\nRemoved: {}", profile.info.description()),
@@ -99,7 +102,7 @@ fn remove(ids: Vec<String>, directory: Option<PathBuf>) -> Result<(), cli::Error
 }
 
 fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
-    fn concat(mut s1: String, s2: String) -> String {
+    fn concat(mut s1: String, s2: &str) -> String {
         s1.push_str(&s2);
         s1
     }
@@ -111,7 +114,8 @@ fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
         .map(|entries| mp::filter(entries, |profile| profile.info.expiration_date <= date))
         .and_then(|profiles| {
             if profiles.is_empty() {
-                Ok(println!("All provisioning profiles are valid"))
+                println!("All provisioning profiles are valid");
+                Ok(())
             } else {
                 profiles
                     .iter()
@@ -120,9 +124,9 @@ fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
                             .map(|_| format!("'{}' was removed\n", profile.info.uuid))
                             .map_err(|err| format!("'{}' {}\n", profile.info.uuid, err))
                     }).fold(Ok(String::new()), |acc, s| match (acc, s) {
-                        (Ok(acc), Ok(s)) => Ok(concat(acc, s)),
+                        (Ok(acc), Ok(s)) => Ok(concat(acc, &s)),
                         (Ok(acc), Err(s)) | (Err(acc), Ok(s)) | (Err(acc), Err(s)) => {
-                            Err(concat(acc, s))
+                            Err(concat(acc, &s))
                         }
                     }).map(|s| println!("{}", s))
                     .map_err(cli::Error::Custom)
