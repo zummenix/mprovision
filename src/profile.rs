@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use crate::{Error, Result};
 use plist;
-use plist::PlistEvent::*;
+use plist::PlistEvent;
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
@@ -21,7 +21,7 @@ impl Profile {
         File::open(path)?.read_to_end(&mut buf)?;
         let info = ProfileInfo::from_xml_data(&buf)
             .ok_or_else(|| Error::Own("Couldn't parse file.".into()))?;
-        Ok(Profile {
+        Ok(Self {
             path: path.to_owned(),
             info,
         })
@@ -42,32 +42,32 @@ impl ProfileInfo {
     /// Returns instance of the `Profile` parsed from a `data`.
     pub fn from_xml_data(data: &[u8]) -> Option<Self> {
         if let Some(data) = crate::plist_extractor::find(data) {
-            let mut profile = ProfileInfo::empty();
+            let mut profile = Self::empty();
             let mut iter = plist::xml::EventReader::new(io::Cursor::new(data));
             while let Some(item) = iter.next() {
-                if let Ok(StringValue(key)) = item {
+                if let Ok(PlistEvent::StringValue(key)) = item {
                     if key == "UUID" {
-                        if let Some(Ok(StringValue(value))) = iter.next() {
+                        if let Some(Ok(PlistEvent::StringValue(value))) = iter.next() {
                             profile.uuid = value;
                         }
                     }
                     if key == "Name" {
-                        if let Some(Ok(StringValue(value))) = iter.next() {
+                        if let Some(Ok(PlistEvent::StringValue(value))) = iter.next() {
                             profile.name = value;
                         }
                     }
                     if key == "application-identifier" {
-                        if let Some(Ok(StringValue(value))) = iter.next() {
+                        if let Some(Ok(PlistEvent::StringValue(value))) = iter.next() {
                             profile.app_identifier = value;
                         }
                     }
                     if key == "CreationDate" {
-                        if let Some(Ok(DateValue(value))) = iter.next() {
+                        if let Some(Ok(PlistEvent::DateValue(value))) = iter.next() {
                             profile.creation_date = value.into();
                         }
                     }
                     if key == "ExpirationDate" {
-                        if let Some(Ok(DateValue(value))) = iter.next() {
+                        if let Some(Ok(PlistEvent::DateValue(value))) = iter.next() {
                             profile.expiration_date = value.into();
                         }
                     }
@@ -81,7 +81,7 @@ impl ProfileInfo {
 
     /// Returns an empty profile info.
     pub fn empty() -> Self {
-        ProfileInfo {
+        Self {
             uuid: "".into(),
             name: "".into(),
             app_identifier: "".into(),

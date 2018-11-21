@@ -107,12 +107,11 @@ pub enum Error {
 
 impl Error {
     pub fn exit(&self) -> ! {
-        match self {
-            Error::Clap(e) => e.exit(),
-            _ => {
-                writeln!(&mut io::stderr(), "{}", self).unwrap();
-                process::exit(1);
-            }
+        if let Error::Clap(e) = self {
+            e.exit()
+        } else {
+            writeln!(&mut io::stderr(), "{}", self).unwrap();
+            process::exit(1);
         }
     }
 }

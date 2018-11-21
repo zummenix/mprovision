@@ -91,9 +91,10 @@ fn remove(ids: &[String], directory: Option<PathBuf>) -> Result<(), cli::Error> 
         .and_then(|directory| {
             mp::find_by_ids(&directory, &ids).and_then(|profiles| {
                 for profile in profiles {
-                    match mp::remove(&profile.path) {
-                        Ok(_) => println!("\nRemoved: {}", profile.info.description()),
-                        Err(_) => println!("\nError while removing '{}'", profile.info.uuid),
+                    if mp::remove(&profile.path).is_ok() {
+                        println!("\nRemoved: {}", profile.info.description());
+                    } else {
+                        println!("\nError while removing '{}'", profile.info.uuid);
                     }
                 }
                 Ok(())
