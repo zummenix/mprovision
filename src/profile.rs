@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc};
 use crate::{Error, Result};
+use chrono::{DateTime, Utc};
 use plist;
 use plist::PlistEvent;
 use std::fs::File;
@@ -130,6 +130,7 @@ impl ProfileInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use expectest::expect;
     use expectest::prelude::*;
 
     #[test]

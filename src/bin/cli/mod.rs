@@ -41,11 +41,7 @@ pub struct ListParams {
     )]
     /// Lists provisioning profiles that will expire in days
     pub expire_in_days: Option<i64>,
-    #[structopt(
-        long = "source",
-        parse(from_os_str),
-        raw(empty_values = "false")
-    )]
+    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
@@ -55,11 +51,7 @@ pub struct ShowUuidParams {
     #[structopt(raw(empty_values = "false"))]
     /// An uuid of a provisioning profile
     pub uuid: String,
-    #[structopt(
-        long = "source",
-        parse(from_os_str),
-        raw(empty_values = "false")
-    )]
+    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
@@ -76,22 +68,14 @@ pub struct RemoveParams {
     #[structopt(raw(empty_values = "false"))]
     /// uuid(s) or bundle id(s) of provisioning profiles
     pub ids: Vec<String>,
-    #[structopt(
-        long = "source",
-        parse(from_os_str),
-        raw(empty_values = "false")
-    )]
+    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct CleanParams {
-    #[structopt(
-        long = "source",
-        parse(from_os_str),
-        raw(empty_values = "false")
-    )]
+    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
     /// A directory where to clean
     pub directory: Option<PathBuf>,
 }
@@ -183,6 +167,7 @@ fn parse_days(s: &str) -> result::Result<i64, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use expectest::expect;
     use expectest::prelude::*;
 
     #[test]
@@ -250,7 +235,8 @@ mod tests {
             "3",
             "--source",
             ".",
-        ])).to(be_ok().value(Command::List(ListParams {
+        ]))
+        .to(be_ok().value(Command::List(ListParams {
             text: Some("abc".to_string()),
             expire_in_days: Some(3),
             directory: Some(".".into()),
@@ -265,7 +251,8 @@ mod tests {
             "3",
             "--source",
             ".",
-        ])).to(be_ok().value(Command::List(ListParams {
+        ]))
+        .to(be_ok().value(Command::List(ListParams {
             text: Some("abc".to_string()),
             expire_in_days: Some(3),
             directory: Some(".".into()),
@@ -338,7 +325,8 @@ mod tests {
             "ef",
             "--source",
             ".",
-        ])).to(be_ok().value(Command::Remove(RemoveParams {
+        ]))
+        .to(be_ok().value(Command::Remove(RemoveParams {
             ids: vec!["abcd".to_string(), "ef".to_string()],
             directory: Some(".".into()),
         })));

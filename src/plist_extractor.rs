@@ -27,6 +27,7 @@ pub fn find(data: &[u8]) -> Option<&[u8]> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use expectest::expect;
     use expectest::prelude::*;
 
     #[test]

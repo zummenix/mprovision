@@ -2,20 +2,6 @@
 //! files. Main purpose of this crate is to contain functions and types
 //! for **mprovision**.
 
-extern crate chrono;
-#[cfg(test)]
-#[macro_use(expect)]
-extern crate expectest;
-extern crate memmem;
-extern crate plist;
-#[cfg(test)]
-extern crate tempdir;
-
-extern crate dirs;
-extern crate futures;
-extern crate futures_cpupool;
-extern crate num_cpus;
-
 use futures::stream::Stream;
 use futures::Future;
 use futures_cpupool::CpuPool;
@@ -99,7 +85,8 @@ pub fn show(file_path: &Path) -> Result<String> {
             .and_then(|_| {
                 plist_extractor::find(&buf)
                     .ok_or_else(|| Error::Own(format!("Couldn't parse '{}'", file_path.display())))
-            }).and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
+            })
+            .and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
     })
 }
 
@@ -153,6 +140,7 @@ pub fn find_by_ids(dir: &Path, ids: &[String]) -> Result<Vec<Profile>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use expectest::expect;
     use expectest::prelude::*;
 
     #[test]
