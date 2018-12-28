@@ -31,14 +31,15 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// - the provided path is not a directory
 pub fn entries(dir: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
     let entries = fs::read_dir(dir)?;
-    let filtered = entries.filter_map(|entry| entry.ok()).filter_map(|entry| {
-        if let Some(ext) = entry.path().extension() {
-            if ext == "mobileprovision" {
-                return Some(entry);
-            }
-        }
-        None
-    });
+    let filtered = entries
+        .filter(|entry| {
+            entry.as_ref().ok().and_then(|v| {
+                v.path()
+                    .extension()
+                    .map(|ext| ext.to_str() == Some("mobileprovision"))
+            }) == Some(true)
+        })
+        .filter_map(|entry| entry.ok());
     Ok(Box::new(filtered))
 }
 
