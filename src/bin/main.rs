@@ -29,7 +29,7 @@ fn run(command: cli::Command) -> Result<(), cli::Error> {
 
 fn list(
     text: &Option<String>,
-    expires_in_days: Option<i64>,
+    expires_in_days: Option<u64>,
     directory: Option<PathBuf>,
 ) -> Result<(), cli::Error> {
     mp::with_directory(directory)
@@ -38,7 +38,7 @@ fn list(
         .map(|entries| {
             let total = entries.len();
             let date = expires_in_days
-                .map(|days| SystemTime::now() + Duration::from_secs(days as u64 * 24 * 60 * 60));
+                .map(|days| SystemTime::now() + Duration::from_secs(days * 24 * 60 * 60));
             let filter_string = text.as_ref();
             let mut profiles = mp::filter(entries, |profile| match (date, filter_string) {
                 (Some(date), Some(string)) => {

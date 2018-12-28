@@ -40,7 +40,7 @@ pub struct ListParams {
         parse(try_from_str = "parse_days")
     )]
     /// Lists provisioning profiles that will expire in days
-    pub expire_in_days: Option<i64>,
+    pub expire_in_days: Option<u64>,
     #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
@@ -153,7 +153,7 @@ where
 }
 
 /// Parses and validates days argument.
-fn parse_days(s: &str) -> result::Result<i64, Error> {
+fn parse_days(s: &str) -> result::Result<u64, Error> {
     let days = s
         .parse::<i64>()
         .map_err(|err| Error::Custom(err.to_string()))?;
@@ -161,7 +161,7 @@ fn parse_days(s: &str) -> result::Result<i64, Error> {
         let message = format!("should be between 0 and 365, got {}", days);
         return Err(Error::Custom(message));
     }
-    Ok(days)
+    Ok(days as u64)
 }
 
 #[cfg(test)]
