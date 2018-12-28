@@ -11,7 +11,7 @@ use std::time::SystemTime;
 #[derive(Debug, Clone)]
 pub struct Profile {
     pub path: PathBuf,
-    pub info: ProfileInfo,
+    pub info: Info,
 }
 
 impl Profile {
@@ -19,8 +19,8 @@ impl Profile {
     pub fn from_file(path: &Path) -> Result<Self> {
         let mut buf = Vec::new();
         File::open(path)?.read_to_end(&mut buf)?;
-        let info = ProfileInfo::from_xml_data(&buf)
-            .ok_or_else(|| Error::Own("Couldn't parse file.".into()))?;
+        let info =
+            Info::from_xml_data(&buf).ok_or_else(|| Error::Own("Couldn't parse file.".into()))?;
         Ok(Self {
             path: path.to_owned(),
             info,
@@ -30,7 +30,7 @@ impl Profile {
 
 /// Represents provisioning profile info.
 #[derive(Debug, Clone)]
-pub struct ProfileInfo {
+pub struct Info {
     pub uuid: String,
     pub name: String,
     pub app_identifier: String,
@@ -38,7 +38,7 @@ pub struct ProfileInfo {
     pub expiration_date: SystemTime,
 }
 
-impl ProfileInfo {
+impl Info {
     /// Returns instance of the `Profile` parsed from a `data`.
     pub fn from_xml_data(data: &[u8]) -> Option<Self> {
         if let Some(data) = crate::plist_extractor::find(data) {
@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     fn contains() {
-        let profile = ProfileInfo {
+        let profile = Info {
             uuid: "123".into(),
             name: "name".into(),
             app_identifier: "id".into(),
@@ -149,21 +149,21 @@ mod tests {
 
     #[test]
     fn correct_bundle_id() {
-        let mut profile = ProfileInfo::empty();
+        let mut profile = Info::empty();
         profile.app_identifier = "12345ABCDE.com.exmaple.app".to_owned();
         expect!(profile.bundle_id()).to(be_some().value("com.exmaple.app"));
     }
 
     #[test]
     fn incorrect_bundle_id() {
-        let mut profile = ProfileInfo::empty();
+        let mut profile = Info::empty();
         profile.app_identifier = "12345ABCDE".to_owned();
         expect!(profile.bundle_id()).to(be_none());
     }
 
     #[test]
     fn wildcard_bundle_id() {
-        let mut profile = ProfileInfo::empty();
+        let mut profile = Info::empty();
         profile.app_identifier = "12345ABCDE.*".to_owned();
         expect!(profile.bundle_id()).to(be_some().value("*"));
     }
