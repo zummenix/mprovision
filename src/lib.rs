@@ -29,7 +29,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// - the user lacks the requisite permissions
 /// - there is no entry in the filesystem at the provided path
 /// - the provided path is not a directory
-pub fn entries(dir: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
+pub fn entries(dir: &Path) -> Result<impl Iterator<Item = DirEntry>> {
     let entries = fs::read_dir(dir)?;
     let filtered = entries
         .filter(|entry| {
@@ -40,7 +40,7 @@ pub fn entries(dir: &Path) -> Result<Box<Iterator<Item = DirEntry>>> {
             }) == Some(true)
         })
         .filter_map(|entry| entry.ok());
-    Ok(Box::new(filtered))
+    Ok(filtered)
 }
 
 /// Returns the path to the directory that contains installed mobile
@@ -103,6 +103,8 @@ fn validate_path(file_path: &Path) -> Result<&Path> {
 }
 
 /// Filters entries of a directory using `f`.
+///
+/// The filtering is perfomed concurrently.
 pub fn filter<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
 where
     F: Fn(&Profile) -> bool + Sync,
@@ -119,6 +121,8 @@ where
 }
 
 /// Searches a provisioning profile by its uuid.
+///
+/// The search is performed concurrently.
 pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
     let entries: Vec<DirEntry> = entries(dir)?.collect();
     if let Some(profile) = filter(entries, |profile| profile.info.uuid == uuid).pop() {
@@ -129,6 +133,8 @@ pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
 }
 
 /// Searches provisioning profiles by their uuid(s) or bundle id(s).
+///
+/// The search is performed concurrently.
 pub fn find_by_ids(dir: &Path, ids: &[String]) -> Result<Vec<Profile>> {
     let entries: Vec<DirEntry> = entries(dir)?.collect();
     let profiles = filter(entries, |profile| {
