@@ -6,7 +6,7 @@ Written in Rust.
 
 1. You need to install Rust Compiler either by downloading from 
 [official site](https://www.rust-lang.org/downloads.html) or using
-[rustup](https://www.rustup.rs)(which is preferable).
+[rustup](https://www.rustup.rs) (which is preferable).
 
 2. You have two options:
 
@@ -18,6 +18,8 @@ cargo build --release
 ```
 
 The result binary will be `./target/release/mprovision` and you can place it in your `PATH`.
+
+Alternatively, you can run `install.sh` script that runs `cargo install` command internally.
 
 - Automatic
 
