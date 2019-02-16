@@ -11,7 +11,7 @@ doc = false
 test = true
 
 [dependencies]
-plist = "0.3"
+plist = "0.4"
 chrono = "0.4"
 memmem = "0.1"
 futures = "0.1"
