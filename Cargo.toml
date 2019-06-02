@@ -19,7 +19,7 @@ futures-cpupool = "0.1"
 num_cpus = "1.8"
 clap = "2" # structopt
 structopt = "0.2"
-dirs = "1.0"
+dirs = "2.0"
 
 [dev-dependencies]
 expectest = "0.11"
