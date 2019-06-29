@@ -109,7 +109,7 @@ impl error::Error for Error {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match self {
             Error::Lib(e) => Some(e),
             Error::Clap(e) => Some(e),
@@ -119,7 +119,7 @@ impl error::Error for Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Lib(e) => error::Error::description(e).fmt(f),
             Error::Clap(e) => error::Error::description(e).fmt(f),
