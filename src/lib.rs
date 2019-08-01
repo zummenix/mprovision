@@ -15,7 +15,7 @@ pub use crate::profile::Profile;
 
 mod error;
 mod plist_extractor;
-mod profile;
+pub mod profile;
 
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;

@@ -29,7 +29,7 @@ impl Profile {
 }
 
 /// Represents provisioning profile info.
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Info {
     pub uuid: String,
     pub name: String,

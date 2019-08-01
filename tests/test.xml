@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AppIDName</key>
+	<string>TestApp</string>
+	<key>ApplicationIdentifierPrefix</key>
+	<array>
+	<string>1234567890</string>
+	</array>
+	<key>CreationDate</key>
+	<date>2019-07-12T10:20:02Z</date>
+	<key>Platform</key>
+	<array>
+		<string>iOS</string>
+	</array>
+	<key>IsXcodeManaged</key>
+	<false/>
+	<key>DeveloperCertificates</key>
+	<array>
+	</array>
+
+																				
+	<key>Entitlements</key>
+	<dict>
+						<key>aps-environment</key>
+		<string>development</string>
+						<key>application-identifier</key>
+		<string>1234567890.com.testapp</string>
+						<key>keychain-access-groups</key>
+		<array>
+				<string>1234567890.*</string>
+		</array>
+						<key>get-task-allow</key>
+		<true/>
+						<key>com.apple.developer.team-identifier</key>
+		<string>1234567890</string>
+
+	</dict>
+	<key>ExpirationDate</key>
+	<date>2020-07-11T10:20:02Z</date>
+	<key>Name</key>
+	<string>TestApp iOS Development</string>
+	<key>ProvisionedDevices</key>
+	<array>
+		<string>ahhboajfhajdfhvajodhfbknadfljlkgjlajlkal</string>
+	</array>
+	<key>TeamIdentifier</key>
+	<array>
+		<string>1234567890</string>
+	</array>
+	<key>TeamName</key>
+	<string>My Company, Inc</string>
+	<key>TimeToLive</key>
+	<integer>365</integer>
+	<key>UUID</key>
+	<string>fbcdefgl-af78-hal1-lgl1-87jl897lja8e</string>
+	<key>Version</key>
+	<integer>1</integer>
+</dict>
+</plist>
