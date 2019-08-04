@@ -11,7 +11,7 @@ doc = false
 test = true
 
 [dependencies]
-plist = "0.4"
+plist = "0.5"
 chrono = "0.4"
 memmem = "0.1"
 futures = "0.1"
@@ -20,6 +20,7 @@ num_cpus = "1.10"
 clap = "2" # structopt
 structopt = "0.2"
 dirs = "2.0"
+serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 expectest = "0.11"

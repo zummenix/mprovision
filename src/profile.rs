@@ -1,7 +1,7 @@
 use crate::{Error, Result};
 use chrono::{DateTime, Utc};
 use plist;
-use plist::stream::Event;
+use serde::Deserialize;
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
@@ -38,45 +38,40 @@ pub struct Info {
     pub expiration_date: SystemTime,
 }
 
+#[derive(Debug, Deserialize)]
+struct InfoDef {
+    #[serde(rename = "UUID")]
+    pub uuid: String,
+    #[serde(rename = "Name")]
+    pub name: String,
+    #[serde(rename = "Entitlements")]
+    pub entitlements: Entitlements,
+    #[serde(rename = "CreationDate")]
+    pub creation_date: plist::Date,
+    #[serde(rename = "ExpirationDate")]
+    pub expiration_date: plist::Date,
+}
+
+#[derive(Debug, Deserialize)]
+struct Entitlements {
+    #[serde(rename = "application-identifier")]
+    pub app_identifier: String,
+}
+
 impl Info {
     /// Returns instance of the `Profile` parsed from a `data`.
     pub fn from_xml_data(data: &[u8]) -> Option<Self> {
-        if let Some(data) = crate::plist_extractor::find(data) {
-            let mut profile = Self::empty();
-            let mut iter = plist::stream::XmlReader::new(io::Cursor::new(data));
-            while let Some(item) = iter.next() {
-                if let Ok(Event::StringValue(key)) = item {
-                    if key == "UUID" {
-                        if let Some(Ok(Event::StringValue(value))) = iter.next() {
-                            profile.uuid = value;
-                        }
-                    }
-                    if key == "Name" {
-                        if let Some(Ok(Event::StringValue(value))) = iter.next() {
-                            profile.name = value;
-                        }
-                    }
-                    if key == "application-identifier" {
-                        if let Some(Ok(Event::StringValue(value))) = iter.next() {
-                            profile.app_identifier = value;
-                        }
-                    }
-                    if key == "CreationDate" {
-                        if let Some(Ok(Event::DateValue(value))) = iter.next() {
-                            profile.creation_date = value.into();
-                        }
-                    }
-                    if key == "ExpirationDate" {
-                        if let Some(Ok(Event::DateValue(value))) = iter.next() {
-                            profile.expiration_date = value.into();
-                        }
-                    }
-                }
-            }
-            Some(profile)
-        } else {
-            None
-        }
+        crate::plist_extractor::find(data).and_then(|xml| {
+            plist::from_reader_xml(io::Cursor::new(xml))
+                .ok()
+                .map(|info: InfoDef| Info {
+                    uuid: info.uuid,
+                    name: info.name,
+                    app_identifier: info.entitlements.app_identifier,
+                    creation_date: info.creation_date.into(),
+                    expiration_date: info.expiration_date.into(),
+                })
+        })
     }
 
     /// Returns an empty profile info.
