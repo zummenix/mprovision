@@ -86,6 +86,7 @@ pub type Result = result::Result<Command, Error>;
 pub enum Error {
     Lib(mp::Error),
     Clap(clap::Error),
+    Io(io::Error),
     Custom(String),
 }
 
@@ -105,6 +106,7 @@ impl error::Error for Error {
         match self {
             Error::Lib(e) => e.description(),
             Error::Clap(e) => e.description(),
+            Error::Io(e) => e.description(),
             Error::Custom(e) => e,
         }
     }
@@ -113,6 +115,7 @@ impl error::Error for Error {
         match self {
             Error::Lib(e) => Some(e),
             Error::Clap(e) => Some(e),
+            Error::Io(e) => Some(e),
             Error::Custom(_) => None,
         }
     }
@@ -123,6 +126,7 @@ impl fmt::Display for Error {
         match self {
             Error::Lib(e) => error::Error::description(e).fmt(f),
             Error::Clap(e) => error::Error::description(e).fmt(f),
+            Error::Io(e) => e.fmt(f),
             Error::Custom(e) => e.fmt(f),
         }
     }
@@ -137,6 +141,12 @@ impl From<mp::Error> for Error {
 impl From<clap::Error> for Error {
     fn from(e: clap::Error) -> Self {
         Error::Clap(e)
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self {
+        Error::Io(e)
     }
 }
 

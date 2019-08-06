@@ -1,6 +1,7 @@
 use crate::cli::Command;
 use mprovision as mp;
 use std::env;
+use std::io::{self, Write};
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
@@ -36,7 +37,6 @@ fn list(
         .and_then(|dir| mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>()))
         .map_err(|err| err.into())
         .map(|entries| {
-            let total = entries.len();
             let date = expires_in_days
                 .map(|days| SystemTime::now() + Duration::from_secs(days * 24 * 60 * 60));
             let filter_string = text.as_ref();
@@ -49,17 +49,17 @@ fn list(
                 (_, _) => true,
             });
             profiles.sort_by(|a, b| a.info.creation_date.cmp(&b.info.creation_date));
-            (total, profiles)
+            profiles
         })
-        .and_then(|(total, profiles)| {
+        .and_then(|profiles| {
+            let stdout = io::stdout();
+            let mut stdout = stdout.lock();
             if profiles.is_empty() {
-                println!("Nothing found");
                 Ok(())
             } else {
                 for profile in &profiles {
-                    println!("\n{}", profile.info.description());
+                    writeln!(&mut stdout, "{}\n", profile.info.description())?;
                 }
-                println!("\nFound {} of {}", profiles.len(), total);
                 Ok(())
             }
         })
