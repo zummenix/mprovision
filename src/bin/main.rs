@@ -33,36 +33,30 @@ fn list(
     expires_in_days: Option<u64>,
     directory: Option<PathBuf>,
 ) -> Result<(), cli::Error> {
-    mp::with_directory(directory)
-        .and_then(|dir| mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>()))
-        .map_err(|err| err.into())
-        .map(|entries| {
-            let date = expires_in_days
-                .map(|days| SystemTime::now() + Duration::from_secs(days * 24 * 60 * 60));
-            let filter_string = text.as_ref();
-            let mut profiles = mp::filter(entries, |profile| match (date, filter_string) {
-                (Some(date), Some(string)) => {
-                    profile.info.expiration_date <= date && profile.info.contains(string)
-                }
-                (Some(date), _) => profile.info.expiration_date <= date,
-                (_, Some(string)) => profile.info.contains(string),
-                (_, _) => true,
-            });
-            profiles.sort_by(|a, b| a.info.creation_date.cmp(&b.info.creation_date));
-            profiles
-        })
-        .and_then(|profiles| {
-            let stdout = io::stdout();
-            let mut stdout = stdout.lock();
-            if profiles.is_empty() {
-                Ok(())
-            } else {
-                for profile in &profiles {
-                    writeln!(&mut stdout, "{}\n", profile.info.description())?;
-                }
-                Ok(())
-            }
-        })
+    let dir = mp::with_directory(directory)?;
+    let entries = mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>())?;
+    let date =
+        expires_in_days.map(|days| SystemTime::now() + Duration::from_secs(days * 24 * 60 * 60));
+    let filter_string = text.as_ref();
+    let mut profiles = mp::filter(entries, |profile| match (date, filter_string) {
+        (Some(date), Some(string)) => {
+            profile.info.expiration_date <= date && profile.info.contains(string)
+        }
+        (Some(date), _) => profile.info.expiration_date <= date,
+        (_, Some(string)) => profile.info.contains(string),
+        (_, _) => true,
+    });
+    profiles.sort_by(|a, b| a.info.creation_date.cmp(&b.info.creation_date));
+    if profiles.is_empty() {
+        Ok(())
+    } else {
+        let stdout = io::stdout();
+        let mut stdout = stdout.lock();
+        for profile in &profiles {
+            writeln!(&mut stdout, "{}\n", profile.info.description())?;
+        }
+        Ok(())
+    }
 }
 
 fn show_uuid(uuid: &str, directory: Option<PathBuf>) -> Result<(), cli::Error> {
