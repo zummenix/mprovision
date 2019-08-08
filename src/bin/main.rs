@@ -60,12 +60,11 @@ fn list(
 }
 
 fn show_uuid(uuid: &str, directory: Option<PathBuf>) -> Result<(), cli::Error> {
-    mp::with_directory(directory)
-        .and_then(|directory| {
-            mp::find_by_uuid(&directory, &uuid)
-                .and_then(|profile| mp::show(&profile.path).map(|xml| println!("{}", xml)))
-        })
-        .map_err(|err| err.into())
+    let dir = mp::with_directory(directory)?;
+    let profile = mp::find_by_uuid(&dir, &uuid)?;
+    let xml = mp::show(&profile.path)?;
+    writeln!(io::stdout(), "{}", xml)?;
+    Ok(())
 }
 
 fn show_file(path: &Path) -> Result<(), cli::Error> {
