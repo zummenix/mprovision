@@ -68,9 +68,9 @@ fn show_uuid(uuid: &str, directory: Option<PathBuf>) -> Result<(), cli::Error> {
 }
 
 fn show_file(path: &Path) -> Result<(), cli::Error> {
-    mp::show(&path)
-        .map(|xml| println!("{}", xml))
-        .map_err(|err| err.into())
+    let xml = mp::show(&path)?;
+    writeln!(io::stdout(), "{}", xml)?;
+    Ok(())
 }
 
 fn remove(ids: &[String], directory: Option<PathBuf>) -> Result<(), cli::Error> {
