@@ -74,20 +74,16 @@ fn show_file(path: &Path) -> Result<(), cli::Error> {
 }
 
 fn remove(ids: &[String], directory: Option<PathBuf>) -> Result<(), cli::Error> {
-    mp::with_directory(directory)
-        .and_then(|directory| {
-            mp::find_by_ids(&directory, &ids).and_then(|profiles| {
-                for profile in profiles {
-                    if mp::remove(&profile.path).is_ok() {
-                        println!("\nRemoved: {}", profile.info.description());
-                    } else {
-                        println!("\nError while removing '{}'", profile.info.uuid);
-                    }
-                }
-                Ok(())
-            })
-        })
-        .map_err(|err| err.into())
+    let dir = mp::with_directory(directory)?;
+    let profiles = mp::find_by_ids(&dir, &ids)?;
+    for profile in profiles {
+        if mp::remove(&profile.path).is_ok() {
+            println!("\nRemoved: {}", profile.info.description());
+        } else {
+            println!("\nError while removing '{}'", profile.info.uuid);
+        }
+    }
+    Ok(())
 }
 
 fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
