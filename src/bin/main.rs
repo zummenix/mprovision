@@ -8,13 +8,15 @@ use std::time::{Duration, SystemTime};
 
 mod cli;
 
+type Result = std::result::Result<(), cli::Error>;
+
 fn main() {
     if let Err(e) = cli::parse(env::args()).and_then(run) {
         e.exit();
     }
 }
 
-fn run(command: cli::Command) -> Result<(), cli::Error> {
+fn run(command: cli::Command) -> Result {
     match command {
         Command::List(cli::ListParams {
             text,
@@ -28,11 +30,7 @@ fn run(command: cli::Command) -> Result<(), cli::Error> {
     }
 }
 
-fn list(
-    text: &Option<String>,
-    expires_in_days: Option<u64>,
-    directory: Option<PathBuf>,
-) -> Result<(), cli::Error> {
+fn list(text: &Option<String>, expires_in_days: Option<u64>, directory: Option<PathBuf>) -> Result {
     let dir = mp::with_directory(directory)?;
     let entries = mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>())?;
     let date =
@@ -59,7 +57,7 @@ fn list(
     }
 }
 
-fn show_uuid(uuid: &str, directory: Option<PathBuf>) -> Result<(), cli::Error> {
+fn show_uuid(uuid: &str, directory: Option<PathBuf>) -> Result {
     let dir = mp::with_directory(directory)?;
     let profile = mp::find_by_uuid(&dir, &uuid)?;
     let xml = mp::show(&profile.path)?;
@@ -67,13 +65,13 @@ fn show_uuid(uuid: &str, directory: Option<PathBuf>) -> Result<(), cli::Error> {
     Ok(())
 }
 
-fn show_file(path: &Path) -> Result<(), cli::Error> {
+fn show_file(path: &Path) -> Result {
     let xml = mp::show(&path)?;
     writeln!(io::stdout(), "{}", xml)?;
     Ok(())
 }
 
-fn remove(ids: &[String], directory: Option<PathBuf>) -> Result<(), cli::Error> {
+fn remove(ids: &[String], directory: Option<PathBuf>) -> Result {
     let dir = mp::with_directory(directory)?;
     let profiles = mp::find_by_ids(&dir, &ids)?;
     for profile in profiles {
@@ -86,7 +84,7 @@ fn remove(ids: &[String], directory: Option<PathBuf>) -> Result<(), cli::Error> 
     Ok(())
 }
 
-fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
+fn clean(directory: Option<PathBuf>) -> Result {
     let date = SystemTime::now();
     let dir = mp::with_directory(directory)?;
     let entries = mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>())?;
