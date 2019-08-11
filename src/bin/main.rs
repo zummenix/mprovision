@@ -87,36 +87,20 @@ fn remove(ids: &[String], directory: Option<PathBuf>) -> Result<(), cli::Error> 
 }
 
 fn clean(directory: Option<PathBuf>) -> Result<(), cli::Error> {
-    fn concat(mut s1: String, s2: &str) -> String {
-        s1.push_str(&s2);
-        s1
-    }
-
     let date = SystemTime::now();
-    mp::with_directory(directory)
-        .and_then(|dir| mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>()))
-        .map_err(|err| err.into())
-        .map(|entries| mp::filter(entries, |profile| profile.info.expiration_date <= date))
-        .and_then(|profiles| {
-            if profiles.is_empty() {
-                println!("All provisioning profiles are valid");
-                Ok(())
+    let dir = mp::with_directory(directory)?;
+    let entries = mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>())?;
+    let profiles = mp::filter(entries, |profile| profile.info.expiration_date <= date);
+    if profiles.is_empty() {
+        println!("All provisioning profiles are valid");
+    } else {
+        for profile in profiles {
+            if mp::remove(&profile.path).is_ok() {
+                println!("\nRemoved: {}", profile.info.description());
             } else {
-                profiles
-                    .iter()
-                    .map(|profile| {
-                        std::fs::remove_file(&profile.path)
-                            .map(|_| format!("'{}' was removed\n", profile.info.uuid))
-                            .map_err(|err| format!("'{}' {}\n", profile.info.uuid, err))
-                    })
-                    .fold(Ok(String::new()), |acc, s| match (acc, s) {
-                        (Ok(acc), Ok(s)) => Ok(concat(acc, &s)),
-                        (Ok(acc), Err(s)) | (Err(acc), Ok(s)) | (Err(acc), Err(s)) => {
-                            Err(concat(acc, &s))
-                        }
-                    })
-                    .map(|s| println!("{}", s))
-                    .map_err(cli::Error::Custom)
+                println!("\nError while removing '{}'", profile.info.uuid);
             }
-        })
+        }
+    }
+    Ok(())
 }
