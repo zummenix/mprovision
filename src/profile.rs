@@ -64,7 +64,7 @@ impl Info {
         crate::plist_extractor::find(data).and_then(|xml| {
             plist::from_reader_xml(io::Cursor::new(xml))
                 .ok()
-                .map(|info: InfoDef| Info {
+                .map(|info: InfoDef| Self {
                     uuid: info.uuid,
                     name: info.name,
                     app_identifier: info.entitlements.app_identifier,

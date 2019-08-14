@@ -39,7 +39,7 @@ pub fn entries(dir: &Path) -> Result<impl Iterator<Item = DirEntry>> {
                     .map(|ext| ext.to_str() == Some("mobileprovision"))
             }) == Some(true)
         })
-        .filter_map(|entry| entry.ok());
+        .filter_map(std::result::Result::ok);
     Ok(filtered)
 }
 
@@ -72,8 +72,9 @@ pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
 
 /// Removes a provisioning profile.
 pub fn remove(file_path: &Path) -> Result<()> {
-    validate_path(file_path)
-        .and_then(|file_path| std::fs::remove_file(file_path).map_err(|err| err.into()))
+    let path = validate_path(file_path)?;
+    std::fs::remove_file(path)?;
+    Ok(())
 }
 
 /// Returns internals of a provisioning profile.

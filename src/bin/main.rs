@@ -32,7 +32,7 @@ fn run(command: cli::Command) -> Result {
 
 fn list(text: &Option<String>, expires_in_days: Option<u64>, directory: Option<PathBuf>) -> Result {
     let dir = mp::with_directory(directory)?;
-    let entries = mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>())?;
+    let entries = mp::entries(&dir).map(std::iter::Iterator::collect)?;
     let date =
         expires_in_days.map(|days| SystemTime::now() + Duration::from_secs(days * 24 * 60 * 60));
     let filter_string = text.as_ref();
@@ -87,7 +87,7 @@ fn remove(ids: &[String], directory: Option<PathBuf>) -> Result {
 fn clean(directory: Option<PathBuf>) -> Result {
     let date = SystemTime::now();
     let dir = mp::with_directory(directory)?;
-    let entries = mp::entries(&dir).map(|entries| entries.collect::<Vec<_>>())?;
+    let entries = mp::entries(&dir).map(std::iter::Iterator::collect)?;
     let profiles = mp::filter(entries, |profile| profile.info.expiration_date <= date);
     if profiles.is_empty() {
         println!("All provisioning profiles are valid");
