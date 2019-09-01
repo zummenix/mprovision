@@ -9,7 +9,7 @@ use std::result;
 use structopt::StructOpt;
 
 #[derive(Debug, PartialEq, StructOpt)]
-#[structopt(raw(global_settings = "&[clap::AppSettings::DeriveDisplayOrder]"))]
+#[structopt(author, about, global_settings(&[clap::AppSettings::DeriveDisplayOrder]))]
 /// A tool that helps iOS developers to manage mobileprovision files.
 pub enum Command {
     #[structopt(name = "list")]
@@ -31,51 +31,51 @@ pub enum Command {
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct ListParams {
-    #[structopt(short = "t", long = "text", raw(empty_values = "false"))]
+    #[structopt(short = "t", long = "text", empty_values(false))]
     /// Lists provisioning profiles that contain this text
     pub text: Option<String>,
     #[structopt(
         short = "d",
         long = "expire-in-days",
-        parse(try_from_str = "parse_days")
+        parse(try_from_str = parse_days)
     )]
     /// Lists provisioning profiles that will expire in days
     pub expire_in_days: Option<u64>,
-    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
+    #[structopt(long = "source", parse(from_os_str), empty_values(false))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct ShowUuidParams {
-    #[structopt(raw(empty_values = "false"))]
+    #[structopt(empty_values(false))]
     /// An uuid of a provisioning profile
     pub uuid: String,
-    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
+    #[structopt(long = "source", parse(from_os_str), empty_values(false))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct ShowFileParams {
-    #[structopt(parse(from_os_str), raw(empty_values = "false"))]
+    #[structopt(parse(from_os_str), empty_values(false))]
     /// A file path of a provisioning profile
     pub file: PathBuf,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct RemoveParams {
-    #[structopt(raw(empty_values = "false"))]
+    #[structopt(empty_values(false))]
     /// uuid(s) or bundle id(s) of provisioning profiles
     pub ids: Vec<String>,
-    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
+    #[structopt(long = "source", parse(from_os_str), empty_values(false))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
 pub struct CleanParams {
-    #[structopt(long = "source", parse(from_os_str), raw(empty_values = "false"))]
+    #[structopt(long = "source", parse(from_os_str), empty_values(false))]
     /// A directory where to clean
     pub directory: Option<PathBuf>,
 }
