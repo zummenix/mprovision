@@ -2,10 +2,6 @@
 //! files. Main purpose of this crate is to contain functions and types
 //! for **mprovision**.
 
-use futures::stream::Stream;
-use futures::Future;
-use futures_cpupool::CpuPool;
-
 use std::fs::{self, DirEntry, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -108,17 +104,15 @@ fn validate_path(file_path: &Path) -> Result<&Path> {
 /// The filtering is perfomed concurrently.
 pub fn filter<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
 where
-    F: Fn(&Profile) -> bool + Sync,
+    F: Fn(&Profile) -> bool + Send + Sync,
 {
-    let cpu_pool = CpuPool::new(num_cpus::get());
-
-    let stream = futures::stream::iter_ok(entries.into_iter())
-        .map(|entry| cpu_pool.spawn_fn(move || Profile::from_file(&entry.path())))
-        .buffered(num_cpus::get() * 2)
+    use rayon::prelude::*;
+    entries
+        .par_iter()
+        .map(|entry| Profile::from_file(&entry.path()))
+        .filter_map(Result::ok)
         .filter(f)
-        .collect();
-
-    stream.wait().unwrap_or_default()
+        .collect()
 }
 
 /// Searches a provisioning profile by its uuid.
