@@ -66,20 +66,6 @@ The `clean` subcommand removes expired provisioning profiles.
 > NOTE: you can see provisioning profiles that will be removed using the
 `mprovision list -d 0` command.
 
-## Performance
-
-I expect that main bottleneck will be your machine's disk and cpu.
-When you run this tool for the first time, performance probably will be not so good as subsequent times.
-
-For comparison, on my machine with ssd and 4 cpu cores I see the following results:
-```
-$ time mprovision list -t any
-...
-Found 4 of 789
-mprovision list -t any  1.94s user 0.03s system 667% cpu 0.295 total
-```
-As you can see the execution time for almost 1000 profiles is reasonable.
-
 ## License
 
 MIT
