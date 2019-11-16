@@ -300,7 +300,7 @@ dependencies = [
 
 [[package]]
 name = "mprovision"
-version = "5.4.0"
+version = "6.0.0"
 dependencies = [
  "chrono 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
