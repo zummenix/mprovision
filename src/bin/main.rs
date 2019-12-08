@@ -60,9 +60,7 @@ fn list(text: &Option<String>, expires_in_days: Option<u64>, directory: Option<P
 fn show_uuid(uuid: &str, directory: Option<PathBuf>) -> Result {
     let dir = mp::with_directory(directory)?;
     let profile = mp::find_by_uuid(&dir, &uuid)?;
-    let xml = mp::show(&profile.path)?;
-    writeln!(io::stdout(), "{}", xml)?;
-    Ok(())
+    show_file(&profile.path)
 }
 
 fn show_file(path: &Path) -> Result {
@@ -74,14 +72,7 @@ fn show_file(path: &Path) -> Result {
 fn remove(ids: &[String], directory: Option<PathBuf>) -> Result {
     let dir = mp::with_directory(directory)?;
     let profiles = mp::find_by_ids(&dir, &ids)?;
-    for profile in profiles {
-        if mp::remove(&profile.path).is_ok() {
-            println!("\nRemoved: {}", profile.info.description());
-        } else {
-            println!("\nError while removing '{}'", profile.info.uuid);
-        }
-    }
-    Ok(())
+    remove_profiles(profiles)
 }
 
 fn clean(directory: Option<PathBuf>) -> Result {
@@ -89,15 +80,16 @@ fn clean(directory: Option<PathBuf>) -> Result {
     let dir = mp::with_directory(directory)?;
     let entries = mp::entries(&dir).map(std::iter::Iterator::collect)?;
     let profiles = mp::filter(entries, |profile| profile.info.expiration_date <= date);
-    if profiles.is_empty() {
-        println!("All provisioning profiles are valid");
-    } else {
-        for profile in profiles {
-            if mp::remove(&profile.path).is_ok() {
-                println!("\nRemoved: {}", profile.info.description());
-            } else {
-                println!("\nError while removing '{}'", profile.info.uuid);
-            }
+    remove_profiles(profiles)
+}
+
+fn remove_profiles(profiles: Vec<mp::Profile>) -> Result {
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock();
+    for profile in profiles {
+        match mp::remove(&profile.path) {
+            Ok(()) => writeln!(&mut stdout, "{}/n", profile.info.description())?,
+            Err(err) => writeln!(io::stderr(), "{}", err)?,
         }
     }
     Ok(())
