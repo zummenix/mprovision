@@ -69,7 +69,7 @@ fn show_file(path: &Path) -> Result {
 fn remove(ids: &[String], directory: Option<PathBuf>) -> Result {
     let dir = mp::with_directory(directory)?;
     let profiles = mp::find_by_ids(&dir, &ids)?;
-    remove_profiles(profiles)
+    remove_profiles(&profiles)
 }
 
 fn clean(directory: Option<PathBuf>) -> Result {
@@ -77,10 +77,10 @@ fn clean(directory: Option<PathBuf>) -> Result {
     let dir = mp::with_directory(directory)?;
     let entries = mp::entries(&dir).map(std::iter::Iterator::collect)?;
     let profiles = mp::filter(entries, |profile| profile.info.expiration_date <= date);
-    remove_profiles(profiles)
+    remove_profiles(&profiles)
 }
 
-fn remove_profiles(profiles: Vec<mp::Profile>) -> Result {
+fn remove_profiles(profiles: &[mp::Profile]) -> Result {
     let mut errors_exist = false;
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
