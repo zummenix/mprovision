@@ -84,13 +84,22 @@ fn clean(directory: Option<PathBuf>) -> Result {
 }
 
 fn remove_profiles(profiles: Vec<mp::Profile>) -> Result {
+    let mut errors_exist = false;
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
     for profile in profiles {
         match mp::remove(&profile.path) {
             Ok(()) => writeln!(&mut stdout, "{}/n", profile.info.description())?,
-            Err(err) => writeln!(io::stderr(), "{}", err)?,
+            Err(err) => {
+                errors_exist = true;
+                writeln!(io::stderr(), "{}", err)?
+            }
         }
     }
-    Ok(())
+    if errors_exist {
+        // Don't need to show anything – all errors are already printed.
+        Err(cli::Error::Custom(String::new()))
+    } else {
+        Ok(())
+    }
 }
