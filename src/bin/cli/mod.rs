@@ -92,7 +92,7 @@ pub enum Error {
 
 impl Error {
     pub fn exit(&self) -> ! {
-        if let Error::Clap(e) = self {
+        if let Self::Clap(e) = self {
             e.exit()
         } else {
             writeln!(&mut io::stderr(), "{}", self).unwrap();
@@ -102,21 +102,12 @@ impl Error {
 }
 
 impl error::Error for Error {
-    fn description(&self) -> &str {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Error::Lib(e) => e.description(),
-            Error::Clap(e) => e.description(),
-            Error::Io(e) => e.description(),
-            Error::Custom(e) => e,
-        }
-    }
-
-    fn cause(&self) -> Option<&dyn error::Error> {
-        match self {
-            Error::Lib(e) => Some(e),
-            Error::Clap(e) => Some(e),
-            Error::Io(e) => Some(e),
-            Error::Custom(_) => None,
+            Self::Lib(e) => Some(e),
+            Self::Clap(e) => Some(e),
+            Self::Io(e) => Some(e),
+            Self::Custom(_) => None,
         }
     }
 }
@@ -124,29 +115,29 @@ impl error::Error for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Lib(e) => error::Error::description(e).fmt(f),
-            Error::Clap(e) => error::Error::description(e).fmt(f),
-            Error::Io(e) => e.fmt(f),
-            Error::Custom(e) => e.fmt(f),
+            Self::Lib(e) => e.fmt(f),
+            Self::Clap(e) => e.fmt(f),
+            Self::Io(e) => e.fmt(f),
+            Self::Custom(e) => e.fmt(f),
         }
     }
 }
 
 impl From<mp::Error> for Error {
     fn from(e: mp::Error) -> Self {
-        Error::Lib(e)
+        Self::Lib(e)
     }
 }
 
 impl From<clap::Error> for Error {
     fn from(e: clap::Error) -> Self {
-        Error::Clap(e)
+        Self::Clap(e)
     }
 }
 
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self {
-        Error::Io(e)
+        Self::Io(e)
     }
 }
 

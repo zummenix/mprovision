@@ -13,35 +13,31 @@ pub enum Error {
 }
 
 impl error::Error for Error {
-    fn description(&self) -> &str {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Error::Io(e) => e.description(),
-            Error::Own(e) => e,
-        }
-    }
-
-    fn cause(&self) -> Option<&dyn error::Error> {
-        match self {
-            Error::Io(e) => Some(e),
-            Error::Own(_) => None,
+            Self::Io(e) => Some(e),
+            Self::Own(_) => None,
         }
     }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        error::Error::description(self).fmt(f)
+        match self {
+            Self::Io(e) => e.fmt(f),
+            Self::Own(e) => e.fmt(f),
+        }
     }
 }
 
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self {
-        Error::Io(e)
+        Self::Io(e)
     }
 }
 
 impl From<FromUtf8Error> for Error {
     fn from(e: FromUtf8Error) -> Self {
-        Error::Own(e.to_string())
+        Self::Own(e.to_string())
     }
 }
