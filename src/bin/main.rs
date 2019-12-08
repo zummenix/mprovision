@@ -45,16 +45,13 @@ fn list(text: &Option<String>, expires_in_days: Option<u64>, directory: Option<P
         (_, _) => true,
     });
     profiles.sort_by(|a, b| a.info.creation_date.cmp(&b.info.creation_date));
-    if profiles.is_empty() {
-        Ok(())
-    } else {
-        let stdout = io::stdout();
-        let mut stdout = stdout.lock();
-        for profile in &profiles {
-            writeln!(&mut stdout, "{}\n", profile.info.description())?;
-        }
-        Ok(())
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock();
+    for (i, profile) in profiles.iter().enumerate() {
+        let separator = if i + 1 == profiles.len() { "" } else { "\n" };
+        writeln!(&mut stdout, "{}{}", profile.info.description(), separator)?;
     }
+    Ok(())
 }
 
 fn show_uuid(uuid: &str, directory: Option<PathBuf>) -> Result {
@@ -87,9 +84,12 @@ fn remove_profiles(profiles: Vec<mp::Profile>) -> Result {
     let mut errors_exist = false;
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
-    for profile in profiles {
+    for (i, profile) in profiles.iter().enumerate() {
         match mp::remove(&profile.path) {
-            Ok(()) => writeln!(&mut stdout, "{}/n", profile.info.description())?,
+            Ok(()) => {
+                let separator = if i + 1 == profiles.len() { "" } else { "\n" };
+                writeln!(&mut stdout, "{}{}", profile.info.description(), separator)?
+            }
             Err(err) => {
                 errors_exist = true;
                 writeln!(io::stderr(), "{}", err)?
