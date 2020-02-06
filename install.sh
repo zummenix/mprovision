@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cargo install --force --path .
+cargo install --path .
 
 MPROVISION_PATH=$(which mprovision)
 echo "Binary size before strip:"
