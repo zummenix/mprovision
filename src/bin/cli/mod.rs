@@ -1,10 +1,6 @@
 use clap;
-use mprovision as mp;
 use std::error;
-use std::fmt;
-use std::io::{self, Write};
 use std::path::PathBuf;
-use std::process;
 use std::result;
 use structopt::StructOpt;
 
@@ -80,69 +76,8 @@ pub struct CleanParams {
     pub directory: Option<PathBuf>,
 }
 
-pub type Result = result::Result<Command, Error>;
-
-#[derive(Debug)]
-pub enum Error {
-    Lib(mp::Error),
-    Clap(clap::Error),
-    Io(io::Error),
-    Custom(String),
-}
-
-impl Error {
-    pub fn exit(&self) -> ! {
-        if let Self::Clap(e) = self {
-            e.exit()
-        } else {
-            writeln!(&mut io::stderr(), "{}", self).unwrap();
-            process::exit(1);
-        }
-    }
-}
-
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            Self::Lib(e) => Some(e),
-            Self::Clap(e) => Some(e),
-            Self::Io(e) => Some(e),
-            Self::Custom(_) => None,
-        }
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Lib(e) => e.fmt(f),
-            Self::Clap(e) => e.fmt(f),
-            Self::Io(e) => e.fmt(f),
-            Self::Custom(e) => e.fmt(f),
-        }
-    }
-}
-
-impl From<mp::Error> for Error {
-    fn from(e: mp::Error) -> Self {
-        Self::Lib(e)
-    }
-}
-
-impl From<clap::Error> for Error {
-    fn from(e: clap::Error) -> Self {
-        Self::Clap(e)
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self {
-        Self::Io(e)
-    }
-}
-
 /// Parses arguments and returns a `Command`.
-pub fn parse<I, S>(args: I) -> Result
+pub fn parse<I, S>(args: I) -> result::Result<Command, Box<dyn error::Error>>
 where
     I: IntoIterator<Item = S>,
     S: Clone,
@@ -154,13 +89,11 @@ where
 }
 
 /// Parses and validates days argument.
-fn parse_days(s: &str) -> result::Result<u64, Error> {
-    let days = s
-        .parse::<i64>()
-        .map_err(|err| Error::Custom(err.to_string()))?;
+fn parse_days(s: &str) -> result::Result<u64, Box<dyn error::Error>> {
+    let days = s.parse::<i64>()?;
     if days < 0 || days > 365 {
         let message = format!("should be between 0 and 365, got {}", days);
-        return Err(Error::Custom(message));
+        return Err(message.into());
     }
     Ok(days as u64)
 }

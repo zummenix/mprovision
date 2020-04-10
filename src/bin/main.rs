@@ -4,19 +4,15 @@ use std::env;
 use std::io::{self, Write};
 use std::path::Path;
 use std::path::PathBuf;
+use std::result;
 use std::time::{Duration, SystemTime};
 
 mod cli;
 
-type Result = std::result::Result<(), cli::Error>;
+type Result = result::Result<(), main_error::MainError>;
 
-fn main() {
-    if let Err(e) = cli::parse(env::args()).and_then(run) {
-        e.exit();
-    }
-}
-
-fn run(command: cli::Command) -> Result {
+fn main() -> Result {
+    let command = cli::parse(env::args())?;
     match command {
         Command::List(cli::ListParams {
             text,
@@ -98,7 +94,7 @@ fn remove_profiles(profiles: &[mp::Profile]) -> Result {
     }
     if errors_exist {
         // Don't need to show anything – all errors are already printed.
-        Err(cli::Error::Custom(String::new()))
+        Err(String::new().into())
     } else {
         Ok(())
     }
