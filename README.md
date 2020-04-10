@@ -19,8 +19,6 @@ cargo build --release
 
 The result binary will be `./target/release/mprovision` and you can place it in your `PATH`.
 
-Alternatively, you can run `install.sh` script that runs `cargo install` command internally.
-
 - Automatic
 
 ```bash
