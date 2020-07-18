@@ -26,5 +26,7 @@ expectest = "0.12"
 tempdir = "0.3"
 
 [profile.release]
+codegen-units = 1
+opt-level = "z"
 panic = "abort"
 lto = true
