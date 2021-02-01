@@ -11,7 +11,7 @@ doc = false
 test = true
 
 [dependencies]
-plist = "1.0"
+plist = "1.1"
 chrono = "0.4"
 memmem = "0.1"
 clap = "2" # structopt
