@@ -8,18 +8,7 @@ Written in Rust.
 [official site](https://www.rust-lang.org/downloads.html) or using
 [rustup](https://www.rustup.rs) (which is preferable).
 
-2. You have two options:
-
-- Manual
-```bash
-git clone https://github.com/zummenix/mprovision
-cd mprovision
-cargo build --release
-```
-
-The result binary will be `./target/release/mprovision` and you can place it in your `PATH`.
-
-- Automatic
+2. Run the following command:
 
 ```bash
 cargo install --git https://github.com/zummenix/mprovision
