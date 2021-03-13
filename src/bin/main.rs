@@ -1,6 +1,5 @@
 use crate::cli::Command;
 use mprovision as mp;
-use std::env;
 use std::io::{self, Write};
 use std::path::Path;
 use std::path::PathBuf;
@@ -12,8 +11,7 @@ mod cli;
 type Result = result::Result<(), main_error::MainError>;
 
 fn main() -> Result {
-    let command = cli::parse(env::args())?;
-    match command {
+    match cli::run() {
         Command::List(cli::ListParams {
             text,
             expire_in_days,

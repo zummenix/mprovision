@@ -76,16 +76,9 @@ pub struct CleanParams {
     pub directory: Option<PathBuf>,
 }
 
-/// Parses arguments and returns a `Command`.
-pub fn parse<I, S>(args: I) -> result::Result<Command, Box<dyn error::Error>>
-where
-    I: IntoIterator<Item = S>,
-    S: Clone,
-    ::std::ffi::OsString: From<S>,
-{
-    let app = Command::clap();
-    let matches = app.get_matches_from_safe(args)?;
-    Ok(Command::from_clap(&matches))
+/// Runs the cli and returns the `Command`.
+pub fn run() -> Command {
+    Command::from_args()
 }
 
 /// Parses and validates days argument.
@@ -103,6 +96,16 @@ mod tests {
     use super::*;
     use expectest::expect;
     use expectest::prelude::*;
+
+    /// Parses arguments and returns a `Command`.
+    fn parse<I, S>(args: I) -> result::Result<Command, clap::Error>
+    where
+        I: IntoIterator<Item = S>,
+        S: Clone,
+        ::std::ffi::OsString: From<S>,
+    {
+        Command::from_iter_safe(args)
+    }
 
     #[test]
     fn list_command() {
