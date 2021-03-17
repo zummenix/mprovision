@@ -26,6 +26,14 @@ full path using a `--source` argument.
 
 It's very simple: `mprovision list`
 
+### Number of profiles
+
+Use the `list` subcommand with opitons you want, set `--oneline` flag in pipe into `wc`, like that:
+
+```bash
+mprovision list -d 30 --oneline | wc -l
+```
+
 ### Searching and Removing
 
 1. The `list` subcommand accepts an optional argument `-t` or `--text` that allows you to filter the list of 
