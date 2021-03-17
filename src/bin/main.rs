@@ -16,7 +16,8 @@ fn main() -> Result {
             text,
             expire_in_days,
             directory,
-        }) => list(&text, expire_in_days, directory),
+            oneline,
+        }) => list(&text, expire_in_days, directory, oneline),
         Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => show_uuid(&uuid, directory),
         Command::ShowFile(cli::ShowFileParams { file }) => show_file(&file),
         Command::Remove(cli::RemoveParams { ids, directory }) => remove(&ids, directory),
@@ -24,7 +25,12 @@ fn main() -> Result {
     }
 }
 
-fn list(text: &Option<String>, expires_in_days: Option<u64>, directory: Option<PathBuf>) -> Result {
+fn list(
+    text: &Option<String>,
+    expires_in_days: Option<u64>,
+    directory: Option<PathBuf>,
+    oneline: bool,
+) -> Result {
     let dir = mp::with_directory(directory)?;
     let entries = mp::entries(&dir).map(std::iter::Iterator::collect)?;
     let date =
