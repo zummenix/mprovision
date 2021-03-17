@@ -1,5 +1,6 @@
 use crate::cli::Command;
 use chrono::{DateTime, Utc};
+use colored::Colorize;
 use mprovision as mp;
 use std::io::{self, Write};
 use std::path::Path;
@@ -53,9 +54,9 @@ fn list(
             writeln!(
                 &mut stdout,
                 "{} {} {} {}",
-                profile.info.uuid,
+                profile.info.uuid.yellow(),
                 DateTime::<Utc>::from(profile.info.expiration_date).format("%Y-%m-%d"),
-                profile.info.app_identifier,
+                profile.info.app_identifier.green(),
                 profile.info.name
             )?;
         }
