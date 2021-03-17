@@ -1,4 +1,5 @@
 use crate::cli::Command;
+use chrono::{DateTime, Utc};
 use mprovision as mp;
 use std::io::{self, Write};
 use std::path::Path;
@@ -47,9 +48,22 @@ fn list(
     profiles.sort_by(|a, b| a.info.creation_date.cmp(&b.info.creation_date));
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
-    for (i, profile) in profiles.iter().enumerate() {
-        let separator = if i + 1 == profiles.len() { "" } else { "\n" };
-        writeln!(&mut stdout, "{}{}", profile.info.description(), separator)?;
+    if oneline {
+        for profile in profiles {
+            writeln!(
+                &mut stdout,
+                "{} {} {} {}",
+                profile.info.uuid,
+                DateTime::<Utc>::from(profile.info.expiration_date).format("%Y-%m-%d"),
+                profile.info.app_identifier,
+                profile.info.name
+            )?;
+        }
+    } else {
+        for (i, profile) in profiles.iter().enumerate() {
+            let separator = if i + 1 == profiles.len() { "" } else { "\n" };
+            writeln!(&mut stdout, "{}{}", profile.info.description(), separator)?;
+        }
     }
     Ok(())
 }
