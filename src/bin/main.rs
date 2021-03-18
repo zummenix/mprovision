@@ -1,6 +1,4 @@
 use crate::cli::Command;
-use chrono::{DateTime, Utc};
-use colored::Colorize;
 use mprovision as mp;
 use std::io::{self, Write};
 use std::path::Path;
@@ -49,22 +47,18 @@ fn list(
     profiles.sort_by(|a, b| a.info.creation_date.cmp(&b.info.creation_date));
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
-    if oneline {
-        for profile in profiles {
-            writeln!(
-                &mut stdout,
-                "{} {} {} {}",
-                profile.info.uuid.yellow(),
-                DateTime::<Utc>::from(profile.info.expiration_date).format("%Y-%m-%d"),
-                profile.info.app_identifier.green(),
-                profile.info.name
-            )?;
-        }
-    } else {
-        for (i, profile) in profiles.iter().enumerate() {
-            let separator = if i + 1 == profiles.len() { "" } else { "\n" };
-            writeln!(&mut stdout, "{}{}", profile.info.description(), separator)?;
-        }
+    for (i, profile) in profiles.iter().enumerate() {
+        let separator = if oneline || i + 1 == profiles.len() {
+            ""
+        } else {
+            "\n"
+        };
+        writeln!(
+            &mut stdout,
+            "{}{}",
+            profile.info.description(oneline),
+            separator
+        )?;
     }
     Ok(())
 }
@@ -103,7 +97,12 @@ fn remove_profiles(profiles: &[mp::Profile]) -> Result {
         match mp::remove(&profile.path) {
             Ok(()) => {
                 let separator = if i + 1 == profiles.len() { "" } else { "\n" };
-                writeln!(&mut stdout, "{}{}", profile.info.description(), separator)?
+                writeln!(
+                    &mut stdout,
+                    "{}{}",
+                    profile.info.description(false),
+                    separator
+                )?
             }
             Err(err) => {
                 errors_exist = true;
