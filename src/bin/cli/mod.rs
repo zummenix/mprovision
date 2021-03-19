@@ -40,6 +40,9 @@ pub struct ListParams {
     #[structopt(long = "source", parse(from_os_str), empty_values(false))]
     /// A directory where to search provisioning profiles
     pub directory: Option<PathBuf>,
+    #[structopt(long = "oneline")]
+    /// Output profile details in one line
+    pub oneline: bool,
 }
 
 #[derive(Debug, Default, PartialEq, StructOpt)]
@@ -117,6 +120,7 @@ mod tests {
                 text: None,
                 expire_in_days: None,
                 directory: Some(".".into()),
+                oneline: false,
             },
         )));
 
@@ -127,6 +131,7 @@ mod tests {
                 text: Some("abc".to_string()),
                 expire_in_days: None,
                 directory: None,
+                oneline: false,
             },
         )));
 
@@ -135,6 +140,7 @@ mod tests {
                 text: Some("abc".to_string()),
                 expire_in_days: None,
                 directory: None,
+                oneline: false,
             },
         )));
 
@@ -147,6 +153,7 @@ mod tests {
                 text: None,
                 expire_in_days: Some(3),
                 directory: None,
+                oneline: false,
             }),
         ));
 
@@ -155,6 +162,7 @@ mod tests {
                 text: None,
                 expire_in_days: Some(3),
                 directory: None,
+                oneline: false,
             },
         )));
 
@@ -177,6 +185,7 @@ mod tests {
             text: Some("abc".to_string()),
             expire_in_days: Some(3),
             directory: Some(".".into()),
+            oneline: false,
         })));
 
         expect!(parse(&[
@@ -193,7 +202,17 @@ mod tests {
             text: Some("abc".to_string()),
             expire_in_days: Some(3),
             directory: Some(".".into()),
+            oneline: false,
         })));
+
+        expect!(parse(&["mprovision", "list", "--oneline"])).to(be_ok().value(Command::List(
+            ListParams {
+                text: None,
+                expire_in_days: None,
+                directory: None,
+                oneline: true,
+            },
+        )));
     }
 
     #[test]

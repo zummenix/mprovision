@@ -53,6 +53,15 @@ The `clean` subcommand removes expired provisioning profiles.
 > NOTE: you can see provisioning profiles that will be removed using the
 `mprovision list -d 0` command.
 
+### Number of profiles
+
+Use the `list` subcommand with opitons you want, set `--oneline` flag and pipe into `wc`,
+like that:
+
+```bash
+mprovision list -d 30 --oneline | wc -l
+```
+
 ## License
 
 MIT

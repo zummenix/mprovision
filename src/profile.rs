@@ -1,5 +1,6 @@
 use crate::{Error, Result};
 use chrono::{DateTime, Utc};
+use colored::Colorize;
 use plist;
 use serde::Deserialize;
 use std::fs::File;
@@ -105,20 +106,33 @@ impl Info {
     }
 
     /// Returns profile in a text form.
-    pub fn description(&self) -> String {
-        let mut desc = String::new();
-        desc.push_str(&self.uuid);
-        desc.push_str("\n");
-        desc.push_str(&self.app_identifier);
-        desc.push_str("\n");
-        desc.push_str(&self.name);
-        desc.push_str("\n");
-        desc.push_str(&format!(
-            "{} - {}",
-            DateTime::<Utc>::from(self.creation_date),
-            DateTime::<Utc>::from(self.expiration_date)
-        ));
-        desc
+    pub fn description(&self, oneline: bool) -> String {
+        if oneline {
+            return format!(
+                "{} {} {} {}",
+                self.uuid.yellow(),
+                DateTime::<Utc>::from(self.expiration_date)
+                    .format("%Y-%m-%d")
+                    .to_string()
+                    .blue(),
+                self.app_identifier.green(),
+                self.name
+            );
+        } else {
+            let dates = format!(
+                "{} - {}",
+                DateTime::<Utc>::from(self.creation_date),
+                DateTime::<Utc>::from(self.expiration_date)
+            )
+            .blue();
+            return format!(
+                "{}\n{}\n{}\n{}",
+                self.uuid.yellow(),
+                self.app_identifier.green(),
+                self.name,
+                dates
+            );
+        }
     }
 }
 
