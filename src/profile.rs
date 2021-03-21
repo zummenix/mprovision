@@ -1,7 +1,6 @@
 use crate::{Error, Result};
 use chrono::{DateTime, Utc};
 use colored::Colorize;
-use plist;
 use serde::Deserialize;
 use std::fs::File;
 use std::io::{self, Read};

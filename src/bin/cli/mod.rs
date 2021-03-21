@@ -1,4 +1,3 @@
-use clap;
 use std::error;
 use std::path::PathBuf;
 use std::result;
