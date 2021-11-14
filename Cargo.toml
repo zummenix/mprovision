@@ -2,7 +2,7 @@
 name = "mprovision"
 version = "6.3.0"
 authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [[bin]]
 path = "src/bin/main.rs"
@@ -11,7 +11,7 @@ doc = false
 test = true
 
 [dependencies]
-plist = "1.2"
+plist = "1.3"
 chrono = "0.4"
 memmem = "0.1"
 clap = "2" # structopt
