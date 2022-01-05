@@ -90,7 +90,7 @@ pub fn run() -> Command {
 /// Parses and validates days argument.
 fn parse_days(s: &str) -> result::Result<u64, String> {
     let days = s.parse::<i64>().map_err(|err| err.to_string())?;
-    if days < 0 || days > 365 {
+    if !(0..=365).contains(&days) {
         return Err(format!("should be between 0 and 365, got {}", days));
     }
     Ok(days as u64)

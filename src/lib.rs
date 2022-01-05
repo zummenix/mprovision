@@ -134,7 +134,7 @@ pub fn find_by_ids(dir: &Path, ids: &[String]) -> Result<Vec<Profile>> {
     let entries: Vec<DirEntry> = entries(dir)?.collect();
     let profiles = filter(entries, |profile| {
         ids.iter()
-            .any(|id| id == &profile.info.uuid || profile.info.bundle_id() == Some(&id))
+            .any(|id| id == &profile.info.uuid || profile.info.bundle_id() == Some(id))
     });
     Ok(profiles)
 }

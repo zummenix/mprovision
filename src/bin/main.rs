@@ -65,19 +65,19 @@ fn list(
 
 fn show_uuid(uuid: &str, directory: Option<PathBuf>) -> Result {
     let dir = mp::with_directory(directory)?;
-    let profile = mp::find_by_uuid(&dir, &uuid)?;
+    let profile = mp::find_by_uuid(&dir, uuid)?;
     show_file(&profile.path)
 }
 
 fn show_file(path: &Path) -> Result {
-    let xml = mp::show(&path)?;
+    let xml = mp::show(path)?;
     writeln!(io::stdout(), "{}", xml)?;
     Ok(())
 }
 
 fn remove(ids: &[String], directory: Option<PathBuf>) -> Result {
     let dir = mp::with_directory(directory)?;
-    let profiles = mp::find_by_ids(&dir, &ids)?;
+    let profiles = mp::find_by_ids(&dir, ids)?;
     remove_profiles(&profiles)
 }
 
