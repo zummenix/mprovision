@@ -1,94 +1,97 @@
-use std::error;
+use clap::Parser;
 use std::path::PathBuf;
 use std::result;
-use structopt::StructOpt;
 
-#[derive(Debug, PartialEq, StructOpt)]
-#[structopt(author, about, global_settings(&[clap::AppSettings::DeriveDisplayOrder]))]
 /// A tool that helps iOS developers to manage mobileprovision files.
+#[derive(Debug, PartialEq, Parser)]
+#[clap(author, about, global_setting(clap::AppSettings::DeriveDisplayOrder))]
 pub enum Command {
-    #[structopt(name = "list")]
     /// Lists provisioning profiles
+    #[clap(name = "list")]
     List(ListParams),
-    #[structopt(name = "show")]
+
     /// Shows details of a provisioning profile using its uuid
+    #[clap(name = "show")]
     ShowUuid(ShowUuidParams),
-    #[structopt(name = "show-file")]
+
     /// Shows details of a provisioning profile
+    #[clap(name = "show-file")]
     ShowFile(ShowFileParams),
-    #[structopt(name = "remove")]
+
     /// Removes provisioning profiles
+    #[clap(name = "remove")]
     Remove(RemoveParams),
-    #[structopt(name = "clean")]
+
     /// Removes expired provisioning profiles
+    #[clap(name = "clean")]
     Clean(CleanParams),
 }
 
-#[derive(Debug, Default, PartialEq, StructOpt)]
+#[derive(Debug, Default, PartialEq, Parser)]
 pub struct ListParams {
-    #[structopt(short = "t", long = "text", empty_values(false))]
     /// Lists provisioning profiles that contain this text
+    #[clap(short = 't', long = "text", forbid_empty_values(true))]
     pub text: Option<String>,
-    #[structopt(
-        short = "d",
-        long = "expire-in-days",
-        parse(try_from_str = parse_days)
-    )]
+
     /// Lists provisioning profiles that will expire in days
+    #[clap( short = 'd', long = "expire-in-days", parse(try_from_str = parse_days))]
     pub expire_in_days: Option<u64>,
-    #[structopt(long = "source", parse(from_os_str), empty_values(false))]
+
     /// A directory where to search provisioning profiles
+    #[clap(long = "source", parse(from_os_str), forbid_empty_values(true))]
     pub directory: Option<PathBuf>,
-    #[structopt(long = "oneline")]
+
     /// Output profile details in one line
+    #[clap(long = "oneline")]
     pub oneline: bool,
 }
 
-#[derive(Debug, Default, PartialEq, StructOpt)]
+#[derive(Debug, Default, PartialEq, Parser)]
 pub struct ShowUuidParams {
-    #[structopt(empty_values(false))]
     /// An uuid of a provisioning profile
+    #[clap(forbid_empty_values(true))]
     pub uuid: String,
-    #[structopt(long = "source", parse(from_os_str), empty_values(false))]
+
     /// A directory where to search provisioning profiles
+    #[clap(long = "source", parse(from_os_str), forbid_empty_values(true))]
     pub directory: Option<PathBuf>,
 }
 
-#[derive(Debug, Default, PartialEq, StructOpt)]
+#[derive(Debug, Default, PartialEq, Parser)]
 pub struct ShowFileParams {
-    #[structopt(parse(from_os_str), empty_values(false))]
     /// A file path of a provisioning profile
+    #[clap(parse(from_os_str), forbid_empty_values(true))]
     pub file: PathBuf,
 }
 
-#[derive(Debug, Default, PartialEq, StructOpt)]
+#[derive(Debug, Default, PartialEq, Parser)]
 pub struct RemoveParams {
-    #[structopt(empty_values(false))]
     /// uuid(s) or bundle id(s) of provisioning profiles
+    #[clap(forbid_empty_values(true))]
     pub ids: Vec<String>,
-    #[structopt(long = "source", parse(from_os_str), empty_values(false))]
+
     /// A directory where to search provisioning profiles
+    #[clap(long = "source", parse(from_os_str), forbid_empty_values(true))]
     pub directory: Option<PathBuf>,
 }
 
-#[derive(Debug, Default, PartialEq, StructOpt)]
+#[derive(Debug, Default, PartialEq, Parser)]
 pub struct CleanParams {
-    #[structopt(long = "source", parse(from_os_str), empty_values(false))]
     /// A directory where to clean
+    #[clap(long = "source", parse(from_os_str), forbid_empty_values(true))]
     pub directory: Option<PathBuf>,
 }
 
 /// Runs the cli and returns the `Command`.
 pub fn run() -> Command {
-    Command::from_args()
+    Command::parse()
 }
 
 /// Parses and validates days argument.
-fn parse_days(s: &str) -> result::Result<u64, Box<dyn error::Error>> {
-    let days = s.parse::<i64>()?;
+fn parse_days(s: &str) -> result::Result<u64, String> {
+    let days = s.parse::<i64>().map_err(|err| err.to_string())?;
     if days < 0 || days > 365 {
-        let message = format!("should be between 0 and 365, got {}", days);
-        return Err(message.into());
+        return Err(format!("should be between 0 and 365, got {}", days));
     }
     Ok(days as u64)
 }
@@ -106,7 +109,7 @@ mod tests {
         S: Clone,
         ::std::ffi::OsString: From<S>,
     {
-        Command::from_iter_safe(args)
+        Command::try_parse_from(args)
     }
 
     #[test]
