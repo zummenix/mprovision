@@ -23,7 +23,7 @@ colored = "2"
 
 [dev-dependencies]
 expectest = "0.12"
-tempdir = "0.3"
+tempfile = "3.3.0"
 
 [profile.release]
 codegen-units = 1

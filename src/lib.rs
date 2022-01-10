@@ -148,9 +148,8 @@ mod tests {
     #[test]
     fn filter_mobileprovision_files() {
         use std::fs::File;
-        use tempdir::TempDir;
 
-        let temp_dir = TempDir::new("test").unwrap();
+        let temp_dir = tempfile::tempdir().unwrap();
         let result = entries(temp_dir.path()).map(|iter| iter.count());
         expect!(result).to(be_ok().value(0));
 
