@@ -1,11 +1,12 @@
 use crate::{Error, Result};
-use chrono::{DateTime, Utc};
 use colored::Colorize;
 use serde::Deserialize;
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
+use time::macros::format_description;
+use time::OffsetDateTime;
 
 /// Represents a file with a provisioning profile info.
 #[derive(Debug, Clone)]
@@ -105,32 +106,32 @@ impl Info {
     }
 
     /// Returns profile in a text form.
-    pub fn description(&self, oneline: bool) -> String {
+    pub fn description(&self, oneline: bool) -> Result<String> {
         if oneline {
-            return format!(
+            return Ok(format!(
                 "{} {} {} {}",
                 self.uuid.yellow(),
-                DateTime::<Utc>::from(self.expiration_date)
-                    .format("%Y-%m-%d")
-                    .to_string()
+                OffsetDateTime::from(self.expiration_date)
+                    .format(format_description!("[year]-[month]-[day]"))?
                     .blue(),
                 self.app_identifier.green(),
                 self.name
-            );
+            ));
         } else {
+            let fmt_desc = format_description!("[year]-[month]-[day] [hour]:[minute]:[second] UTC");
             let dates = format!(
                 "{} - {}",
-                DateTime::<Utc>::from(self.creation_date),
-                DateTime::<Utc>::from(self.expiration_date)
+                OffsetDateTime::from(self.creation_date).format(fmt_desc)?,
+                OffsetDateTime::from(self.expiration_date).format(fmt_desc)?,
             )
             .blue();
-            return format!(
+            return Ok(format!(
                 "{}\n{}\n{}\n{}",
                 self.uuid.yellow(),
                 self.app_identifier.green(),
                 self.name,
                 dates
-            );
+            ));
         }
     }
 }

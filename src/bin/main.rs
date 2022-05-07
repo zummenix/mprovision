@@ -56,7 +56,7 @@ fn list(
         writeln!(
             &mut stdout,
             "{}{}",
-            profile.info.description(oneline),
+            profile.info.description(oneline)?,
             separator
         )?;
     }
@@ -100,7 +100,7 @@ fn remove_profiles(profiles: &[mp::Profile]) -> Result {
                 writeln!(
                     &mut stdout,
                     "{}{}",
-                    profile.info.description(false),
+                    profile.info.description(false)?,
                     separator
                 )?
             }
