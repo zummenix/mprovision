@@ -3,6 +3,7 @@ name = "mprovision"
 version = "6.4.0"
 authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
 edition = "2021"
+autobins = false
 
 [[bin]]
 path = "src/bin/main.rs"
