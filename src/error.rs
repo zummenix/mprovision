@@ -41,9 +41,3 @@ impl From<FromUtf8Error> for Error {
         Self::Own(e.to_string())
     }
 }
-
-impl From<time::error::Format> for Error {
-    fn from(e: time::error::Format) -> Self {
-        Self::Own(e.to_string())
-    }
-}

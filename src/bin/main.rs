@@ -1,5 +1,6 @@
-use crate::cli::Command;
+use cli::Command;
 use mprovision as mp;
+use profile_formatters::{format_multiline, format_oneline};
 use std::io::{self, Write};
 use std::path::Path;
 use std::path::PathBuf;
@@ -7,6 +8,7 @@ use std::result;
 use std::time::{Duration, SystemTime};
 
 mod cli;
+mod profile_formatters;
 
 type Result = result::Result<(), main_error::MainError>;
 
@@ -47,18 +49,18 @@ fn list(
     profiles.sort_by(|a, b| a.info.creation_date.cmp(&b.info.creation_date));
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
+    let format = if oneline {
+        format_oneline
+    } else {
+        format_multiline
+    };
     for (i, profile) in profiles.iter().enumerate() {
         let separator = if oneline || i + 1 == profiles.len() {
             ""
         } else {
             "\n"
         };
-        writeln!(
-            &mut stdout,
-            "{}{}",
-            profile.info.description(oneline)?,
-            separator
-        )?;
+        writeln!(&mut stdout, "{}{}", format(profile)?, separator)?;
     }
     Ok(())
 }
@@ -97,12 +99,7 @@ fn remove_profiles(profiles: &[mp::Profile]) -> Result {
         match mp::remove(&profile.path) {
             Ok(()) => {
                 let separator = if i + 1 == profiles.len() { "" } else { "\n" };
-                writeln!(
-                    &mut stdout,
-                    "{}{}",
-                    profile.info.description(false)?,
-                    separator
-                )?
+                writeln!(&mut stdout, "{}{}", format_multiline(profile)?, separator)?
             }
             Err(err) => {
                 errors_exist = true;
