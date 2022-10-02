@@ -4,81 +4,80 @@ use std::result;
 
 /// A tool that helps iOS developers to manage mobileprovision files.
 #[derive(Debug, PartialEq, Parser)]
-#[clap(author, about, global_setting(clap::AppSettings::DeriveDisplayOrder))]
+#[command(author, about)]
 pub enum Command {
     /// Lists provisioning profiles
-    #[clap(name = "list")]
+    #[command(name = "list")]
     List(ListParams),
 
     /// Shows details of a provisioning profile using its uuid
-    #[clap(name = "show")]
+    #[command(name = "show")]
     ShowUuid(ShowUuidParams),
 
     /// Shows details of a provisioning profile
-    #[clap(name = "show-file")]
+    #[command(name = "show-file")]
     ShowFile(ShowFileParams),
 
     /// Removes provisioning profiles
-    #[clap(name = "remove")]
+    #[command(name = "remove")]
     Remove(RemoveParams),
 
     /// Removes expired provisioning profiles
-    #[clap(name = "clean")]
+    #[command(name = "clean")]
     Clean(CleanParams),
 }
 
 #[derive(Debug, Default, PartialEq, Parser)]
 pub struct ListParams {
     /// Lists provisioning profiles that contain this text
-    #[clap(short = 't', long = "text", forbid_empty_values(true))]
+    #[arg(short = 't', long = "text", value_parser = clap::builder::NonEmptyStringValueParser::new())]
     pub text: Option<String>,
 
     /// Lists provisioning profiles that will expire in days
-    #[clap( short = 'd', long = "expire-in-days", parse(try_from_str = parse_days))]
+    #[arg(short = 'd', long = "expire-in-days", value_parser = parse_days)]
     pub expire_in_days: Option<u64>,
 
     /// A directory where to search provisioning profiles
-    #[clap(long = "source", parse(from_os_str), forbid_empty_values(true))]
+    #[arg(long = "source")]
     pub directory: Option<PathBuf>,
 
     /// Output profile details in one line
-    #[clap(long = "oneline")]
+    #[arg(long = "oneline")]
     pub oneline: bool,
 }
 
 #[derive(Debug, Default, PartialEq, Parser)]
 pub struct ShowUuidParams {
     /// An uuid of a provisioning profile
-    #[clap(forbid_empty_values(true))]
+    #[arg(value_parser = clap::builder::NonEmptyStringValueParser::new())]
     pub uuid: String,
 
     /// A directory where to search provisioning profiles
-    #[clap(long = "source", parse(from_os_str), forbid_empty_values(true))]
+    #[arg(long = "source")]
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, Parser)]
 pub struct ShowFileParams {
     /// A file path of a provisioning profile
-    #[clap(parse(from_os_str), forbid_empty_values(true))]
     pub file: PathBuf,
 }
 
 #[derive(Debug, Default, PartialEq, Parser)]
 pub struct RemoveParams {
     /// uuid(s) or bundle id(s) of provisioning profiles
-    #[clap(forbid_empty_values(true))]
+    #[arg(num_args(1..), value_parser = clap::builder::NonEmptyStringValueParser::new())]
     pub ids: Vec<String>,
 
     /// A directory where to search provisioning profiles
-    #[clap(long = "source", parse(from_os_str), forbid_empty_values(true))]
+    #[arg(long = "source")]
     pub directory: Option<PathBuf>,
 }
 
 #[derive(Debug, Default, PartialEq, Parser)]
 pub struct CleanParams {
     /// A directory where to clean
-    #[clap(long = "source", parse(from_os_str), forbid_empty_values(true))]
+    #[arg(long = "source")]
     pub directory: Option<PathBuf>,
 }
 
