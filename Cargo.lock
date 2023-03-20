@@ -391,9 +391,9 @@ checksum = "9ff7415e9ae3fff1225851df9e0d9e4e5479f947619774677a63572e55e80eff"
 
 [[package]]
 name = "plist"
-version = "1.4.2"
+version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffac6a51110e97610dd3ac73e34a65b27e56a1e305df41bad1f616d8e1cb22f4"
+checksum = "9bd9647b268a3d3e14ff09c23201133a62589c658db02bb7388c7246aafe0590"
 dependencies = [
  "base64",
  "indexmap",
@@ -438,9 +438,9 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
-version = "0.27.1"
+version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffc053f057dd768a56f62cd7e434c42c831d296968997e9ac1f76ea7c2d14c41"
+checksum = "e5c1a97b1bc42b1d550bfb48d4262153fe400a12bab1511821736f7eac76d7e2"
 dependencies = [
  "memchr",
 ]
