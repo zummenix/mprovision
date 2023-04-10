@@ -15,7 +15,7 @@ test = true
 plist = "1.4"
 time = { version = "0.3.20", features = ["formatting", "macros"] }
 memmem = "0.1"
-clap = { version = "4.1", features = ["derive"] }
+clap = { version = "4.2", features = ["derive"] }
 dirs = "4.0"
 serde = { version = "1.0", features = ["derive"] }
 rayon = "1.7"
