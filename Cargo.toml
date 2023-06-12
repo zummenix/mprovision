@@ -13,7 +13,7 @@ test = true
 
 [dependencies]
 plist = "1.4"
-time = { version = "0.3.21", features = ["formatting", "macros"] }
+time = { version = "0.3.22", features = ["formatting", "macros"] }
 memmem = "0.1"
 clap = { version = "4.3", features = ["derive"] }
 dirs = "5.0"
