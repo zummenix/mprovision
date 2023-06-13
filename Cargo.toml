@@ -24,7 +24,7 @@ colored = "2"
 
 [dev-dependencies]
 expectest = "0.12"
-tempfile = "3.5.0"
+tempfile = "3.6.0"
 
 [profile.release]
 codegen-units = 1
