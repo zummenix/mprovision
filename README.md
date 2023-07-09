@@ -32,9 +32,6 @@ It's very simple: `mprovision list`
 provisioning profiles by some text. 
 2. The `remove` subcommand allows you to remove one or more profiles by their uuids or bundle ids.
 
-> WARNING: the `remove` subcommand is relatively dangerous since it removes profiles from the
-system completely.
-
 ### View details of a provisioning profile
 
 The `show` subcommand followed by uuid of a provisioning profile allows you to see details
