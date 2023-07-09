@@ -67,9 +67,13 @@ pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
 }
 
 /// Removes a provisioning profile.
-pub fn remove(file_path: &Path) -> Result<()> {
+pub fn remove(file_path: &Path, permanently: bool) -> Result<()> {
     let path = validate_path(file_path)?;
-    trash::delete(path)?;
+    if permanently {
+        std::fs::remove_file(path)?;
+    } else {
+        trash::delete(path)?;
+    }
     Ok(())
 }
 
