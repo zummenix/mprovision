@@ -69,7 +69,7 @@ pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
 /// Removes a provisioning profile.
 pub fn remove(file_path: &Path) -> Result<()> {
     let path = validate_path(file_path)?;
-    std::fs::remove_file(path)?;
+    trash::delete(path)?;
     Ok(())
 }
 

@@ -21,6 +21,7 @@ serde = { version = "1.0", features = ["derive"] }
 rayon = "1.7"
 main_error = "0.1"
 colored = "2"
+trash = "3.0.5"
 
 [dev-dependencies]
 expectest = "0.12"
