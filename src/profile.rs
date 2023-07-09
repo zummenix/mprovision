@@ -126,8 +126,8 @@ mod tests {
     #[test]
     fn correct_bundle_id() {
         let mut profile = Info::empty();
-        profile.app_identifier = "12345ABCDE.com.exmaple.app".to_owned();
-        expect!(profile.bundle_id()).to(be_some().value("com.exmaple.app"));
+        profile.app_identifier = "12345ABCDE.com.example.app".to_owned();
+        expect!(profile.bundle_id()).to(be_some().value("com.example.app"));
     }
 
     #[test]

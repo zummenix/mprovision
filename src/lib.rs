@@ -101,7 +101,7 @@ fn validate_path(file_path: &Path) -> Result<&Path> {
 
 /// Filters entries of a directory using `f`.
 ///
-/// The filtering is perfomed concurrently.
+/// The filtering is performed concurrently.
 pub fn filter<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
 where
     F: Fn(&Profile) -> bool + Send + Sync,

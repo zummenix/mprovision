@@ -55,7 +55,7 @@ The `clean` subcommand removes expired provisioning profiles.
 
 ### Number of profiles
 
-Use the `list` subcommand with opitons you want, set `--oneline` flag and pipe into `wc`,
+Use the `list` subcommand with options you want, set `--oneline` flag and pipe into `wc`,
 like that:
 
 ```bash
