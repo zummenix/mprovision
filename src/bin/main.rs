@@ -22,8 +22,15 @@ fn main() -> Result {
         }) => list(&text, expire_in_days, directory, oneline),
         Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => show_uuid(&uuid, directory),
         Command::ShowFile(cli::ShowFileParams { file }) => show_file(&file),
-        Command::Remove(cli::RemoveParams { ids, directory }) => remove(&ids, directory),
-        Command::Clean(cli::CleanParams { directory }) => clean(directory),
+        Command::Remove(cli::RemoveParams {
+            ids,
+            directory,
+            permanently,
+        }) => remove(&ids, directory, permanently),
+        Command::Clean(cli::CleanParams {
+            directory,
+            permanently,
+        }) => clean(directory, permanently),
     }
 }
 
@@ -77,26 +84,26 @@ fn show_file(path: &Path) -> Result {
     Ok(())
 }
 
-fn remove(ids: &[String], directory: Option<PathBuf>) -> Result {
+fn remove(ids: &[String], directory: Option<PathBuf>, permanently: bool) -> Result {
     let dir = mp::with_directory(directory)?;
     let profiles = mp::find_by_ids(&dir, ids)?;
-    remove_profiles(&profiles)
+    remove_profiles(&profiles, permanently)
 }
 
-fn clean(directory: Option<PathBuf>) -> Result {
+fn clean(directory: Option<PathBuf>, permanently: bool) -> Result {
     let date = SystemTime::now();
     let dir = mp::with_directory(directory)?;
     let entries = mp::entries(&dir).map(std::iter::Iterator::collect)?;
     let profiles = mp::filter(entries, |profile| profile.info.expiration_date <= date);
-    remove_profiles(&profiles)
+    remove_profiles(&profiles, permanently)
 }
 
-fn remove_profiles(profiles: &[mp::Profile]) -> Result {
+fn remove_profiles(profiles: &[mp::Profile], permanently: bool) -> Result {
     let mut errors_exist = false;
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
     for (i, profile) in profiles.iter().enumerate() {
-        match mp::remove(&profile.path) {
+        match mp::remove(&profile.path, permanently) {
             Ok(()) => {
                 let separator = if i + 1 == profiles.len() { "" } else { "\n" };
                 writeln!(&mut stdout, "{}{}", format_multiline(profile)?, separator)?

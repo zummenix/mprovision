@@ -72,6 +72,10 @@ pub struct RemoveParams {
     /// A directory where to search provisioning profiles
     #[arg(long = "source")]
     pub directory: Option<PathBuf>,
+
+    /// Whether to remove provisioning profiles permanently
+    #[arg(long = "permanently")]
+    pub permanently: bool,
 }
 
 #[derive(Debug, Default, PartialEq, Parser)]
@@ -79,6 +83,10 @@ pub struct CleanParams {
     /// A directory where to clean
     #[arg(long = "source")]
     pub directory: Option<PathBuf>,
+
+    /// Whether to remove provisioning profiles permanently
+    #[arg(long = "permanently")]
+    pub permanently: bool,
 }
 
 /// Runs the cli and returns the `Command`.
@@ -256,13 +264,23 @@ mod tests {
             RemoveParams {
                 ids: vec!["abcd".to_string()],
                 directory: None,
+                permanently: false,
             },
         )));
+
+        expect!(parse(&["mprovision", "remove", "abcd", "--permanently"])).to(be_ok().value(
+            Command::Remove(RemoveParams {
+                ids: vec!["abcd".to_string()],
+                directory: None,
+                permanently: true,
+            }),
+        ));
 
         expect!(parse(&["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(Command::Remove(
             RemoveParams {
                 ids: vec!["abcd".to_string(), "ef".to_string()],
                 directory: None,
+                permanently: false,
             },
         )));
 
@@ -272,6 +290,7 @@ mod tests {
             Command::Remove(RemoveParams {
                 ids: vec!["abcd".to_string()],
                 directory: Some(".".into()),
+                permanently: false,
             }),
         ));
 
@@ -286,6 +305,22 @@ mod tests {
         .to(be_ok().value(Command::Remove(RemoveParams {
             ids: vec!["abcd".to_string(), "ef".to_string()],
             directory: Some(".".into()),
+            permanently: false,
+        })));
+
+        expect!(parse(&[
+            "mprovision",
+            "remove",
+            "abcd",
+            "ef",
+            "--permanently",
+            "--source",
+            ".",
+        ]))
+        .to(be_ok().value(Command::Remove(RemoveParams {
+            ids: vec!["abcd".to_string(), "ef".to_string()],
+            directory: Some(".".into()),
+            permanently: true,
         })));
 
         expect!(parse(&["mprovision", "remove", "abcd", "--source", ""])).to(be_err());
@@ -293,14 +328,36 @@ mod tests {
 
     #[test]
     fn clean_command() {
-        expect!(parse(&["mprovision", "clean"]))
-            .to(be_ok().value(Command::Clean(CleanParams { directory: None })));
+        expect!(parse(&["mprovision", "clean"])).to(be_ok().value(Command::Clean(CleanParams {
+            directory: None,
+            permanently: false,
+        })));
+
+        expect!(parse(&["mprovision", "clean", "--permanently"])).to(be_ok().value(
+            Command::Clean(CleanParams {
+                directory: None,
+                permanently: true,
+            }),
+        ));
 
         expect!(parse(&["mprovision", "clean", "--source", "."])).to(be_ok().value(
             Command::Clean(CleanParams {
                 directory: Some(".".into()),
+                permanently: false,
             }),
         ));
+
+        expect!(parse(&[
+            "mprovision",
+            "clean",
+            "--permanently",
+            "--source",
+            "."
+        ]))
+        .to(be_ok().value(Command::Clean(CleanParams {
+            directory: Some(".".into()),
+            permanently: true,
+        })));
 
         expect!(parse(&["mprovision", "clean", "--source", ""])).to(be_err());
     }
