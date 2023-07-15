@@ -2,7 +2,7 @@
 //! files. Main purpose of this crate is to contain functions and types
 //! for **mprovision**.
 
-use std::fs::{self, DirEntry, File};
+use std::fs::{self, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
@@ -16,7 +16,7 @@ pub mod profile;
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Returns an iterator over the `*.mobileprovision` entries within a given
+/// Returns an iterator over the `*.mobileprovision` file paths within a given
 /// directory.
 ///
 /// # Errors
@@ -25,9 +25,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// - the user lacks the requisite permissions
 /// - there is no entry in the filesystem at the provided path
 /// - the provided path is not a directory
-pub fn entries(dir: &Path) -> Result<impl Iterator<Item = DirEntry>> {
-    let entries = fs::read_dir(dir)?;
-    let filtered = entries
+pub fn file_paths(dir: &Path) -> Result<impl Iterator<Item = PathBuf>> {
+    let filtered = fs::read_dir(dir)?
         .filter(|entry| {
             entry.as_ref().ok().and_then(|v| {
                 v.path()
@@ -35,7 +34,8 @@ pub fn entries(dir: &Path) -> Result<impl Iterator<Item = DirEntry>> {
                     .map(|ext| ext.to_str() == Some("mobileprovision"))
             }) == Some(true)
         })
-        .filter_map(std::result::Result::ok);
+        .filter_map(std::result::Result::ok)
+        .map(|entry| entry.path());
     Ok(filtered)
 }
 
@@ -57,13 +57,12 @@ pub fn directory() -> Result<PathBuf> {
         })
 }
 
-/// Returns `dir` if it is not `None` otherwise returns `directory()`.
-pub fn with_directory(dir: Option<PathBuf>) -> Result<PathBuf> {
-    if let Some(d) = dir {
-        Ok(d)
-    } else {
-        directory()
-    }
+/// Returns `dir` or default [`directory`].
+///
+/// # Errors
+/// The same as for [`directory`].
+pub fn dir_or_default(dir: Option<PathBuf>) -> Result<PathBuf> {
+    dir.map(Result::Ok).unwrap_or_else(directory)
 }
 
 /// Removes a provisioning profile.
@@ -103,17 +102,17 @@ fn validate_path(file_path: &Path) -> Result<&Path> {
     }
 }
 
-/// Filters entries of a directory using `f`.
+/// Filters files of a directory using `f`.
 ///
 /// The filtering is performed concurrently.
-pub fn filter<F>(entries: Vec<DirEntry>, f: F) -> Vec<Profile>
+pub fn filter<F>(file_paths: Vec<PathBuf>, f: F) -> Vec<Profile>
 where
     F: Fn(&Profile) -> bool + Send + Sync,
 {
     use rayon::prelude::*;
-    entries
+    file_paths
         .par_iter()
-        .map(|entry| Profile::from_file(&entry.path()))
+        .map(|path| Profile::from_file(path))
         .filter_map(Result::ok)
         .filter(f)
         .collect()
@@ -123,8 +122,8 @@ where
 ///
 /// The search is performed concurrently.
 pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
-    let entries: Vec<DirEntry> = entries(dir)?.collect();
-    if let Some(profile) = filter(entries, |profile| profile.info.uuid == uuid).pop() {
+    let paths: Vec<PathBuf> = file_paths(dir)?.collect();
+    if let Some(profile) = filter(paths, |profile| profile.info.uuid == uuid).pop() {
         Ok(profile)
     } else {
         Err(Error::Own(format!("Profile '{}' is not found.", uuid)))
@@ -135,8 +134,8 @@ pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
 ///
 /// The search is performed concurrently.
 pub fn find_by_ids(dir: &Path, ids: &[String]) -> Result<Vec<Profile>> {
-    let entries: Vec<DirEntry> = entries(dir)?.collect();
-    let profiles = filter(entries, |profile| {
+    let paths: Vec<PathBuf> = file_paths(dir)?.collect();
+    let profiles = filter(paths, |profile| {
         ids.iter()
             .any(|id| id == &profile.info.uuid || profile.info.bundle_id() == Some(id))
     });
@@ -154,13 +153,13 @@ mod tests {
         use std::fs::File;
 
         let temp_dir = tempfile::tempdir().unwrap();
-        let result = entries(temp_dir.path()).map(|iter| iter.count());
+        let result = file_paths(temp_dir.path()).map(|iter| iter.count());
         expect!(result).to(be_ok().value(0));
 
         File::create(temp_dir.path().join("1.mobileprovision")).unwrap();
         File::create(temp_dir.path().join("2.mobileprovision")).unwrap();
         File::create(temp_dir.path().join("3.txt")).unwrap();
-        let result = entries(temp_dir.path()).map(|iter| iter.count());
+        let result = file_paths(temp_dir.path()).map(|iter| iter.count());
         expect!(result).to(be_ok().value(2));
     }
 }

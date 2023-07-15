@@ -25,6 +25,10 @@ pub enum Command {
     /// Removes expired provisioning profiles
     #[command(name = "clean")]
     Clean(CleanParams),
+
+    /// Extracts provisioning profiles from ipa file or zip archive
+    #[command(name = "extract")]
+    Extract(ExtractParams),
 }
 
 #[derive(Debug, Default, PartialEq, Parser)]
@@ -89,6 +93,14 @@ pub struct CleanParams {
     pub permanently: bool,
 }
 
+#[derive(Debug, Default, PartialEq, Parser)]
+pub struct ExtractParams {
+    /// File path to an archive
+    pub source: PathBuf,
+    /// Directory where to place extracted provisioning profiles
+    pub destination: PathBuf,
+}
+
 /// Runs the cli and returns the `Command`.
 pub fn run() -> Command {
     Command::parse()
@@ -121,10 +133,10 @@ mod tests {
 
     #[test]
     fn list_command() {
-        expect!(parse(&["mprovision", "list"]))
+        expect!(parse(["mprovision", "list"]))
             .to(be_ok().value(Command::List(ListParams::default())));
 
-        expect!(parse(&["mprovision", "list", "--source", "."])).to(be_ok().value(Command::List(
+        expect!(parse(["mprovision", "list", "--source", "."])).to(be_ok().value(Command::List(
             ListParams {
                 text: None,
                 expire_in_days: None,
@@ -133,9 +145,9 @@ mod tests {
             },
         )));
 
-        expect!(parse(&["mprovision", "list", "--source", ""])).to(be_err());
+        expect!(parse(["mprovision", "list", "--source", ""])).to(be_err());
 
-        expect!(parse(&["mprovision", "list", "--text", "abc"])).to(be_ok().value(Command::List(
+        expect!(parse(["mprovision", "list", "--text", "abc"])).to(be_ok().value(Command::List(
             ListParams {
                 text: Some("abc".to_string()),
                 expire_in_days: None,
@@ -144,7 +156,7 @@ mod tests {
             },
         )));
 
-        expect!(parse(&["mprovision", "list", "-t", "abc"])).to(be_ok().value(Command::List(
+        expect!(parse(["mprovision", "list", "-t", "abc"])).to(be_ok().value(Command::List(
             ListParams {
                 text: Some("abc".to_string()),
                 expire_in_days: None,
@@ -153,11 +165,11 @@ mod tests {
             },
         )));
 
-        expect!(parse(&["mprovision", "list", "--text", ""])).to(be_err());
+        expect!(parse(["mprovision", "list", "--text", ""])).to(be_err());
 
-        expect!(parse(&["mprovision", "list", "-t", ""])).to(be_err());
+        expect!(parse(["mprovision", "list", "-t", ""])).to(be_err());
 
-        expect!(parse(&["mprovision", "list", "--expire-in-days", "3"])).to(be_ok().value(
+        expect!(parse(["mprovision", "list", "--expire-in-days", "3"])).to(be_ok().value(
             Command::List(ListParams {
                 text: None,
                 expire_in_days: Some(3),
@@ -166,7 +178,7 @@ mod tests {
             }),
         ));
 
-        expect!(parse(&["mprovision", "list", "-d", "3"])).to(be_ok().value(Command::List(
+        expect!(parse(["mprovision", "list", "-d", "3"])).to(be_ok().value(Command::List(
             ListParams {
                 text: None,
                 expire_in_days: Some(3),
@@ -175,12 +187,12 @@ mod tests {
             },
         )));
 
-        expect!(parse(&["mprovision", "list", "--expire-in-days", "-3"])).to(be_err());
-        expect!(parse(&["mprovision", "list", "-d", "-3"])).to(be_err());
-        expect!(parse(&["mprovision", "list", "--expire-in-days", "366"])).to(be_err());
-        expect!(parse(&["mprovision", "list", "-d", "366"])).to(be_err());
+        expect!(parse(["mprovision", "list", "--expire-in-days", "-3"])).to(be_err());
+        expect!(parse(["mprovision", "list", "-d", "-3"])).to(be_err());
+        expect!(parse(["mprovision", "list", "--expire-in-days", "366"])).to(be_err());
+        expect!(parse(["mprovision", "list", "-d", "366"])).to(be_err());
 
-        expect!(parse(&[
+        expect!(parse([
             "mprovision",
             "list",
             "--text",
@@ -197,7 +209,7 @@ mod tests {
             oneline: false,
         })));
 
-        expect!(parse(&[
+        expect!(parse([
             "mprovision",
             "list",
             "-t",
@@ -214,7 +226,7 @@ mod tests {
             oneline: false,
         })));
 
-        expect!(parse(&["mprovision", "list", "--oneline"])).to(be_ok().value(Command::List(
+        expect!(parse(["mprovision", "list", "--oneline"])).to(be_ok().value(Command::List(
             ListParams {
                 text: None,
                 expire_in_days: None,
@@ -226,41 +238,41 @@ mod tests {
 
     #[test]
     fn show_uuid_command() {
-        expect!(parse(&["mprovision", "show", "abcd"])).to(be_ok().value(Command::ShowUuid(
+        expect!(parse(["mprovision", "show", "abcd"])).to(be_ok().value(Command::ShowUuid(
             ShowUuidParams {
                 uuid: "abcd".to_string(),
                 directory: None,
             },
         )));
 
-        expect!(parse(&["mprovision", "show", ""])).to(be_err());
+        expect!(parse(["mprovision", "show", ""])).to(be_err());
 
-        expect!(parse(&["mprovision", "show", "abcd", "--source", "."])).to(be_ok().value(
+        expect!(parse(["mprovision", "show", "abcd", "--source", "."])).to(be_ok().value(
             Command::ShowUuid(ShowUuidParams {
                 uuid: "abcd".to_string(),
                 directory: Some(".".into()),
             }),
         ));
 
-        expect!(parse(&["mprovision", "show", "abcd", "--source", ""])).to(be_err());
+        expect!(parse(["mprovision", "show", "abcd", "--source", ""])).to(be_err());
     }
 
     #[test]
     fn show_file_command() {
-        expect!(parse(&["mprovision", "show-file", "file.mprovision"])).to(be_ok().value(
+        expect!(parse(["mprovision", "show-file", "file.mprovision"])).to(be_ok().value(
             Command::ShowFile(ShowFileParams {
                 file: "file.mprovision".into(),
             }),
         ));
 
-        expect!(parse(&["mprovision", "show-file", "file.mprovision", "."])).to(be_err());
+        expect!(parse(["mprovision", "show-file", "file.mprovision", "."])).to(be_err());
 
-        expect!(parse(&["mprovision", "show-file", ""])).to(be_err());
+        expect!(parse(["mprovision", "show-file", ""])).to(be_err());
     }
 
     #[test]
     fn remove_id_command() {
-        expect!(parse(&["mprovision", "remove", "abcd"])).to(be_ok().value(Command::Remove(
+        expect!(parse(["mprovision", "remove", "abcd"])).to(be_ok().value(Command::Remove(
             RemoveParams {
                 ids: vec!["abcd".to_string()],
                 directory: None,
@@ -268,7 +280,7 @@ mod tests {
             },
         )));
 
-        expect!(parse(&["mprovision", "remove", "abcd", "--permanently"])).to(be_ok().value(
+        expect!(parse(["mprovision", "remove", "abcd", "--permanently"])).to(be_ok().value(
             Command::Remove(RemoveParams {
                 ids: vec!["abcd".to_string()],
                 directory: None,
@@ -276,7 +288,7 @@ mod tests {
             }),
         ));
 
-        expect!(parse(&["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(Command::Remove(
+        expect!(parse(["mprovision", "remove", "abcd", "ef"])).to(be_ok().value(Command::Remove(
             RemoveParams {
                 ids: vec!["abcd".to_string(), "ef".to_string()],
                 directory: None,
@@ -284,9 +296,9 @@ mod tests {
             },
         )));
 
-        expect!(parse(&["mprovision", "remove", ""])).to(be_err());
+        expect!(parse(["mprovision", "remove", ""])).to(be_err());
 
-        expect!(parse(&["mprovision", "remove", "abcd", "--source", "."])).to(be_ok().value(
+        expect!(parse(["mprovision", "remove", "abcd", "--source", "."])).to(be_ok().value(
             Command::Remove(RemoveParams {
                 ids: vec!["abcd".to_string()],
                 directory: Some(".".into()),
@@ -294,7 +306,7 @@ mod tests {
             }),
         ));
 
-        expect!(parse(&[
+        expect!(parse([
             "mprovision",
             "remove",
             "abcd",
@@ -308,7 +320,7 @@ mod tests {
             permanently: false,
         })));
 
-        expect!(parse(&[
+        expect!(parse([
             "mprovision",
             "remove",
             "abcd",
@@ -323,31 +335,31 @@ mod tests {
             permanently: true,
         })));
 
-        expect!(parse(&["mprovision", "remove", "abcd", "--source", ""])).to(be_err());
+        expect!(parse(["mprovision", "remove", "abcd", "--source", ""])).to(be_err());
     }
 
     #[test]
     fn clean_command() {
-        expect!(parse(&["mprovision", "clean"])).to(be_ok().value(Command::Clean(CleanParams {
+        expect!(parse(["mprovision", "clean"])).to(be_ok().value(Command::Clean(CleanParams {
             directory: None,
             permanently: false,
         })));
 
-        expect!(parse(&["mprovision", "clean", "--permanently"])).to(be_ok().value(
-            Command::Clean(CleanParams {
+        expect!(parse(["mprovision", "clean", "--permanently"])).to(be_ok().value(Command::Clean(
+            CleanParams {
                 directory: None,
                 permanently: true,
-            }),
-        ));
+            },
+        )));
 
-        expect!(parse(&["mprovision", "clean", "--source", "."])).to(be_ok().value(
-            Command::Clean(CleanParams {
+        expect!(parse(["mprovision", "clean", "--source", "."])).to(be_ok().value(Command::Clean(
+            CleanParams {
                 directory: Some(".".into()),
                 permanently: false,
-            }),
-        ));
+            },
+        )));
 
-        expect!(parse(&[
+        expect!(parse([
             "mprovision",
             "clean",
             "--permanently",
@@ -359,6 +371,20 @@ mod tests {
             permanently: true,
         })));
 
-        expect!(parse(&["mprovision", "clean", "--source", ""])).to(be_err());
+        expect!(parse(["mprovision", "clean", "--source", ""])).to(be_err());
+    }
+
+    #[test]
+    fn extract_command() {
+        expect!(parse(["mprovision", "extract", "app.ipa", "."])).to(be_ok().value(
+            Command::Extract(ExtractParams {
+                source: "app.ipa".into(),
+                destination: ".".into(),
+            }),
+        ));
+
+        expect!(parse(["mprovision", "extract", "app.ipa"])).to(be_err());
+
+        expect!(parse(["mprovision", "extract"])).to(be_err());
     }
 }
