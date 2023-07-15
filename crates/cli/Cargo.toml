@@ -1,0 +1,23 @@
+[package]
+name = "mprovision-cli"
+version = "6.6.0"
+authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
+edition = "2021"
+autobins = false
+
+[[bin]]
+path = "src/main.rs"
+name = "mprovision"
+doc = false
+test = true
+
+[dependencies]
+mprovision = { path = "../lib" }
+time = { version = "0.3.23", features = ["formatting", "macros"] }
+clap = { version = "4.3", features = ["derive"] }
+main_error = "0.1"
+colored = "2"
+zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
+
+[dev-dependencies]
+expectest = "0.12"
