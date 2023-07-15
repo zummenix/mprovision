@@ -345,19 +345,19 @@ mod tests {
             permanently: false,
         })));
 
-        expect!(parse(["mprovision", "clean", "--permanently"])).to(be_ok().value(
-            Command::Clean(CleanParams {
+        expect!(parse(["mprovision", "clean", "--permanently"])).to(be_ok().value(Command::Clean(
+            CleanParams {
                 directory: None,
                 permanently: true,
-            }),
-        ));
+            },
+        )));
 
-        expect!(parse(["mprovision", "clean", "--source", "."])).to(be_ok().value(
-            Command::Clean(CleanParams {
+        expect!(parse(["mprovision", "clean", "--source", "."])).to(be_ok().value(Command::Clean(
+            CleanParams {
                 directory: Some(".".into()),
                 permanently: false,
-            }),
-        ));
+            },
+        )));
 
         expect!(parse([
             "mprovision",
