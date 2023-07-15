@@ -1,11 +1,14 @@
-use cli::Command;
+use cli::{Command, ExtractParams};
 use mprovision as mp;
 use profile_formatters::{format_multiline, format_oneline};
-use std::io::{self, Write};
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::result;
 use std::time::{Duration, SystemTime};
+use std::{
+    fs,
+    io::{self, Read, Write},
+};
+use zip::ZipArchive;
 
 mod cli;
 mod profile_formatters;
@@ -19,33 +22,43 @@ fn main() -> Result {
             expire_in_days,
             directory,
             oneline,
-        }) => list(&text, expire_in_days, directory, oneline),
-        Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => show_uuid(&uuid, directory),
+        }) => list(
+            &text,
+            expire_in_days,
+            mp::dir_or_default(directory)?,
+            oneline,
+        ),
+        Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => {
+            show_uuid(&uuid, mp::dir_or_default(directory)?)
+        }
         Command::ShowFile(cli::ShowFileParams { file }) => show_file(&file),
         Command::Remove(cli::RemoveParams {
             ids,
             directory,
             permanently,
-        }) => remove(&ids, directory, permanently),
+        }) => remove(&ids, mp::dir_or_default(directory)?, permanently),
         Command::Clean(cli::CleanParams {
             directory,
             permanently,
-        }) => clean(directory, permanently),
+        }) => clean(mp::dir_or_default(directory)?, permanently),
+        Command::Extract(ExtractParams {
+            source,
+            destination,
+        }) => extract(source, destination),
     }
 }
 
 fn list(
     text: &Option<String>,
     expires_in_days: Option<u64>,
-    directory: Option<PathBuf>,
+    dir: PathBuf,
     oneline: bool,
 ) -> Result {
-    let dir = mp::with_directory(directory)?;
-    let entries = mp::entries(&dir).map(std::iter::Iterator::collect)?;
+    let file_paths = mp::file_paths(&dir)?.collect();
     let date =
         expires_in_days.map(|days| SystemTime::now() + Duration::from_secs(days * 24 * 60 * 60));
     let filter_string = text.as_ref();
-    let mut profiles = mp::filter(entries, |profile| match (date, filter_string) {
+    let mut profiles = mp::filter(file_paths, |profile| match (date, filter_string) {
         (Some(date), Some(string)) => {
             profile.info.expiration_date <= date && profile.info.contains(string)
         }
@@ -72,8 +85,7 @@ fn list(
     Ok(())
 }
 
-fn show_uuid(uuid: &str, directory: Option<PathBuf>) -> Result {
-    let dir = mp::with_directory(directory)?;
+fn show_uuid(uuid: &str, dir: PathBuf) -> Result {
     let profile = mp::find_by_uuid(&dir, uuid)?;
     show_file(&profile.path)
 }
@@ -84,18 +96,43 @@ fn show_file(path: &Path) -> Result {
     Ok(())
 }
 
-fn remove(ids: &[String], directory: Option<PathBuf>, permanently: bool) -> Result {
-    let dir = mp::with_directory(directory)?;
+fn remove(ids: &[String], dir: PathBuf, permanently: bool) -> Result {
     let profiles = mp::find_by_ids(&dir, ids)?;
     remove_profiles(&profiles, permanently)
 }
 
-fn clean(directory: Option<PathBuf>, permanently: bool) -> Result {
+fn clean(dir: PathBuf, permanently: bool) -> Result {
     let date = SystemTime::now();
-    let dir = mp::with_directory(directory)?;
-    let entries = mp::entries(&dir).map(std::iter::Iterator::collect)?;
-    let profiles = mp::filter(entries, |profile| profile.info.expiration_date <= date);
+    let file_paths = mp::file_paths(&dir)?.collect();
+    let profiles = mp::filter(file_paths, |profile| profile.info.expiration_date <= date);
     remove_profiles(&profiles, permanently)
+}
+
+fn extract(source: PathBuf, destination: PathBuf) -> Result {
+    if !destination.exists() {
+        fs::create_dir_all(&destination)?;
+    }
+    if !destination.is_dir() {
+        return Err(format!("Destination '{}' is not a directory", destination.display()).into());
+    }
+    let mut archive = ZipArchive::new(fs::File::open(source)?)?;
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i)?;
+        let Some(path) = file.enclosed_name().map(|name| name.to_path_buf()) else { continue };
+        if path.extension().and_then(|ext| ext.to_str()) != Some("mobileprovision") {
+            continue;
+        }
+        let mut buf: Vec<u8> = Vec::with_capacity(file.size() as usize);
+        file.read_to_end(&mut buf)?;
+        let info = mp::profile::Info::from_xml_data(&buf)
+            .ok_or_else(|| format!("Failed to decode {}", path.display()))?;
+        let file_name = format!("{}.mobileprovision", info.uuid);
+        let mut buf_cursor = io::Cursor::new(buf);
+        let outpath = destination.join(file_name);
+        let mut outfile = fs::File::create(outpath)?;
+        io::copy(&mut buf_cursor, &mut outfile)?;
+    }
+    Ok(())
 }
 
 fn remove_profiles(profiles: &[mp::Profile], permanently: bool) -> Result {

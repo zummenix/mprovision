@@ -33,9 +33,9 @@ mod tests {
     #[test]
     fn test_find_plist() {
         let data: &[u8] = b"<?xml version=</plist>";
-        expect!(find(&data)).to(be_some().value(data));
+        expect!(find(data)).to(be_some().value(data));
 
         let data: &[u8] = b"   <?xml version=abcd</plist>   ";
-        expect!(find(&data)).to(be_some().value(b"<?xml version=abcd</plist>"));
+        expect!(find(data)).to(be_some().value(b"<?xml version=abcd</plist>"));
     }
 }
