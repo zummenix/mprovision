@@ -1,4 +1,4 @@
-use cli::{Command, ExtractParams};
+use cli::Command;
 use mprovision as mp;
 use profile_formatters::{format_multiline, format_oneline};
 use std::path::{Path, PathBuf};
@@ -41,7 +41,7 @@ fn main() -> Result {
             directory,
             permanently,
         }) => clean(mp::dir_or_default(directory)?, permanently),
-        Command::Extract(ExtractParams {
+        Command::Extract(cli::ExtractParams {
             source,
             destination,
         }) => extract(source, destination),
