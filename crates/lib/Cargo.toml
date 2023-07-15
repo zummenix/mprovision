@@ -1,18 +1,21 @@
 [package]
 name = "mprovision"
 version = "0.1.0"
-authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
-edition = "2021"
+description = "Set of types and functions to manage iOS provisioning profiles"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
+time.workspace = true
 plist = "1.5"
-time = { version = "0.3.23", features = ["formatting", "macros"] }
 memmem = "0.1"
 dirs = "5.0"
 serde = { version = "1.0", features = ["derive"] }
 rayon = "1.7"
-trash = "3.0.5"
+trash = "3.0"
 
 [dev-dependencies]
 expectest = "0.12"
-tempfile = "3.6.0"
+tempfile = "3.6"

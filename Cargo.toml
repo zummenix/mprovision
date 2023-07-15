@@ -1,6 +1,15 @@
 [workspace]
 members = ["crates/*"]
 
+[workspace.package]
+authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
+edition = "2021"
+repository = "https://github.com/zummenix/mprovision"
+license = "MIT"
+
+[workspace.dependencies]
+time = { version = "0.3", features = ["formatting", "macros"] }
+
 [profile.release]
 codegen-units = 1
 opt-level = "z"

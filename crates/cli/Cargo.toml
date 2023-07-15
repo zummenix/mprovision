@@ -1,8 +1,11 @@
 [package]
 name = "mprovision-cli"
 version = "6.6.0"
-authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
-edition = "2021"
+description = "A command line tool to manage iOS provisioning profiles"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
 autobins = false
 
 [[bin]]
@@ -13,11 +16,11 @@ test = true
 
 [dependencies]
 mprovision = { path = "../lib" }
-time = { version = "0.3.23", features = ["formatting", "macros"] }
+time.workspace = true
 clap = { version = "4.3", features = ["derive"] }
 main_error = "0.1"
 colored = "2"
-zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
+zip = { version = "0.6", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
 expectest = "0.12"
