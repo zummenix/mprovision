@@ -95,9 +95,9 @@ pub struct CleanParams {
 
 #[derive(Debug, Default, PartialEq, Parser)]
 pub struct ExtractParams {
-    /// File path to ipa file
+    /// File path to an archive
     pub source: PathBuf,
-    /// Directory where to copy provisioning profiles
+    /// Directory where to place extracted provisioning profiles
     pub destination: PathBuf,
 }
 
