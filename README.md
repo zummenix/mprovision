@@ -59,6 +59,14 @@ like that:
 mprovision list -d 30 --oneline | wc -l
 ```
 
+### Extract provisioning profiles from an ipa file
+
+Use the `extract` subcommand and pass `source` and `destination`.
+
+```bash
+mprovision extract MyApp.ipa MyApp/
+```
+
 ## License
 
 MIT
