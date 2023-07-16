@@ -1,0 +1,23 @@
+[package]
+name = "mprovision"
+version = "0.1.0"
+description = "Set of types and functions to manage iOS provisioning profiles"
+categories = ["development-tools", "filesystem"]
+keywords.workspace = true
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+time.workspace = true
+plist = "1.5"
+memmem = "0.1"
+dirs = "5.0"
+serde = { version = "1.0", features = ["derive"] }
+rayon = "1.7"
+trash = "3.0"
+
+[dev-dependencies]
+expectest = "0.12"
+tempfile = "3.6"

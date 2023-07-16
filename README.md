@@ -1,18 +1,6 @@
 # mprovision
+
 A tool that helps iOS developers to manage local provisioning profiles.
-Written in Rust.
-
-## How to install
-
-1. You need to install Rust Compiler either by downloading from 
-[official site](https://www.rust-lang.org/downloads.html) or using
-[rustup](https://www.rustup.rs) (which is preferable).
-
-2. Run the following command:
-
-```bash
-cargo install --git https://github.com/zummenix/mprovision
-```
 
 ## Usage
 

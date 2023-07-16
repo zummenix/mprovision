@@ -1,0 +1,28 @@
+[package]
+name = "mprovision-cli"
+version = "6.6.0"
+description = "A command line tool to manage iOS provisioning profiles"
+categories = ["command-line-utilities", "development-tools", "filesystem"]
+keywords.workspace = true
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+autobins = false
+
+[[bin]]
+path = "src/main.rs"
+name = "mprovision"
+doc = false
+test = true
+
+[dependencies]
+mprovision = { version = "0.1.0", path = "../lib" }
+time.workspace = true
+clap = { version = "4.3", features = ["derive"] }
+main_error = "0.1"
+colored = "2"
+zip = { version = "0.6", default-features = false, features = ["deflate"] }
+
+[dev-dependencies]
+expectest = "0.12"
