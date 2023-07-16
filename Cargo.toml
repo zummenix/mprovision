@@ -6,6 +6,7 @@ authors = ["Aleksey Kuznetsov <zummenix@gmail.com>"]
 edition = "2021"
 repository = "https://github.com/zummenix/mprovision"
 license = "MIT"
+keywords = ["ios", "provisioning-profile", "mobileprovision"]
 
 [workspace.dependencies]
 time = { version = "0.3", features = ["formatting", "macros"] }
