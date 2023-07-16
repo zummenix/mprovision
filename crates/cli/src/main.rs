@@ -119,7 +119,7 @@ fn extract(source: PathBuf, destination: PathBuf) -> Result {
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)?;
         let Some(path) = file.enclosed_name().map(|name| name.to_path_buf()) else { continue };
-        if path.extension().and_then(|ext| ext.to_str()) != Some("mobileprovision") {
+        if mp::is_mobileprovision(&path) {
             continue;
         }
         let mut buf: Vec<u8> = Vec::with_capacity(file.size() as usize);

@@ -16,6 +16,14 @@ pub mod profile;
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// An extension for povisioning profile files.
+pub const EXT_MOBILEPROVISION: &str = "mobileprovision";
+
+/// Returns true if the `file_path` is a provisioning profile file.
+pub fn is_mobileprovision(file_path: &Path) -> bool {
+    file_path.extension().and_then(|ext| ext.to_str()) == Some(EXT_MOBILEPROVISION)
+}
+
 /// Returns an iterator over the `*.mobileprovision` file paths within a given
 /// directory.
 ///
@@ -28,11 +36,11 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub fn file_paths(dir: &Path) -> Result<impl Iterator<Item = PathBuf>> {
     let filtered = fs::read_dir(dir)?
         .filter(|entry| {
-            entry.as_ref().ok().and_then(|v| {
-                v.path()
-                    .extension()
-                    .map(|ext| ext.to_str() == Some("mobileprovision"))
-            }) == Some(true)
+            entry
+                .as_ref()
+                .ok()
+                .map(|entry| is_mobileprovision(entry.path().as_ref()))
+                .unwrap_or(false)
         })
         .filter_map(std::result::Result::ok)
         .map(|entry| entry.path());
@@ -93,12 +101,13 @@ pub fn show(file_path: &Path) -> Result<String> {
 
 /// Validates that `file_path` has a `mobileprovision` extension.
 fn validate_path(file_path: &Path) -> Result<&Path> {
-    match file_path.extension() {
-        Some(extension) if extension == "mobileprovision" => Ok(file_path),
-        _ => Err(Error::Own(format!(
+    if is_mobileprovision(file_path) {
+        Ok(file_path)
+    } else {
+        Err(Error::Own(format!(
             "'{}' doesn't have 'mobileprovision' extension",
             file_path.display()
-        ))),
+        )))
     }
 }
 
