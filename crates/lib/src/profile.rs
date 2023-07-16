@@ -57,7 +57,7 @@ struct Entitlements {
 }
 
 impl Info {
-    /// Returns instance of the `Profile` parsed from a `data`.
+    /// Returns instance of the `Info` parsed from a `data`.
     pub fn from_xml_data(data: &[u8]) -> Option<Self> {
         crate::plist_extractor::find(data).and_then(|xml| {
             plist::from_reader_xml(io::Cursor::new(xml))
@@ -72,17 +72,6 @@ impl Info {
         })
     }
 
-    /// Returns an empty profile info.
-    pub fn empty() -> Self {
-        Self {
-            uuid: "".into(),
-            name: "".into(),
-            app_identifier: "".into(),
-            creation_date: SystemTime::UNIX_EPOCH,
-            expiration_date: SystemTime::UNIX_EPOCH,
-        }
-    }
-
     /// Returns `true` if one or more fields of the profile contain `string`.
     pub fn contains(&self, string: &str) -> bool {
         let s = string.to_lowercase();
@@ -93,6 +82,13 @@ impl Info {
             }
         }
         false
+    }
+
+    /// Returns `true` if the profile has any of `ids` as `uuid` or `bundle_id`.
+    pub fn has_ids(&self, ids: impl IntoIterator<Item = impl AsRef<str>>) -> bool {
+        let bundle_id = self.bundle_id();
+        ids.into_iter()
+            .any(|id| self.uuid == id.as_ref() || bundle_id == Some(id.as_ref()))
     }
 
     /// Returns a bundle id of a profile.
@@ -109,6 +105,19 @@ mod tests {
     use expectest::expect;
     use expectest::prelude::*;
 
+    impl Info {
+        /// Returns an empty profile info.
+        fn empty() -> Self {
+            Self {
+                uuid: "".into(),
+                name: "".into(),
+                app_identifier: "".into(),
+                creation_date: SystemTime::UNIX_EPOCH,
+                expiration_date: SystemTime::UNIX_EPOCH,
+            }
+        }
+    }
+
     #[test]
     fn contains() {
         let profile = Info {
@@ -121,6 +130,26 @@ mod tests {
         expect!(profile.contains("12")).to(be_true());
         expect!(profile.contains("me")).to(be_true());
         expect!(profile.contains("id")).to(be_true());
+    }
+
+    #[test]
+    fn has_id_in_bundle_id() {
+        let mut profile = Info::empty();
+        profile.app_identifier = "12345ABCDE.com.example.app".to_owned();
+        assert!(profile.has_ids(&["com.example.app"]));
+    }
+
+    #[test]
+    fn has_id_in_uuid() {
+        let mut profile = Info::empty();
+        profile.uuid = String::from("123");
+        assert!(profile.has_ids(&["123"]));
+    }
+
+    #[test]
+    fn does_not_have_ids() {
+        let profile = Info::empty();
+        assert!(!profile.has_ids(&["a", "b", "c"]));
     }
 
     #[test]

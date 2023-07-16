@@ -41,9 +41,3 @@ impl From<FromUtf8Error> for Error {
         Self::Own(e.to_string())
     }
 }
-
-impl From<trash::Error> for Error {
-    fn from(e: trash::Error) -> Self {
-        Self::Own(e.to_string())
-    }
-}

@@ -29,18 +29,32 @@ fn main() -> Result {
             oneline,
         ),
         Command::ShowUuid(cli::ShowUuidParams { uuid, directory }) => {
-            show_uuid(&uuid, mp::dir_or_default(directory)?)
+            let dir = mp::dir_or_default(directory)?;
+            let profile = mp::filter_dir(&dir, |profile| profile.info.uuid == uuid)?
+                .into_iter()
+                .next()
+                .ok_or_else(|| format!("Failed to find provisioning profile for '{}'", uuid))?;
+            show_file(&profile.path)
         }
         Command::ShowFile(cli::ShowFileParams { file }) => show_file(&file),
         Command::Remove(cli::RemoveParams {
             ids,
             directory,
             permanently,
-        }) => remove(&ids, mp::dir_or_default(directory)?, permanently),
+        }) => {
+            let dir = mp::dir_or_default(directory)?;
+            let profiles = mp::filter_dir(&dir, |profile| profile.info.has_ids(&ids))?;
+            remove_profiles(&profiles, permanently)
+        }
         Command::Clean(cli::CleanParams {
             directory,
             permanently,
-        }) => clean(mp::dir_or_default(directory)?, permanently),
+        }) => {
+            let dir = mp::dir_or_default(directory)?;
+            let date = SystemTime::now();
+            let profiles = mp::filter_dir(&dir, |profile| profile.info.expiration_date <= date)?;
+            remove_profiles(&profiles, permanently)
+        }
         Command::Extract(cli::ExtractParams {
             source,
             destination,
@@ -54,18 +68,17 @@ fn list(
     dir: PathBuf,
     oneline: bool,
 ) -> Result {
-    let file_paths = mp::file_paths(&dir)?.collect();
     let date =
         expires_in_days.map(|days| SystemTime::now() + Duration::from_secs(days * 24 * 60 * 60));
     let filter_string = text.as_ref();
-    let mut profiles = mp::filter(file_paths, |profile| match (date, filter_string) {
+    let mut profiles = mp::filter_dir(&dir, |profile| match (date, filter_string) {
         (Some(date), Some(string)) => {
             profile.info.expiration_date <= date && profile.info.contains(string)
         }
         (Some(date), _) => profile.info.expiration_date <= date,
         (_, Some(string)) => profile.info.contains(string),
         (_, _) => true,
-    });
+    })?;
     profiles.sort_by(|a, b| a.info.creation_date.cmp(&b.info.creation_date));
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
@@ -85,27 +98,10 @@ fn list(
     Ok(())
 }
 
-fn show_uuid(uuid: &str, dir: PathBuf) -> Result {
-    let profile = mp::find_by_uuid(&dir, uuid)?;
-    show_file(&profile.path)
-}
-
 fn show_file(path: &Path) -> Result {
     let xml = mp::show(path)?;
     writeln!(io::stdout(), "{}", xml)?;
     Ok(())
-}
-
-fn remove(ids: &[String], dir: PathBuf, permanently: bool) -> Result {
-    let profiles = mp::find_by_ids(&dir, ids)?;
-    remove_profiles(&profiles, permanently)
-}
-
-fn clean(dir: PathBuf, permanently: bool) -> Result {
-    let date = SystemTime::now();
-    let file_paths = mp::file_paths(&dir)?.collect();
-    let profiles = mp::filter(file_paths, |profile| profile.info.expiration_date <= date);
-    remove_profiles(&profiles, permanently)
 }
 
 fn extract(source: PathBuf, destination: PathBuf) -> Result {
@@ -135,12 +131,12 @@ fn extract(source: PathBuf, destination: PathBuf) -> Result {
     Ok(())
 }
 
-fn remove_profiles(profiles: &[mp::Profile], permanently: bool) -> Result {
+fn remove_profiles(profiles: &[mp::profile::Profile], permanently: bool) -> Result {
     let mut errors_exist = false;
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
     for (i, profile) in profiles.iter().enumerate() {
-        match mp::remove(&profile.path, permanently) {
+        match remove(&profile.path, permanently) {
             Ok(()) => {
                 let separator = if i + 1 == profiles.len() { "" } else { "\n" };
                 writeln!(&mut stdout, "{}{}", format_multiline(profile)?, separator)?
@@ -157,4 +153,13 @@ fn remove_profiles(profiles: &[mp::Profile], permanently: bool) -> Result {
     } else {
         Ok(())
     }
+}
+
+fn remove(file_path: &Path, permanently: bool) -> result::Result<(), Box<dyn std::error::Error>> {
+    if permanently {
+        std::fs::remove_file(file_path)?;
+    } else {
+        trash::delete(file_path)?;
+    }
+    Ok(())
 }
