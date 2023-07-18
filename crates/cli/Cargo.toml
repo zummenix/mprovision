@@ -1,6 +1,6 @@
 [package]
 name = "mprovision-cli"
-version = "6.6.0"
+version = "7.0.0"
 description = "A command line tool to manage iOS provisioning profiles"
 categories = ["command-line-utilities", "development-tools", "filesystem"]
 readme = "../../README.md"
