@@ -1,5 +1,5 @@
 use colored::Colorize;
-use mprovision::Profile;
+use mprovision::profile::Profile;
 use time::error::Format;
 use time::format_description::FormatItem;
 use time::macros::format_description;

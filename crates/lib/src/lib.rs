@@ -6,15 +6,23 @@ use std::fs::{self, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-pub use crate::error::Error;
-pub use crate::profile::Profile;
+use crate::error::Error;
+use crate::profile::Profile;
 
-mod error;
-mod plist_extractor;
+pub mod error;
+pub mod plist_extractor;
 pub mod profile;
 
 /// A Result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
+
+/// A file extension of a povisioning profile.
+pub const EXT_MOBILEPROVISION: &str = "mobileprovision";
+
+/// Returns true if the `file_path` is a provisioning profile file.
+pub fn is_mobileprovision(file_path: &Path) -> bool {
+    file_path.extension().and_then(|ext| ext.to_str()) == Some(EXT_MOBILEPROVISION)
+}
 
 /// Returns an iterator over the `*.mobileprovision` file paths within a given
 /// directory.
@@ -28,11 +36,11 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub fn file_paths(dir: &Path) -> Result<impl Iterator<Item = PathBuf>> {
     let filtered = fs::read_dir(dir)?
         .filter(|entry| {
-            entry.as_ref().ok().and_then(|v| {
-                v.path()
-                    .extension()
-                    .map(|ext| ext.to_str() == Some("mobileprovision"))
-            }) == Some(true)
+            entry
+                .as_ref()
+                .ok()
+                .map(|entry| is_mobileprovision(entry.path().as_ref()))
+                .unwrap_or(false)
         })
         .filter_map(std::result::Result::ok)
         .map(|entry| entry.path());
@@ -65,44 +73,7 @@ pub fn dir_or_default(dir: Option<PathBuf>) -> Result<PathBuf> {
     dir.map(Result::Ok).unwrap_or_else(directory)
 }
 
-/// Removes a provisioning profile.
-pub fn remove(file_path: &Path, permanently: bool) -> Result<()> {
-    let path = validate_path(file_path)?;
-    if permanently {
-        std::fs::remove_file(path)?;
-    } else {
-        trash::delete(path)?;
-    }
-    Ok(())
-}
-
-/// Returns internals of a provisioning profile.
-pub fn show(file_path: &Path) -> Result<String> {
-    validate_path(file_path).and_then(|file_path| {
-        let mut buf = Vec::new();
-        File::open(file_path)
-            .and_then(|mut file| file.read_to_end(&mut buf))
-            .map_err(|err| err.into())
-            .and_then(|_| {
-                plist_extractor::find(&buf)
-                    .ok_or_else(|| Error::Own(format!("Couldn't parse '{}'", file_path.display())))
-            })
-            .and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
-    })
-}
-
-/// Validates that `file_path` has a `mobileprovision` extension.
-fn validate_path(file_path: &Path) -> Result<&Path> {
-    match file_path.extension() {
-        Some(extension) if extension == "mobileprovision" => Ok(file_path),
-        _ => Err(Error::Own(format!(
-            "'{}' doesn't have 'mobileprovision' extension",
-            file_path.display()
-        ))),
-    }
-}
-
-/// Filters files of a directory using `f`.
+/// Filters files using predicate function `f`.
 ///
 /// The filtering is performed concurrently.
 pub fn filter<F>(file_paths: Vec<PathBuf>, f: F) -> Vec<Profile>
@@ -118,28 +89,27 @@ where
         .collect()
 }
 
-/// Searches a provisioning profile by its uuid.
+/// Filters files of a directory using predicate function `f`.
 ///
-/// The search is performed concurrently.
-pub fn find_by_uuid(dir: &Path, uuid: &str) -> Result<Profile> {
-    let paths: Vec<PathBuf> = file_paths(dir)?.collect();
-    if let Some(profile) = filter(paths, |profile| profile.info.uuid == uuid).pop() {
-        Ok(profile)
-    } else {
-        Err(Error::Own(format!("Profile '{}' is not found.", uuid)))
-    }
+/// Conveniently combines [`file_paths`] and [`filter`] functions together.
+pub fn filter_dir<F>(dir: &Path, f: F) -> Result<Vec<Profile>>
+where
+    F: Fn(&Profile) -> bool + Send + Sync,
+{
+    Ok(filter(file_paths(dir)?.collect(), f))
 }
 
-/// Searches provisioning profiles by their uuid(s) or bundle id(s).
-///
-/// The search is performed concurrently.
-pub fn find_by_ids(dir: &Path, ids: &[String]) -> Result<Vec<Profile>> {
-    let paths: Vec<PathBuf> = file_paths(dir)?.collect();
-    let profiles = filter(paths, |profile| {
-        ids.iter()
-            .any(|id| id == &profile.info.uuid || profile.info.bundle_id() == Some(id))
-    });
-    Ok(profiles)
+/// Returns internals of a provisioning profile.
+pub fn show(file_path: &Path) -> Result<String> {
+    let mut buf = Vec::new();
+    File::open(file_path)
+        .and_then(|mut file| file.read_to_end(&mut buf))
+        .map_err(|err| err.into())
+        .and_then(|_| {
+            plist_extractor::find(&buf)
+                .ok_or_else(|| Error::Own(format!("Couldn't parse '{}'", file_path.display())))
+        })
+        .and_then(|data| String::from_utf8(data.to_owned()).map_err(|err| err.into()))
 }
 
 #[cfg(test)]

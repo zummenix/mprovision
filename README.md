@@ -1,53 +1,58 @@
 # mprovision
 
-A tool that helps iOS developers to manage local provisioning profiles.
+A command line tool to manage local provisioning profiles. It is mostly useful
+in iOS developemtn and/or for mobile CI/CD engineers.
 
 ## Usage
 
 Type `mprovision help` in your terminal to see the list of subcommands and options.
-Most of subcommands work on `~/Library/MobileDevice/Provisioning Profiles` directory by default but you can specify a
-full path using a `--source` argument.
+Most of subcommands work on `~/Library/MobileDevice/Provisioning Profiles`
+directory by default but you can specify a full path using a `--source`
+argument.
 
 ## Use cases
 
-### See all profiles in your system
+### 1. See all profiles in your system
 
-It's very simple: `mprovision list`
+`mprovision list` will show the list of all provisioning profiles installed in
+your system.
 
-### Searching and Removing
+### 2. Search and Remove
 
-1. The `list` subcommand accepts an optional argument `-t` or `--text` that allows you to filter the list of 
-provisioning profiles by some text. 
-2. The `remove` subcommand allows you to remove one or more profiles by their uuids or bundle ids.
+- The `list` subcommand accepts an optional argument `-t` or `--text` that
+allows you to filter the list of provisioning profiles by some text.
+- The `remove` subcommand removes one or more profiles by their uuids or bundle
+ids.
 
-### View details of a provisioning profile
+### 3. View details of a provisioning profile
 
-The `show` subcommand followed by uuid of a provisioning profile allows you to see details
-in xml format.
+The `show` subcommand followed by uuid of a provisioning profile allows you to
+see details in xml format. Alternatively, you can use `show-file` subcommand if
+you know exact path to a file.
 
-### View profiles that will expire soon
+### 4. View profiles that will expire soon
 
-The `list` subcommand accepts an optional argument `-d` or `--expire-in-days` followed by a number of days and shows the
-list of profiles that will expire. For example the `mprovision list -d 0` command will show profiles that have already 
-been expired.
+The `list` subcommand accepts an optional argument `-d` or `--expire-in-days`
+followed by a number of days and shows the list of profiles that will expire.
+For example, the `mprovision list -d 0` command will show profiles that have
+already been expired.
 
-### Remove expired profiles
+### 5. Remove expired profiles
 
 The `clean` subcommand removes expired provisioning profiles.
 
 > NOTE: you can see provisioning profiles that will be removed using the
 `mprovision list -d 0` command.
 
-### Number of profiles
+### 6. Number of profiles
 
-Use the `list` subcommand with options you want, set `--oneline` flag and pipe into `wc`,
-like that:
+There is no special command for that but you can use the following hack:
 
 ```bash
-mprovision list -d 30 --oneline | wc -l
+mprovision list --oneline | wc -l
 ```
 
-### Extract provisioning profiles from an ipa file
+### 7. Extract provisioning profiles from an ipa file
 
 Use the `extract` subcommand and pass `source` and `destination`.
 
