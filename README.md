@@ -1,7 +1,7 @@
 # mprovision
 
-A command line tool to manage local provisioning profiles. It is mostly useful
-in iOS developemtn and/or for mobile CI/CD engineers.
+A command line tool to manage local provisioning profiles. Mostly useful in iOS
+development or for mobile CI/CD engineers.
 
 ## Usage
 
