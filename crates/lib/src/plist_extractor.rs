@@ -1,4 +1,4 @@
-use memmem::{Searcher, TwoWaySearcher};
+use memchr::memmem;
 
 const PLIST_PREFIX: &[u8] = b"<?xml version=";
 const PLIST_SUFFIX: &[u8] = b"</plist>";
@@ -8,12 +8,8 @@ const PLIST_SUFFIX: &[u8] = b"</plist>";
 /// Since mobileprovision files contain "garbage" at the start and the end you need to extract
 /// a plist content before the xml parsing.
 pub fn find(data: &[u8]) -> Option<&[u8]> {
-    let prefix_searcher = TwoWaySearcher::new(PLIST_PREFIX);
-    let suffix_searcher = TwoWaySearcher::new(PLIST_SUFFIX);
-    let start_i = prefix_searcher.search_in(data);
-    let end_i = suffix_searcher
-        .search_in(data)
-        .map(|i| i + PLIST_SUFFIX.len());
+    let start_i = memmem::find(data, PLIST_PREFIX);
+    let end_i = memmem::rfind(data, PLIST_SUFFIX).map(|i| i + PLIST_SUFFIX.len());
 
     if let (Some(start_i), Some(end_i)) = (start_i, end_i) {
         if end_i <= data.len() {
