@@ -1,5 +1,3 @@
-use expectest::expect;
-use expectest::prelude::*;
 use mprovision::profile::Info;
 use std::time::{Duration, SystemTime};
 
@@ -20,5 +18,5 @@ fn deserialize() {
         creation_date: time(1562926802),
         expiration_date: time(1594462802),
     };
-    expect!(info).to(be_equal_to(expected));
+    assert_eq!(info, expected);
 }

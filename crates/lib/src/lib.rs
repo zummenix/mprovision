@@ -115,21 +115,19 @@ pub fn show(file_path: &Path) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use expectest::expect;
-    use expectest::prelude::*;
 
     #[test]
     fn filter_mobileprovision_files() {
         use std::fs::File;
 
         let temp_dir = tempfile::tempdir().unwrap();
-        let result = file_paths(temp_dir.path()).map(|iter| iter.count());
-        expect!(result).to(be_ok().value(0));
+        let result = file_paths(temp_dir.path()).map(|iter| iter.count()).unwrap();
+        assert_eq!(result, 0);
 
         File::create(temp_dir.path().join("1.mobileprovision")).unwrap();
         File::create(temp_dir.path().join("2.mobileprovision")).unwrap();
         File::create(temp_dir.path().join("3.txt")).unwrap();
-        let result = file_paths(temp_dir.path()).map(|iter| iter.count());
-        expect!(result).to(be_ok().value(2));
+        let result = file_paths(temp_dir.path()).map(|iter| iter.count()).unwrap();
+        assert_eq!(result, 2);
     }
 }

@@ -102,8 +102,6 @@ impl Info {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use expectest::expect;
-    use expectest::prelude::*;
 
     impl Info {
         /// Returns an empty profile info.
@@ -127,9 +125,9 @@ mod tests {
             creation_date: SystemTime::UNIX_EPOCH,
             expiration_date: SystemTime::UNIX_EPOCH,
         };
-        expect!(profile.contains("12")).to(be_true());
-        expect!(profile.contains("me")).to(be_true());
-        expect!(profile.contains("id")).to(be_true());
+        assert!(profile.contains("12"));
+        assert!(profile.contains("me"));
+        assert!(profile.contains("id"));
     }
 
     #[test]
@@ -156,20 +154,20 @@ mod tests {
     fn correct_bundle_id() {
         let mut profile = Info::empty();
         profile.app_identifier = "12345ABCDE.com.example.app".to_owned();
-        expect!(profile.bundle_id()).to(be_some().value("com.example.app"));
+        assert_eq!(profile.bundle_id(), Some("com.example.app"));
     }
 
     #[test]
     fn incorrect_bundle_id() {
         let mut profile = Info::empty();
         profile.app_identifier = "12345ABCDE".to_owned();
-        expect!(profile.bundle_id()).to(be_none());
+        assert_eq!(profile.bundle_id(), None);
     }
 
     #[test]
     fn wildcard_bundle_id() {
         let mut profile = Info::empty();
         profile.app_identifier = "12345ABCDE.*".to_owned();
-        expect!(profile.bundle_id()).to(be_some().value("*"));
+        assert_eq!(profile.bundle_id(), Some("*"));
     }
 }

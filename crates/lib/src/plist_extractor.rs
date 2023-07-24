@@ -23,15 +23,15 @@ pub fn find(data: &[u8]) -> Option<&[u8]> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use expectest::expect;
-    use expectest::prelude::*;
 
     #[test]
     fn test_find_plist() {
         let data: &[u8] = b"<?xml version=</plist>";
-        expect!(find(data)).to(be_some().value(data));
-
+        assert_eq!(find(data), Some(data));
+    }
+    #[test]
+    fn test_find_plist_with_spaces() {
         let data: &[u8] = b"   <?xml version=abcd</plist>   ";
-        expect!(find(data)).to(be_some().value(b"<?xml version=abcd</plist>"));
+        assert_eq!(find(data), Some(b"<?xml version=abcd</plist>" as &[u8]));
     }
 }
