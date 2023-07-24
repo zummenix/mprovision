@@ -297,15 +297,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "expectest"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78817c0b64aab8153fbd7532339fbac1a54e43c715802715a288163ca6024978"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
 name = "fastrand"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -548,7 +539,6 @@ version = "7.0.0"
 dependencies = [
  "clap",
  "colored",
- "expectest",
  "main_error",
  "mprovision",
  "time",
