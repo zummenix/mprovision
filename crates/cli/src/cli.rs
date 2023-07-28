@@ -120,60 +120,75 @@ mod tests {
     use super::*;
 
     /// Parses arguments and returns a `Command`.
-    fn parse<I, S>(args: I) -> result::Result<Command, clap::Error>
+    fn parse<'a, I>(args: I) -> result::Result<Command, clap::Error>
     where
-        I: IntoIterator<Item = S>,
-        S: Clone,
-        ::std::ffi::OsString: From<S>,
+        I: IntoIterator<Item = &'a str>,
+        ::std::ffi::OsString: From<&'a str>,
     {
-        Command::try_parse_from(args)
+        Command::try_parse_from(std::iter::once("mprovision").chain(args))
     }
 
     #[test]
-    fn list_command() {
+    fn list() {
         assert_eq!(
-            parse(["mprovision", "list"]).unwrap(),
+            parse(["list"]).unwrap(),
             Command::List(ListParams::default())
         );
+    }
 
+    #[test]
+    fn list_with_source() {
         assert_eq!(
-            parse(["mprovision", "list", "--source", "."]).unwrap(),
+            parse(["list", "--source", "."]).unwrap(),
             Command::List(ListParams {
                 text: None,
                 expire_in_days: None,
                 directory: Some(".".into()),
                 oneline: false,
-            },)
+            })
         );
+    }
 
-        assert!(parse(["mprovision", "list", "--source", ""]).is_err());
+    #[test]
+    fn list_with_empty_source_should_err() {
+        assert!(parse(["list", "--source", ""]).is_err());
+    }
 
+    #[test]
+    fn list_with_text_long() {
         assert_eq!(
-            parse(["mprovision", "list", "--text", "abc"]).unwrap(),
+            parse(["list", "--text", "abc"]).unwrap(),
             Command::List(ListParams {
                 text: Some("abc".to_string()),
                 expire_in_days: None,
                 directory: None,
                 oneline: false,
-            },)
+            })
         );
+    }
 
+    #[test]
+    fn list_with_text_short() {
         assert_eq!(
-            parse(["mprovision", "list", "-t", "abc"]).unwrap(),
+            parse(["list", "-t", "abc"]).unwrap(),
             Command::List(ListParams {
                 text: Some("abc".to_string()),
                 expire_in_days: None,
                 directory: None,
                 oneline: false,
-            },)
+            })
         );
+    }
 
-        assert!(parse(["mprovision", "list", "--text", ""]).is_err());
+    #[test]
+    fn list_with_empty_text_should_err() {
+        assert!(parse(["list", "--text", ""]).is_err());
+    }
 
-        assert!(parse(["mprovision", "list", "-t", ""]).is_err());
-
+    #[test]
+    fn list_with_expire_long() {
         assert_eq!(
-            parse(["mprovision", "list", "--expire-in-days", "3"]).unwrap(),
+            parse(["list", "--expire-in-days", "3"]).unwrap(),
             Command::List(ListParams {
                 text: None,
                 expire_in_days: Some(3),
@@ -181,25 +196,35 @@ mod tests {
                 oneline: false,
             })
         );
+    }
 
+    #[test]
+    fn list_with_expire_short() {
         assert_eq!(
-            parse(["mprovision", "list", "-d", "3"]).unwrap(),
+            parse(["list", "-d", "3"]).unwrap(),
             Command::List(ListParams {
                 text: None,
                 expire_in_days: Some(3),
                 directory: None,
                 oneline: false,
-            },)
+            })
         );
+    }
 
-        assert!(parse(["mprovision", "list", "--expire-in-days", "-3"]).is_err());
-        assert!(parse(["mprovision", "list", "-d", "-3"]).is_err());
-        assert!(parse(["mprovision", "list", "--expire-in-days", "366"]).is_err());
-        assert!(parse(["mprovision", "list", "-d", "366"]).is_err());
+    #[test]
+    fn list_with_expire_less_than_0_should_err() {
+        assert!(parse(["list", "--expire-in-days", "-3"]).is_err());
+    }
 
+    #[test]
+    fn list_with_expire_grater_than_365_should_err() {
+        assert!(parse(["list", "--expire-in-days", "366"]).is_err());
+    }
+
+    #[test]
+    fn list_with_all_arguments_long() {
         assert_eq!(
             parse([
-                "mprovision",
                 "list",
                 "--text",
                 "abc",
@@ -216,19 +241,12 @@ mod tests {
                 oneline: false,
             })
         );
+    }
 
+    #[test]
+    fn list_with_all_arguments_short() {
         assert_eq!(
-            parse([
-                "mprovision",
-                "list",
-                "-t",
-                "abc",
-                "-d",
-                "3",
-                "--source",
-                ".",
-            ])
-            .unwrap(),
+            parse(["list", "-t", "abc", "-d", "3", "--source", ".",]).unwrap(),
             Command::List(ListParams {
                 text: Some("abc".to_string()),
                 expire_in_days: Some(3),
@@ -236,174 +254,222 @@ mod tests {
                 oneline: false,
             })
         );
+    }
 
+    #[test]
+    fn list_with_oneline() {
         assert_eq!(
-            parse(["mprovision", "list", "--oneline"]).unwrap(),
+            parse(["list", "--oneline"]).unwrap(),
             Command::List(ListParams {
                 text: None,
                 expire_in_days: None,
                 directory: None,
-                oneline: true,
-            },)
+                oneline: true
+            })
         );
     }
 
     #[test]
-    fn show_uuid_command() {
+    fn show_uuid() {
         assert_eq!(
-            parse(["mprovision", "show", "abcd"]).unwrap(),
+            parse(["show", "abcd"]).unwrap(),
             Command::ShowUuid(ShowUuidParams {
                 uuid: "abcd".to_string(),
                 directory: None,
-            },)
+            })
         );
+    }
 
-        assert!(parse(["mprovision", "show", ""]).is_err());
+    #[test]
+    fn show_uuid_without_args_should_err() {
+        assert!(parse(["show", ""]).is_err());
+    }
 
+    #[test]
+    fn show_uuid_with_source() {
         assert_eq!(
-            parse(["mprovision", "show", "abcd", "--source", "."]).unwrap(),
+            parse(["show", "abcd", "--source", "."]).unwrap(),
             Command::ShowUuid(ShowUuidParams {
                 uuid: "abcd".to_string(),
                 directory: Some(".".into()),
             })
         );
-
-        assert!(parse(["mprovision", "show", "abcd", "--source", ""]).is_err());
     }
 
     #[test]
-    fn show_file_command() {
+    fn show_uuid_with_empty_source_should_err() {
+        assert!(parse(["show", "abcd", "--source", ""]).is_err());
+    }
+
+    #[test]
+    fn show_file() {
         assert_eq!(
-            parse(["mprovision", "show-file", "file.mprovision"]).unwrap(),
+            parse(["show-file", "file.mprovision"]).unwrap(),
             Command::ShowFile(ShowFileParams {
                 file: "file.mprovision".into(),
             })
         );
-
-        assert!(parse(["mprovision", "show-file", "file.mprovision", "."]).is_err());
-
-        assert!(parse(["mprovision", "show-file", ""]).is_err());
     }
 
     #[test]
-    fn remove_id_command() {
+    fn show_file_with_multiple_paths_should_err() {
+        assert!(parse(["show-file", "file.mprovision", "."]).is_err());
+    }
+
+    #[test]
+    fn show_file_with_empty_path_should_err() {
+        assert!(parse(["show-file", ""]).is_err());
+    }
+
+    #[test]
+    fn remove() {
         assert_eq!(
-            parse(["mprovision", "remove", "abcd"]).unwrap(),
+            parse(["remove", "abcd"]).unwrap(),
             Command::Remove(RemoveParams {
                 ids: vec!["abcd".to_string()],
                 directory: None,
                 permanently: false,
-            },)
+            })
         );
+    }
 
+    #[test]
+    fn remove_single_permanently() {
         assert_eq!(
-            parse(["mprovision", "remove", "abcd", "--permanently"]).unwrap(),
+            parse(["remove", "abcd", "--permanently"]).unwrap(),
             Command::Remove(RemoveParams {
                 ids: vec!["abcd".to_string()],
                 directory: None,
                 permanently: true,
             })
         );
+    }
 
+    #[test]
+    fn remove_multiple() {
         assert_eq!(
-            parse(["mprovision", "remove", "abcd", "ef"]).unwrap(),
+            parse(["remove", "abcd", "ef"]).unwrap(),
             Command::Remove(RemoveParams {
                 ids: vec!["abcd".to_string(), "ef".to_string()],
                 directory: None,
                 permanently: false,
-            },)
+            })
         );
+    }
 
-        assert!(parse(["mprovision", "remove", ""]).is_err());
+    #[test]
+    fn remove_with_empty_arg_should_err() {
+        assert!(parse(["remove", ""]).is_err());
+    }
 
+    #[test]
+    fn remove_single_with_source() {
         assert_eq!(
-            parse(["mprovision", "remove", "abcd", "--source", "."]).unwrap(),
+            parse(["remove", "abcd", "--source", "."]).unwrap(),
             Command::Remove(RemoveParams {
                 ids: vec!["abcd".to_string()],
                 directory: Some(".".into()),
                 permanently: false,
             })
         );
+    }
 
+    #[test]
+    fn remove_multiple_with_source() {
         assert_eq!(
-            parse(["mprovision", "remove", "abcd", "ef", "--source", ".",]).unwrap(),
+            parse(["remove", "abcd", "ef", "--source", ".",]).unwrap(),
             Command::Remove(RemoveParams {
                 ids: vec!["abcd".to_string(), "ef".to_string()],
                 directory: Some(".".into()),
                 permanently: false,
             })
         );
+    }
 
+    #[test]
+    fn remove_with_permanently_and_source() {
         assert_eq!(
-            parse([
-                "mprovision",
-                "remove",
-                "abcd",
-                "ef",
-                "--permanently",
-                "--source",
-                ".",
-            ])
-            .unwrap(),
+            parse(["remove", "abcd", "ef", "--permanently", "--source", ".",]).unwrap(),
             Command::Remove(RemoveParams {
                 ids: vec!["abcd".to_string(), "ef".to_string()],
                 directory: Some(".".into()),
                 permanently: true,
             })
         );
-
-        assert!(parse(["mprovision", "remove", "abcd", "--source", ""]).is_err());
     }
 
     #[test]
-    fn clean_command() {
+    fn remove_with_empty_source_should_err() {
+        assert!(parse(["remove", "abcd", "--source", ""]).is_err());
+    }
+
+    #[test]
+    fn clean() {
         assert_eq!(
-            parse(["mprovision", "clean"]).unwrap(),
+            parse(["clean"]).unwrap(),
             Command::Clean(CleanParams {
                 directory: None,
                 permanently: false,
             })
         );
+    }
 
+    #[test]
+    fn clean_with_permanently() {
         assert_eq!(
-            parse(["mprovision", "clean", "--permanently"]).unwrap(),
+            parse(["clean", "--permanently"]).unwrap(),
             Command::Clean(CleanParams {
                 directory: None,
                 permanently: true,
-            },)
+            })
         );
+    }
 
+    #[test]
+    fn clean_with_source() {
         assert_eq!(
-            parse(["mprovision", "clean", "--source", "."]).unwrap(),
+            parse(["clean", "--source", "."]).unwrap(),
             Command::Clean(CleanParams {
                 directory: Some(".".into()),
                 permanently: false,
-            },)
+            })
         );
+    }
 
+    #[test]
+    fn clean_with_permanently_and_source() {
         assert_eq!(
-            parse(["mprovision", "clean", "--permanently", "--source", "."]).unwrap(),
+            parse(["clean", "--permanently", "--source", "."]).unwrap(),
             Command::Clean(CleanParams {
                 directory: Some(".".into()),
                 permanently: true,
             })
         );
-
-        assert!(parse(["mprovision", "clean", "--source", ""]).is_err());
     }
 
     #[test]
-    fn extract_command() {
+    fn clean_with_empty_source_should_err() {
+        assert!(parse(["clean", "--source", ""]).is_err());
+    }
+
+    #[test]
+    fn extract() {
         assert_eq!(
-            parse(["mprovision", "extract", "app.ipa", "."]).unwrap(),
+            parse(["extract", "app.ipa", "."]).unwrap(),
             Command::Extract(ExtractParams {
                 source: "app.ipa".into(),
                 destination: ".".into(),
             })
         );
+    }
 
-        assert!(parse(["mprovision", "extract", "app.ipa"]).is_err());
+    #[test]
+    fn extract_with_one_arg_should_err() {
+        assert!(parse(["extract", "app.ipa"]).is_err());
+    }
 
-        assert!(parse(["mprovision", "extract"]).is_err());
+    #[test]
+    fn extract_without_args_should_err() {
+        assert!(parse(["extract"]).is_err());
     }
 }
