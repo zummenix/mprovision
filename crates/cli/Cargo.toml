@@ -20,7 +20,7 @@ test = true
 [dependencies]
 mprovision = { version = "0.1", path = "../lib" }
 time.workspace = true
-clap = { version = "4.3", features = ["derive"] }
+clap = { version = "4.4", features = ["derive"] }
 main_error = "0.1"
 colored = "2"
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
