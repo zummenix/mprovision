@@ -24,4 +24,4 @@ clap = { version = "4.5", features = ["derive"] }
 main_error = "0.1"
 colored = "2"
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
-trash = "4.0"
+trash = "4.1"
