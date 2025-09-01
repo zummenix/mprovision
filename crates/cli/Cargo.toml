@@ -23,5 +23,5 @@ time.workspace = true
 clap = { version = "4.5", features = ["derive"] }
 main_error = "0.1"
 colored = "3"
-zip = { version = "4.5", default-features = false, features = ["deflate"] }
+zip = { version = "4.6", default-features = false, features = ["deflate"] }
 trash = "5.2"
