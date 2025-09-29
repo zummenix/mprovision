@@ -15,7 +15,7 @@ plist = "1.8"
 dirs = "6.0"
 serde = { version = "1.0", features = ["derive"] }
 rayon = "1.11"
-memchr = "2.7.5"
+memchr = "2.7.6"
 
 [dev-dependencies]
 tempfile = "3.23"
