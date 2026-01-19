@@ -10,6 +10,7 @@ edition.workspace = true
 repository.workspace = true
 license.workspace = true
 autobins = false
+include = ["src/**/*"]
 
 [[bin]]
 path = "src/main.rs"
@@ -25,3 +26,8 @@ main_error = "0.1"
 colored = "3"
 zip = { version = "7.1", default-features = false, features = ["deflate"] }
 trash = "5.2"
+
+[dev-dependencies]
+insta = { version = "1.45.1", features = ["filters"] }
+insta-cmd = "0.6.0"
+temp-dir = "0.1.16"
