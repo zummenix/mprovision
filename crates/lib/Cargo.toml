@@ -8,6 +8,7 @@ authors.workspace = true
 edition.workspace = true
 repository.workspace = true
 license.workspace = true
+include = ["src/**/*", "README.md"]
 
 [dependencies]
 time.workspace = true

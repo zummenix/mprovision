@@ -114,8 +114,10 @@ fn extract(source: PathBuf, destination: PathBuf) -> Result {
     let mut archive = ZipArchive::new(fs::File::open(source)?)?;
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)?;
-        let Some(path) = file.enclosed_name().map(|name| name.to_path_buf()) else { continue };
-        if mp::is_mobileprovision(&path) {
+        let Some(path) = file.enclosed_name().map(|name| name.to_path_buf()) else {
+            continue;
+        };
+        if !mp::is_mobileprovision(&path) {
             continue;
         }
         let mut buf: Vec<u8> = Vec::with_capacity(file.size() as usize);
