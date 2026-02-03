@@ -28,6 +28,6 @@ zip = { version = "7.2", default-features = false, features = ["deflate"] }
 trash = "5.2"
 
 [dev-dependencies]
-insta = { version = "1.45.1", features = ["filters"] }
+insta = { version = "1.46.2", features = ["filters"] }
 insta-cmd = "0.6.0"
 temp-dir = "0.1.16"
