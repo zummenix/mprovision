@@ -30,4 +30,4 @@ trash = "5.2"
 [dev-dependencies]
 insta = { version = "1.46.3", features = ["filters"] }
 insta-cmd = "0.6.0"
-temp-dir = "0.1.16"
+temp-dir = "0.2.0"
