@@ -12,7 +12,7 @@ include = ["src/**/*", "README.md"]
 
 [dependencies]
 time.workspace = true
-plist = "1.8"
+plist = "1.9"
 dirs = "6.0"
 serde = { version = "1.0", features = ["derive"] }
 rayon = "1.11"
